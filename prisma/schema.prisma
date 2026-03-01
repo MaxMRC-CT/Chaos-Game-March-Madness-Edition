@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeagueStatus {
+  SETUP
+  DRAFT
+  LIVE
+  COMPLETE
+}
+
+enum DraftRole {
+  HERO
+  VILLAIN
+  CINDERELLA
+}
+
+enum Round {
+  R64
+  R32
+  S16
+  E8
+  F4
+  FINAL
+  CHAMP
+}
+
+model TournamentYear {
+  id        String   @id @default(cuid())
+  year      Int      @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  teams   Team[]
+  leagues League[]
+}
+
+model Team {
+  id               String   @id @default(cuid())
+  tournamentYearId String
+  name             String
+  shortName        String?
+  seed             Int
+  region           String
+  logoUrl          String?
+  createdAt        DateTime @default(now())
+
+  tournamentYear TournamentYear @relation(fields: [tournamentYearId], references: [id])
+
+  draftPicks   DraftPick[]
+  wonGames     TournamentGame[] @relation("WinnerTeam")
+  lostGames    TournamentGame[] @relation("LoserTeam")
+  teamResults  TeamResult[]
+
+  @@index([tournamentYearId])
+  @@index([tournamentYearId, seed])
+}
+
+model League {
+  id               String       @id @default(cuid())
+  tournamentYearId String
+  name             String
+  code             String       @unique
+  status           LeagueStatus @default(SETUP)
+  currentPick      Int          @default(0)
+  createdAt        DateTime     @default(now())
+
+  tournamentYear TournamentYear @relation(fields: [tournamentYearId], references: [id])
+
+  members        LeagueMember[]
+  picks          DraftPick[]
+  tournamentGames TournamentGame[]
+  teamResults    TeamResult[]
+  score          LeagueScore?
+  scoreSnapshots LeagueScoreSnapshot[]
+  events         LeagueEvent[]
+}
+
+model LeagueMember {
+  id            String   @id @default(cuid())
+  leagueId      String
+  nickname      String
+  displayName   String
+  nicknameKey   String
+  reconnectCode String   @unique
+  deviceToken   String?
+  isAdmin       Boolean  @default(false)
+  draftPosition Int?
+  createdAt     DateTime @default(now())
+
+  league League      @relation(fields: [leagueId], references: [id])
+  picks  DraftPick[]
+
+  @@unique([leagueId, nicknameKey])
+  @@index([leagueId])
+}
+
+model DraftPick {
+  id         String       @id @default(cuid())
+  leagueId   String
+  memberId   String
+  teamId     String
+  role       DraftRole
+  pickNumber Int
+  createdAt  DateTime     @default(now())
+
+  league League       @relation(fields: [leagueId], references: [id])
+  member LeagueMember @relation(fields: [memberId], references: [id])
+  team   Team         @relation(fields: [teamId], references: [id])
+
+  @@unique([leagueId, memberId, role])
+  @@unique([leagueId, teamId])
+  @@unique([leagueId, pickNumber])
+  @@index([leagueId])
+  @@index([memberId])
+}
+
+model TournamentGame {
+  id           String   @id @default(cuid())
+  leagueId     String
+  round        Round
+  gameNo       Int
+  winnerTeamId String
+  loserTeamId  String
+  createdAt    DateTime @default(now())
+
+  league League @relation(fields: [leagueId], references: [id])
+  winner Team   @relation("WinnerTeam", fields: [winnerTeamId], references: [id])
+  loser  Team   @relation("LoserTeam", fields: [loserTeamId], references: [id])
+
+  @@unique([leagueId, round, gameNo])
+  @@index([leagueId])
+}
+
+model TeamResult {
+  id              String   @id @default(cuid())
+  leagueId        String
+  teamId          String
+  wins            Int      @default(0)
+  eliminatedRound Round?
+  updatedAt       DateTime @updatedAt
+
+  league League @relation(fields: [leagueId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  @@unique([leagueId, teamId])
+  @@index([leagueId])
+}
+
+model LeagueScore {
+  id        String   @id @default(cuid())
+  leagueId  String   @unique
+  updatedAt DateTime @updatedAt
+  totals    Json
+
+  league League @relation(fields: [leagueId], references: [id])
+}
+
+model LeagueScoreSnapshot {
+  id        String   @id @default(cuid())
+  leagueId  String
+  createdAt DateTime @default(now())
+  totals    Json
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@index([leagueId, createdAt])
+}
+
+model LeagueEvent {
+  id        String   @id @default(cuid())
+  leagueId  String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@index([leagueId, createdAt])
+}
