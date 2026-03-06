@@ -1,13 +1,77 @@
 {
   "R64": [
-    { "winnerName": "Duke", "loserName": "St. Francis (PA)" },
-    { "winnerName": "Alabama", "loserName": "Akron" }
+    { "winnerName": "Duke", "loserName": "Mount St. Mary's" },
+    { "winnerName": "Baylor", "loserName": "Mississippi State" },
+    { "winnerName": "Oregon", "loserName": "Liberty" },
+    { "winnerName": "Arizona", "loserName": "Akron" },
+    { "winnerName": "BYU", "loserName": "VCU" },
+    { "winnerName": "Wisconsin", "loserName": "Montana" },
+    { "winnerName": "Saint Mary's", "loserName": "Vanderbilt" },
+    { "winnerName": "Alabama", "loserName": "Robert Morris" },
+    { "winnerName": "Florida", "loserName": "Norfolk State" },
+    { "winnerName": "UConn", "loserName": "Oklahoma" },
+    { "winnerName": "Colorado State", "loserName": "Memphis" },
+    { "winnerName": "Maryland", "loserName": "Grand Canyon" },
+    { "winnerName": "Drake", "loserName": "Missouri" },
+    { "winnerName": "Texas Tech", "loserName": "UNC Wilmington" },
+    { "winnerName": "Arkansas", "loserName": "Kansas" },
+    { "winnerName": "St. John's", "loserName": "Omaha" },
+    { "winnerName": "Auburn", "loserName": "Alabama State" },
+    { "winnerName": "Creighton", "loserName": "Louisville" },
+    { "winnerName": "Michigan", "loserName": "UC San Diego" },
+    { "winnerName": "Texas A&M", "loserName": "Yale" },
+    { "winnerName": "Ole Miss", "loserName": "North Carolina" },
+    { "winnerName": "Iowa State", "loserName": "Lipscomb" },
+    { "winnerName": "New Mexico", "loserName": "Marquette" },
+    { "winnerName": "Michigan State", "loserName": "Bryant" },
+    { "winnerName": "Houston", "loserName": "SIU Edwardsville" },
+    { "winnerName": "Gonzaga", "loserName": "Georgia" },
+    { "winnerName": "McNeese", "loserName": "Clemson" },
+    { "winnerName": "Purdue", "loserName": "High Point" },
+    { "winnerName": "Illinois", "loserName": "Xavier" },
+    { "winnerName": "Kentucky", "loserName": "Troy" },
+    { "winnerName": "UCLA", "loserName": "Utah State" },
+    { "winnerName": "Tennessee", "loserName": "Wofford" }
   ],
   "R32": [
-    { "winnerName": "Duke", "loserName": "Alabama" }
+    { "winnerName": "Duke", "loserName": "Baylor" },
+    { "winnerName": "Arizona", "loserName": "Oregon" },
+    { "winnerName": "BYU", "loserName": "Wisconsin" },
+    { "winnerName": "Alabama", "loserName": "Saint Mary's" },
+    { "winnerName": "Florida", "loserName": "UConn" },
+    { "winnerName": "Maryland", "loserName": "Colorado State" },
+    { "winnerName": "Texas Tech", "loserName": "Drake" },
+    { "winnerName": "Arkansas", "loserName": "St. John's" },
+    { "winnerName": "Auburn", "loserName": "Creighton" },
+    { "winnerName": "Michigan", "loserName": "Texas A&M" },
+    { "winnerName": "Iowa State", "loserName": "Ole Miss" },
+    { "winnerName": "Michigan State", "loserName": "New Mexico" },
+    { "winnerName": "Houston", "loserName": "Gonzaga" },
+    { "winnerName": "Purdue", "loserName": "McNeese" },
+    { "winnerName": "Illinois", "loserName": "Kentucky" },
+    { "winnerName": "Tennessee", "loserName": "UCLA" }
   ],
-  "S16": [],
-  "E8": [],
-  "F4": [],
-  "NCG": []
+  "S16": [
+    { "winnerName": "Duke", "loserName": "Arizona" },
+    { "winnerName": "Alabama", "loserName": "BYU" },
+    { "winnerName": "Florida", "loserName": "Maryland" },
+    { "winnerName": "Texas Tech", "loserName": "Arkansas" },
+    { "winnerName": "Auburn", "loserName": "Michigan" },
+    { "winnerName": "Iowa State", "loserName": "Michigan State" },
+    { "winnerName": "Houston", "loserName": "Purdue" },
+    { "winnerName": "Tennessee", "loserName": "Illinois" }
+  ],
+  "E8": [
+    { "winnerName": "Duke", "loserName": "Alabama" },
+    { "winnerName": "Florida", "loserName": "Texas Tech" },
+    { "winnerName": "Auburn", "loserName": "Michigan State" },
+    { "winnerName": "Houston", "loserName": "Tennessee" }
+  ],
+  "F4": [
+    { "winnerName": "Florida", "loserName": "Auburn" },
+    { "winnerName": "Houston", "loserName": "Duke" }
+  ],
+  "NCG": [
+    { "winnerName": "Florida", "loserName": "Houston" }
+  ]
 }

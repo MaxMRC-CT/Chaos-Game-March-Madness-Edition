@@ -11,6 +11,7 @@ function useBracketDebug() {
   }, []);
   return show;
 }
+import { NCAA_R64_MATCHUPS } from "@/lib/bracket/espnLayout";
 import { buildTeamOwnershipMap } from "@/lib/league/ownership";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
@@ -363,7 +364,7 @@ function RegionRoundContent({
     );
   }
 
-  if (!hasGames || matchups.length === 0) {
+  if (matchups.length === 0) {
     return (
       <div className="rounded-lg border border-neutral-800 bg-neutral-950/80 px-3 py-4 text-center text-sm text-neutral-500">
         Awaiting results
@@ -480,16 +481,12 @@ function getMatchupsForRound({
 }
 
 function buildSeedMatchups(teams: WarRoomResponse["teams"]) {
-  const sorted = [...teams].sort(
-    (a, b) => a.seed - b.seed || a.name.localeCompare(b.name),
-  );
+  const teamBySeed = new Map(teams.map((t) => [t.seed, t]));
   const pairs: Array<[WarRoomResponse["teams"][number], WarRoomResponse["teams"][number]]> = [];
-  let left = 0;
-  let right = sorted.length - 1;
-  while (left < right) {
-    pairs.push([sorted[left], sorted[right]]);
-    left += 1;
-    right -= 1;
+  for (const [seedA, seedB] of NCAA_R64_MATCHUPS) {
+    const teamA = teamBySeed.get(seedA);
+    const teamB = teamBySeed.get(seedB);
+    if (teamA && teamB) pairs.push([teamA, teamB]);
   }
   return pairs;
 }
@@ -519,17 +516,19 @@ function TeamRow({
       </div>
     );
   }
-  // Matchup-aware styling: use matchRole when present so each card shows winner/loser of that game only
+  const owners = Array.isArray(owner) ? owner : owner ? [owner] : [];
   const isWinner =
     matchRole === "winner" ||
     (matchRole == null &&
-      Boolean(result) &&
+      result != null &&
       (result.eliminatedRound === null || result.eliminatedRound === "CHAMP"));
   const isLoser =
     matchRole === "loser" ||
     (matchRole == null &&
-      Boolean(result?.eliminatedRound && result.eliminatedRound !== "CHAMP"));
-  const matchesFilter = matchesOwnershipFilter(owner, filter);
+      result != null &&
+      result.eliminatedRound != null &&
+      result.eliminatedRound !== "CHAMP");
+  const matchesFilter = matchesOwnershipFilter(owners, filter);
 
   return (
     <div
@@ -539,7 +538,7 @@ function TeamRow({
           : isLoser
             ? "border-neutral-700/60 bg-neutral-900/80 text-neutral-500"
             : "border-neutral-700/80 bg-neutral-800/60 text-neutral-200"
-      } ${owner ? "opacity-100" : "opacity-50"} ${!matchesFilter ? "opacity-40" : ""}`}
+      } ${owners.length > 0 ? "opacity-100" : "opacity-50"} ${!matchesFilter ? "opacity-40" : ""}`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -554,14 +553,21 @@ function TeamRow({
             {team.shortName || team.name}
           </span>
         </div>
-        {owner ? (
-          <div className="flex shrink-0 items-center gap-1 text-[10px]">
-            <span className={`rounded border px-1.5 py-0.5 font-medium ${ROLE_BADGE[owner.role]}`}>
-              {owner.role === "HERO" ? "H" : owner.role === "VILLAIN" ? "V" : "C"}
-            </span>
-            <span className="rounded bg-neutral-700/80 px-1.5 py-0.5 text-neutral-300">
-              {owner.ownerDisplayName}
-            </span>
+        {owners.length > 0 ? (
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1 text-[10px]">
+            {[...new Set(owners.map((o) => o.role))].map((role) => {
+              const names = owners.filter((o) => o.role === role).map((o) => o.ownerDisplayName);
+              return (
+                <div key={role} className="flex items-center gap-1">
+                  <span className={`rounded border px-1.5 py-0.5 font-medium ${ROLE_BADGE[role]}`}>
+                    {role === "HERO" ? "H" : role === "VILLAIN" ? "V" : "C"}
+                  </span>
+                  <span className="max-w-[80px] truncate rounded bg-neutral-700/80 px-1.5 py-0.5 text-neutral-300" title={names.join(", ")}>
+                    {names.join(", ")}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         ) : null}
       </div>
@@ -573,9 +579,10 @@ function matchesOwnershipFilter(
   owner: ReturnType<typeof buildTeamOwnershipMap>[string] | undefined,
   filter: OwnershipFilter,
 ) {
+  const list = Array.isArray(owner) ? owner : owner ? [owner] : [];
   if (filter === "ALL") return true;
-  if (filter === "UNOWNED") return !owner;
-  if (!owner) return false;
-  return owner.role === filter;
+  if (filter === "UNOWNED") return list.length === 0;
+  if (list.length === 0) return false;
+  return list.some((o) => o.role === filter);
 }
 

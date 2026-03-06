@@ -5,7 +5,7 @@ import { Copy, Flame, LayoutGrid, Settings, Shield, Users } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import { BrandLockup } from "@/app/(dashboard)/_components/BrandLockup";
-import { startDraftFromForm } from "@/lib/actions/draft";
+import { startTournamentFromForm } from "@/lib/actions/league";
 import { LiveFeed } from "./live-feed";
 import { WarRoomResponse } from "./types";
 
@@ -22,7 +22,7 @@ export function PreDraftWarRoom({
   const [copied, setCopied] = useState(false);
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
-    startDraftFromForm,
+    startTournamentFromForm,
     null,
   );
 
@@ -37,11 +37,14 @@ export function PreDraftWarRoom({
   }, [leagueId]);
 
   useEffect(() => {
+    void load();
+  }, [load]);
+
+  useEffect(() => {
     const id = window.setInterval(() => void load(), 4000);
     return () => window.clearInterval(id);
   }, [load]);
 
-  const isDraftLive = data.league.status === "DRAFT";
   const isSetup = data.league.status === "SETUP";
   const isHost = Boolean(data.me?.isAdmin);
 
@@ -94,21 +97,8 @@ export function PreDraftWarRoom({
                   {data.league.name}
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      isDraftLive
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "bg-amber-500/20 text-amber-300"
-                    }`}
-                  >
-                    {isDraftLive ? (
-                      <>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-                        Draft is live
-                      </>
-                    ) : (
-                      <>Waiting for host to start the draft</>
-                    )}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">
+                    Build your roster (2 Heroes, 2 Villains, 2 Cinderellas)
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -130,23 +120,22 @@ export function PreDraftWarRoom({
                     Share
                   </Link>
                 </div>
-                <div className="mt-4">
-                  {isDraftLive ? (
-                    <Link
-                      href={`/league/${leagueId}/draft`}
-                      className="inline-flex rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-                    >
-                      Go to Draft Room
-                    </Link>
-                  ) : isSetup && isHost ? (
-                    <form action={formAction}>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <Link
+                    href={`/league/${leagueId}/portfolio`}
+                    className="inline-flex rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+                  >
+                    Build roster
+                  </Link>
+                  {isSetup && isHost ? (
+                    <form action={formAction} className="inline">
                       <input type="hidden" name="leagueId" value={leagueId} />
                       <button
                         type="submit"
                         disabled={pending}
                         className="rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-500 disabled:opacity-60"
                       >
-                        {pending ? "Starting…" : "Start Draft"}
+                        {pending ? "Starting…" : "Start tournament"}
                       </button>
                       {state?.error ? (
                         <p className="mt-2 text-sm text-red-400">{state.error}</p>
@@ -155,7 +144,7 @@ export function PreDraftWarRoom({
                   ) : isSetup ? (
                     <span className="inline-flex items-center gap-2 rounded-full bg-neutral-800 px-3 py-1.5 text-xs text-neutral-300">
                       <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      Ready — waiting for host
+                      Waiting for host to start
                     </span>
                   ) : null}
                 </div>
@@ -196,9 +185,9 @@ export function PreDraftWarRoom({
               </ul>
             </section>
 
-            {/* Draft format */}
+            {/* Roster format */}
             <section className="rounded-xl border border-[#1f2937] bg-[#111827] p-3 sm:p-4">
-              <h2 className="mb-3 text-base font-semibold text-neutral-100 sm:text-lg">Draft format</h2>
+              <h2 className="mb-3 text-base font-semibold text-neutral-100 sm:text-lg">Roster (2/2/2)</h2>
               <ul className="space-y-2 text-sm text-neutral-300">
                 <li className="flex items-start gap-2 rounded-lg border border-[#1f2937] bg-[#0f1623] px-3 py-2">
                   <span className="mt-0.5 inline-block h-2 w-2 shrink-0 rounded-full bg-blue-400" />

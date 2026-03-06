@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame, LayoutGrid, Settings, Shield } from "lucide-react";
+import { Flame, LayoutGrid, Settings, Shield, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLockup } from "@/app/(dashboard)/_components/BrandLockup";
@@ -11,6 +11,7 @@ export const LEAGUE_SIDEBAR_ASIDE_CLASS =
 
 const NAV_ITEMS = [
   { href: "dashboard", segment: "dashboard", label: "War Room", Icon: Shield },
+  { href: "portfolio", segment: "portfolio", label: "Roster", Icon: Users },
   { href: "bracket", segment: "bracket", label: "Full Bracket", Icon: LayoutGrid },
   { href: "standings", segment: "standings", label: "My League", Icon: Flame },
 ] as const;

@@ -500,13 +500,10 @@ function commandCta(
   isAdmin: boolean,
 ) {
   if (status === "SETUP") {
-    if (isAdmin) {
-      return { kind: "link" as const, href: `/league/${leagueId}/lobby`, label: "Start Draft" };
-    }
-    return { kind: "anchor" as const, href: "#", label: "Waiting for host" };
+    return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Build roster" };
   }
   if (status === "DRAFT") {
-    return { kind: "link" as const, href: `/league/${leagueId}/draft`, label: "Return to Draft Room" };
+    return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Build roster" };
   }
   if (status === "LIVE") {
     return { kind: "anchor" as const, href: "#hot-seat", label: "View Tonight's Chaos" };

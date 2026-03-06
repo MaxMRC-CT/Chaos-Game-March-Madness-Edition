@@ -115,11 +115,9 @@ function movementReasonChip(
 
     if (event.type === "TEAM_ELIMINATED") {
       const teamId = String(payload.teamId || "");
-      const owner = ownershipMap[teamId];
-      if (!owner || owner.ownerMemberId !== memberId) continue;
-      if (owner.role === "VILLAIN") {
-        return "+ Villain elimination";
-      }
+      const owners = ownershipMap[teamId] ?? [];
+      const mine = owners.some((o) => o.ownerMemberId === memberId && o.role === "VILLAIN");
+      if (mine) return "+ Villain elimination";
     }
   }
 

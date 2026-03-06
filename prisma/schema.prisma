@@ -26,6 +26,7 @@ model Team {
   logoUrl          String?
   createdAt        DateTime         @default(now())
   draftPicks       DraftPick[]
+  portfolioPicks   PortfolioPick[]
   tournamentYear   TournamentYear   @relation(fields: [tournamentYearId], references: [id])
   teamResults      TeamResult[]
   lostGames        TournamentGame[] @relation("LoserTeam")
@@ -36,38 +37,40 @@ model Team {
 }
 
 model League {
-  id                     String                @id @default(cuid())
-  tournamentYearId       String
-  name                   String
-  code                   String                @unique
-  status                 LeagueStatus          @default(SETUP)
-  currentPick            Int                   @default(0)
+  id                      String                @id @default(cuid())
+  tournamentYearId        String
+  name                    String
+  code                    String                @unique
+  status                  LeagueStatus          @default(SETUP)
+  currentPick             Int                   @default(0)
+  createdAt               DateTime              @default(now())
   championshipTotalPoints Int?
-  createdAt              DateTime              @default(now())
-  picks            DraftPick[]
-  tournamentYear   TournamentYear        @relation(fields: [tournamentYearId], references: [id])
-  events           LeagueEvent[]
-  members          LeagueMember[]
-  score            LeagueScore?
-  scoreSnapshots   LeagueScoreSnapshot[]
-  teamResults      TeamResult[]
-  tournamentGames  TournamentGame[]
+  picks                   DraftPick[]
+  tournamentYear          TournamentYear        @relation(fields: [tournamentYearId], references: [id])
+  events                  LeagueEvent[]
+  members                 LeagueMember[]
+  score                   LeagueScore?
+  scoreSnapshots          LeagueScoreSnapshot[]
+  portfolioPicks          PortfolioPick[]
+  teamResults             TeamResult[]
+  tournamentGames         TournamentGame[]
 }
 
 model LeagueMember {
-  id                    String      @id @default(cuid())
-  leagueId              String
-  nickname              String
-  isAdmin               Boolean     @default(false)
-  draftPosition         Int?
+  id                     String          @id @default(cuid())
+  leagueId               String
+  nickname               String
+  isAdmin                Boolean         @default(false)
+  draftPosition          Int?
+  createdAt              DateTime        @default(now())
+  displayName            String
+  nicknameKey            String
+  deviceToken            String?
+  reconnectCode          String          @unique
   championshipPrediction Int?
-  createdAt             DateTime    @default(now())
-  displayName   String
-  nicknameKey   String
-  deviceToken   String?
-  reconnectCode String      @unique
-  picks         DraftPick[]
-  league        League      @relation(fields: [leagueId], references: [id])
+  picks                  DraftPick[]
+  league                 League          @relation(fields: [leagueId], references: [id])
+  portfolioPicks         PortfolioPick[]
 
   @@unique([leagueId, nicknameKey])
   @@index([leagueId])
@@ -151,6 +154,22 @@ model LeagueEvent {
   @@index([leagueId, createdAt])
 }
 
+model PortfolioPick {
+  id        String       @id @default(cuid())
+  leagueId  String
+  memberId  String
+  teamId    String
+  role      RoleType
+  createdAt DateTime     @default(now())
+  league    League       @relation(fields: [leagueId], references: [id])
+  member    LeagueMember @relation(fields: [memberId], references: [id])
+  team      Team         @relation(fields: [teamId], references: [id])
+
+  @@unique([leagueId, memberId, teamId])
+  @@index([leagueId])
+  @@index([memberId])
+}
+
 enum LeagueStatus {
   SETUP
   DRAFT
@@ -159,6 +178,12 @@ enum LeagueStatus {
 }
 
 enum DraftRole {
+  HERO
+  VILLAIN
+  CINDERELLA
+}
+
+enum RoleType {
   HERO
   VILLAIN
   CINDERELLA

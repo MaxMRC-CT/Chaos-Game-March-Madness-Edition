@@ -94,11 +94,11 @@ export type WarRoomResponse = {
   }>;
   ownershipMap: Record<
     string,
-    {
+    Array<{
       role: "HERO" | "VILLAIN" | "CINDERELLA";
       ownerDisplayName: string;
       ownerMemberId: string;
-    }
+    }>
   >;
   /** Present only when ENV_NAME=development */
   roundCounts?: { R64: number; R32: number; S16: number; E8: number; F4: number; NCG: number };

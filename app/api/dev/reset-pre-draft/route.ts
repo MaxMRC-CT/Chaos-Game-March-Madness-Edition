@@ -106,6 +106,7 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     const leagueId = existing.id;
+    await prisma.portfolioPick.deleteMany({ where: { leagueId } });
     await prisma.draftPick.deleteMany({ where: { leagueId } });
     await prisma.leagueEvent.deleteMany({ where: { leagueId } });
     await prisma.leagueScoreSnapshot.deleteMany({ where: { leagueId } });

@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 
-import { DraftRole, Round } from "@prisma/client";
+import { Round } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
@@ -26,7 +26,7 @@ type StandingRow = {
 };
 
 type Ownership = {
-  role: DraftRole;
+  role: "HERO" | "VILLAIN" | "CINDERELLA";
   ownerDisplayName: string;
   ownerMemberId: string;
 };
@@ -93,19 +93,18 @@ export async function GET(request: Request) {
         },
         orderBy: [{ draftPosition: "asc" }, { createdAt: "asc" }],
       }),
-      prisma.draftPick.findMany({
+      prisma.portfolioPick.findMany({
         where: { leagueId },
         select: {
           id: true,
           role: true,
-          pickNumber: true,
           memberId: true,
           teamId: true,
           createdAt: true,
           member: { select: { displayName: true } },
           team: { select: { id: true, name: true, shortName: true, seed: true, region: true } },
         },
-        orderBy: [{ pickNumber: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ createdAt: "asc" }],
       }),
       prisma.team.findMany({
         where: { tournamentYearId: league.tournamentYearId },
@@ -161,12 +160,14 @@ export async function GET(request: Request) {
     const memberId = cookieStore.get(`cl_member_${leagueId}`)?.value ?? null;
     const me = memberId ? members.find((member) => member.id === memberId) ?? null : null;
 
-    const ownershipMap = picks.reduce<Record<string, Ownership>>((acc, pick) => {
-      acc[pick.teamId] = {
+    const ownershipMap = picks.reduce<Record<string, Ownership[]>>((acc, pick) => {
+      const o: Ownership = {
         role: pick.role,
         ownerDisplayName: pick.member.displayName,
         ownerMemberId: pick.memberId,
       };
+      if (!acc[pick.teamId]) acc[pick.teamId] = [];
+      acc[pick.teamId].push(o);
       return acc;
     }, {});
 
@@ -189,7 +190,8 @@ export async function GET(request: Request) {
       currentRound,
     });
 
-    const myPicks = me ? picks.filter((pick) => pick.memberId === me.id) : [];
+    const picksWithPickNumber = picks.map((p, i) => ({ ...p, pickNumber: i + 1 }));
+    const myPicks = me ? picksWithPickNumber.filter((pick) => pick.memberId === me.id) : [];
 
     const roundCounts =
       process.env.ENV_NAME === "development"
@@ -233,7 +235,7 @@ export async function GET(request: Request) {
         isAdmin: member.isAdmin,
         draftPosition: member.draftPosition,
       })),
-      picks,
+      picks: picksWithPickNumber,
       myPicks,
       teams,
       teamResults,
@@ -340,7 +342,7 @@ function buildHotSeatMatchups({
 }: {
   games: Array<{ round: Round; gameNo: number; winnerTeamId: string; loserTeamId: string }>;
   teams: TeamLite[];
-  ownershipMap: Record<string, Ownership>;
+  ownershipMap: Record<string, Ownership[]>;
   resultByTeamId: Map<string, TeamResultLite>;
   currentRound: Round;
 }) {
@@ -369,7 +371,7 @@ function buildHotSeatMatchups({
 
   if (fromGames.length >= 2) return fromGames;
 
-  const ownedTeams = teams.filter((team) => ownershipMap[team.id]);
+  const ownedTeams = teams.filter((team) => (ownershipMap[team.id]?.length ?? 0) > 0);
   const pool = (ownedTeams.length > 0 ? ownedTeams : teams)
     .slice()
     .sort((a, b) => a.seed - b.seed || a.name.localeCompare(b.name));
@@ -408,22 +410,17 @@ function createMatchup({
   region: string;
   teamA: TeamLite;
   teamB: TeamLite;
-  ownershipMap: Record<string, Ownership>;
+  ownershipMap: Record<string, Ownership[]>;
   resultByTeamId: Map<string, TeamResultLite>;
 }) {
-  const ownerA = ownershipMap[teamA.id] ?? null;
-  const ownerB = ownershipMap[teamB.id] ?? null;
+  const ownersA = ownershipMap[teamA.id] ?? [];
+  const ownersB = ownershipMap[teamB.id] ?? [];
+  const allOwners = [...ownersA, ...ownersB];
 
   const impact = {
-    heroOwners: [ownerA, ownerB]
-      .filter((owner): owner is Ownership => Boolean(owner && owner.role === "HERO"))
-      .map((owner) => owner.ownerDisplayName),
-    villainOwners: [ownerA, ownerB]
-      .filter((owner): owner is Ownership => Boolean(owner && owner.role === "VILLAIN"))
-      .map((owner) => owner.ownerDisplayName),
-    cinderellaOwners: [ownerA, ownerB]
-      .filter((owner): owner is Ownership => Boolean(owner && owner.role === "CINDERELLA"))
-      .map((owner) => owner.ownerDisplayName),
+    heroOwners: allOwners.filter((o) => o.role === "HERO").map((o) => o.ownerDisplayName),
+    villainOwners: allOwners.filter((o) => o.role === "VILLAIN").map((o) => o.ownerDisplayName),
+    cinderellaOwners: allOwners.filter((o) => o.role === "CINDERELLA").map((o) => o.ownerDisplayName),
   };
 
   const teamAWin = simulateMatchupDelta(teamA.id, teamB.id, round, ownershipMap, resultByTeamId);
@@ -448,25 +445,19 @@ function simulateMatchupDelta(
   winnerTeamId: string,
   loserTeamId: string,
   round: Round,
-  ownershipMap: Record<string, Ownership>,
+  ownershipMap: Record<string, Ownership[]>,
   resultByTeamId: Map<string, TeamResultLite>,
 ) {
   const delta: Record<string, number> = {};
-
-  const winnerOwner = ownershipMap[winnerTeamId];
-  const loserOwner = ownershipMap[loserTeamId];
+  const winnerOwners = ownershipMap[winnerTeamId] ?? [];
+  const loserOwners = ownershipMap[loserTeamId] ?? [];
   const winnerResult = resultByTeamId.get(winnerTeamId) ?? { wins: 0, eliminatedRound: null };
 
-  if (winnerOwner) {
+  for (const winnerOwner of winnerOwners) {
     if (winnerOwner.role === "HERO") {
-      const before = computeHeroPoints(
-        winnerResult.wins,
-        winnerResult.wins >= 2,
-        winnerResult.wins >= 4,
-        winnerResult.eliminatedRound === "CHAMP" || winnerResult.wins >= 6,
-      );
+      const before = computeHeroPoints(winnerResult.wins);
       const afterWins = winnerResult.wins + 1;
-      const after = computeHeroPoints(afterWins, afterWins >= 2, afterWins >= 4, afterWins >= 6);
+      const after = computeHeroPoints(afterWins);
       delta[winnerOwner.ownerMemberId] = (delta[winnerOwner.ownerMemberId] || 0) + (after - before);
     } else if (winnerOwner.role === "CINDERELLA") {
       const before = computeCinderellaPoints(
@@ -481,20 +472,25 @@ function simulateMatchupDelta(
     }
   }
 
-  if (loserOwner?.role === "VILLAIN") {
-    const villainPoints = computeVillainPoints(round);
-    delta[loserOwner.ownerMemberId] = (delta[loserOwner.ownerMemberId] || 0) + villainPoints;
+  for (const loserOwner of loserOwners) {
+    if (loserOwner.role === "VILLAIN") {
+      const villainPoints = computeVillainPoints(round);
+      delta[loserOwner.ownerMemberId] = (delta[loserOwner.ownerMemberId] || 0) + villainPoints;
+    }
   }
 
-  if (winnerOwner && loserOwner && winnerOwner.ownerMemberId !== loserOwner.ownerMemberId) {
-    if (winnerOwner.role === "HERO" && loserOwner.role === "VILLAIN") {
-      delta[winnerOwner.ownerMemberId] = (delta[winnerOwner.ownerMemberId] || 0) + 5;
-    }
-    if (winnerOwner.role === "CINDERELLA" && loserOwner.role === "HERO") {
-      delta[winnerOwner.ownerMemberId] = (delta[winnerOwner.ownerMemberId] || 0) + 10;
-    }
-    if (winnerOwner.role === "VILLAIN" && loserOwner.role === "HERO") {
-      delta[loserOwner.ownerMemberId] = (delta[loserOwner.ownerMemberId] || 0) - 5;
+  for (const winnerOwner of winnerOwners) {
+    for (const loserOwner of loserOwners) {
+      if (winnerOwner.ownerMemberId === loserOwner.ownerMemberId) continue;
+      if (winnerOwner.role === "HERO" && loserOwner.role === "VILLAIN") {
+        delta[winnerOwner.ownerMemberId] = (delta[winnerOwner.ownerMemberId] || 0) + 5;
+      }
+      if (winnerOwner.role === "CINDERELLA" && loserOwner.role === "HERO") {
+        delta[winnerOwner.ownerMemberId] = (delta[winnerOwner.ownerMemberId] || 0) + 10;
+      }
+      if (winnerOwner.role === "VILLAIN" && loserOwner.role === "HERO") {
+        delta[loserOwner.ownerMemberId] = (delta[loserOwner.ownerMemberId] || 0) - 5;
+      }
     }
   }
 
@@ -504,11 +500,13 @@ function simulateMatchupDelta(
 function summarizeScenario(
   winnerName: string,
   delta: Record<string, number>,
-  ownershipMap: Record<string, Ownership>,
+  ownershipMap: Record<string, Ownership[]>,
 ) {
   const nameByMemberId = new Map<string, string>();
-  for (const ownership of Object.values(ownershipMap)) {
-    nameByMemberId.set(ownership.ownerMemberId, ownership.ownerDisplayName);
+  for (const list of Object.values(ownershipMap)) {
+    for (const ownership of list) {
+      nameByMemberId.set(ownership.ownerMemberId, ownership.ownerDisplayName);
+    }
   }
 
   const entries = Object.entries(delta)

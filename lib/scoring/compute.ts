@@ -1,9 +1,9 @@
-import { DraftRole, Round } from "@prisma/client";
+import { Round } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 type PickByRole = {
   memberId: string;
-  role: DraftRole;
+  role: "HERO" | "VILLAIN" | "CINDERELLA";
   teamId: string;
 };
 
@@ -36,19 +36,18 @@ type MemberTotals = {
   championshipPrediction: number | null;
 };
 
+/** v2: Points per win by round (1/2/4/8/16/32). Total = 2^wins - 1. */
 export function computeHeroPoints(
-  wins: number,
-  reachedS16: boolean,
-  reachedF4: boolean,
-  isChampion: boolean,
+  _wins: number,
+  _reachedS16?: boolean,
+  _reachedF4?: boolean,
+  _isChampion?: boolean,
 ) {
-  let points = wins * 4;
-  if (reachedS16) points += 8;
-  if (reachedF4) points += 12;
-  if (isChampion) points += 20;
-  return points;
+  const wins = Math.min(6, Math.max(0, _wins));
+  return wins === 0 ? 0 : (1 << wins) - 1;
 }
 
+/** v2: Points when villain is eliminated. Early exit bonus (R64/R32). */
 export function computeVillainPoints(eliminatedRound: Round | null | undefined) {
   switch (eliminatedRound) {
     case "R64":
@@ -68,91 +67,89 @@ export function computeVillainPoints(eliminatedRound: Round | null | undefined) 
   }
 }
 
+/** v2: Points per win (1/2/4/8/16/32) + milestone bonuses (S16/E8/F4). */
 export function computeCinderellaPoints(
   wins: number,
   reachedS16: boolean,
   reachedE8: boolean,
   reachedF4: boolean,
 ) {
-  let points = 0;
-  if (wins >= 1) points += 10;
-  if (wins >= 2) points += 15;
-  if (reachedS16) points += 25;
-  if (reachedE8) points += 35;
-  if (reachedF4) points += 50;
-  return points;
+  const winPoints = wins === 0 ? 0 : (1 << wins) - 1;
+  let milestone = 0;
+  if (reachedS16) milestone += 25;
+  if (reachedE8) milestone += 35;
+  if (reachedF4) milestone += 50;
+  return winPoints + milestone;
 }
 
+/** v2: Rivalry applied per (winner pick, loser pick) pair; multiple owners per team. */
 export function computeRivalryBonuses(
   games: RivalryGame[],
   picksByRole: PickByRole[],
 ): { events: RivalryEvent[]; memberDeltas: Record<string, number> } {
-  const teamRoleIndex = new Map<string, PickByRole>();
+  const picksByTeamId = new Map<string, PickByRole[]>();
   for (const pick of picksByRole) {
-    teamRoleIndex.set(pick.teamId, pick);
+    const list = picksByTeamId.get(pick.teamId) ?? [];
+    list.push(pick);
+    picksByTeamId.set(pick.teamId, list);
   }
 
   const events: RivalryEvent[] = [];
   const memberDeltas: Record<string, number> = {};
 
   for (const game of games) {
-    const winnerPick = teamRoleIndex.get(game.winnerTeamId);
-    const loserPick = teamRoleIndex.get(game.loserTeamId);
-    if (!winnerPick || !loserPick) continue;
-
-    if (
-      winnerPick.role === "HERO" &&
-      loserPick.role === "VILLAIN" &&
-      winnerPick.memberId !== loserPick.memberId
-    ) {
-      events.push({
-        type: "RIVALRY_BONUS",
-        gameId: game.id,
-        winnerTeamId: game.winnerTeamId,
-        loserTeamId: game.loserTeamId,
-        memberId: winnerPick.memberId,
-        delta: 5,
-        rule: "HERO_OVER_VILLAIN",
-      });
-      memberDeltas[winnerPick.memberId] = (memberDeltas[winnerPick.memberId] || 0) + 5;
-    }
-
-    if (
-      winnerPick.role === "CINDERELLA" &&
-      loserPick.role === "HERO" &&
-      winnerPick.memberId !== loserPick.memberId
-    ) {
-      events.push({
-        type: "RIVALRY_BONUS",
-        gameId: game.id,
-        winnerTeamId: game.winnerTeamId,
-        loserTeamId: game.loserTeamId,
-        memberId: winnerPick.memberId,
-        delta: 10,
-        rule: "CINDERELLA_OVER_HERO",
-      });
-      memberDeltas[winnerPick.memberId] = (memberDeltas[winnerPick.memberId] || 0) + 10;
-    }
-
-    if (winnerPick.role === "VILLAIN" && loserPick.role === "HERO") {
-      events.push({
-        type: "RIVALRY_BONUS",
-        gameId: game.id,
-        winnerTeamId: game.winnerTeamId,
-        loserTeamId: game.loserTeamId,
-        memberId: loserPick.memberId,
-        delta: -5,
-        rule: "VILLAIN_OVER_HERO",
-      });
-      memberDeltas[loserPick.memberId] = (memberDeltas[loserPick.memberId] || 0) - 5;
+    const winnerPicks = picksByTeamId.get(game.winnerTeamId) ?? [];
+    const loserPicks = picksByTeamId.get(game.loserTeamId) ?? [];
+    for (const winnerPick of winnerPicks) {
+      for (const loserPick of loserPicks) {
+        if (winnerPick.memberId === loserPick.memberId) continue;
+        if (
+          winnerPick.role === "HERO" &&
+          loserPick.role === "VILLAIN"
+        ) {
+          events.push({
+            type: "RIVALRY_BONUS",
+            gameId: game.id,
+            winnerTeamId: game.winnerTeamId,
+            loserTeamId: game.loserTeamId,
+            memberId: winnerPick.memberId,
+            delta: 5,
+            rule: "HERO_OVER_VILLAIN",
+          });
+          memberDeltas[winnerPick.memberId] = (memberDeltas[winnerPick.memberId] || 0) + 5;
+        }
+        if (
+          winnerPick.role === "CINDERELLA" &&
+          loserPick.role === "HERO"
+        ) {
+          events.push({
+            type: "RIVALRY_BONUS",
+            gameId: game.id,
+            winnerTeamId: game.winnerTeamId,
+            loserTeamId: game.loserTeamId,
+            memberId: winnerPick.memberId,
+            delta: 10,
+            rule: "CINDERELLA_OVER_HERO",
+          });
+          memberDeltas[winnerPick.memberId] = (memberDeltas[winnerPick.memberId] || 0) + 10;
+        }
+        if (winnerPick.role === "VILLAIN" && loserPick.role === "HERO") {
+          events.push({
+            type: "RIVALRY_BONUS",
+            gameId: game.id,
+            winnerTeamId: game.winnerTeamId,
+            loserTeamId: game.loserTeamId,
+            memberId: loserPick.memberId,
+            delta: -5,
+            rule: "VILLAIN_OVER_HERO",
+          });
+          memberDeltas[loserPick.memberId] = (memberDeltas[loserPick.memberId] || 0) - 5;
+        }
+      }
     }
   }
 
   return { events, memberDeltas };
-}
-
-function isChampion(result: { wins: number; eliminatedRound: Round | null }) {
-  return result.eliminatedRound === "CHAMP" || result.wins >= 6;
 }
 
 /**
@@ -192,7 +189,7 @@ export async function computeLeagueStandings(leagueId: string) {
       select: { id: true, displayName: true, championshipPrediction: true },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.draftPick.findMany({
+    prisma.portfolioPick.findMany({
       where: { leagueId },
       select: { memberId: true, teamId: true, role: true },
     }),
@@ -238,10 +235,9 @@ export async function computeLeagueStandings(leagueId: string) {
     const reachedS16 = result.wins >= 2;
     const reachedE8 = result.wins >= 3;
     const reachedF4 = result.wins >= 4;
-    const champion = isChampion(result);
 
     if (pick.role === "HERO") {
-      member.HERO += computeHeroPoints(result.wins, reachedS16, reachedF4, champion);
+      member.HERO += computeHeroPoints(result.wins);
     } else if (pick.role === "VILLAIN") {
       member.VILLAIN += computeVillainPoints(result.eliminatedRound);
     } else if (pick.role === "CINDERELLA") {

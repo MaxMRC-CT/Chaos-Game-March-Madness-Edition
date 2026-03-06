@@ -89,7 +89,7 @@ export default function MyLeagueClient({
   }, [data?.picks]);
 
   const standings = data?.standings ?? [];
-  const showDraft = data?.league.status === "DRAFT";
+  const showPortfolio = data?.league.status === "SETUP" || data?.league.status === "DRAFT";
 
   return (
     <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">
@@ -110,12 +110,12 @@ export default function MyLeagueClient({
                 </div>
               </div>
               <div className="flex gap-2">
-                {showDraft ? (
+                {showPortfolio ? (
                   <Link
-                    href={`/league/${leagueId}/draft`}
+                    href={`/league/${leagueId}/portfolio`}
                     className="rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-300 underline-offset-4 transition hover:bg-neutral-800 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
                   >
-                    Draft
+                    Roster
                   </Link>
                 ) : null}
                 <Link

@@ -66,7 +66,7 @@ export default function HomePage() {
             href="/dev"
             className="block text-center text-sm text-neutral-400 hover:text-white transition"
           >
-            Dev Panel
+            Dev Control Center
           </a>
         )}
       </div>

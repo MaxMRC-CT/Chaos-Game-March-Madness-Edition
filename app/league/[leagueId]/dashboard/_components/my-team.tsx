@@ -24,74 +24,70 @@ export function MyTeam({
       <h2 className="text-base font-semibold tracking-wide text-neutral-100 sm:text-lg">My Story</h2>
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
         {ROLE_LABELS.map((role) => {
-          const pick = myPicks.find((item) => item.role === role);
-          const result = pick ? resultByTeamId[pick.teamId] : undefined;
-          const status = !result
-            ? "UNKNOWN"
-            : result.eliminatedRound === "CHAMP" || result.eliminatedRound === null
-              ? "ALIVE"
-              : "ELIMINATED";
-          const points =
+          const rolePicks = myPicks.filter((item) => item.role === role);
+          const totalRolePoints =
             role === "HERO"
-              ? standingsRow?.HERO || 0
+              ? standingsRow?.HERO ?? 0
               : role === "VILLAIN"
-                ? standingsRow?.VILLAIN || 0
-                : standingsRow?.CINDERELLA || 0;
-          const isEliminated = status === "ELIMINATED";
-          const statusLabel = status === "UNKNOWN" ? "TBD" : status === "ELIMINATED" ? "ELIMINATED ☠" : status;
-
+                ? standingsRow?.VILLAIN ?? 0
+                : standingsRow?.CINDERELLA ?? 0;
+          const pointsPerPick = rolePicks.length > 0 ? Math.round(totalRolePoints / rolePicks.length) : 0;
           return (
             <article
               key={role}
-              className={`min-w-0 rounded-xl border p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] transition duration-200 hover:brightness-110 ${ROLE_STYLES[role]} ${
-                isEliminated ? "opacity-70" : ""
-              }`}
+              className={`min-w-0 rounded-xl border p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] transition duration-200 hover:brightness-110 ${ROLE_STYLES[role]}`}
             >
               <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/25 text-xs">
-                    {pick?.team.shortName?.slice(0, 2).toUpperCase() || "CL"}
-                  </span>
-                  <p className="whitespace-nowrap text-xs font-semibold tracking-wide">{role}</p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${
-                    status === "ALIVE"
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                      : status === "ELIMINATED"
-                        ? "border-red-500/40 bg-red-500/10 text-red-200"
-                        : "border-neutral-500/40 bg-neutral-500/10 text-neutral-300"
-                  }`}
-                >
-                  {statusLabel}
+                <p className="whitespace-nowrap text-xs font-semibold tracking-wide">{role}</p>
+                <span className="rounded-full border border-neutral-600 bg-neutral-800/60 px-2 py-0.5 text-[10px] text-neutral-300">
+                  {rolePicks.length}/2
                 </span>
               </div>
-
-              {pick ? (
-                <div className="space-y-2">
-                  <p className="truncate text-base font-semibold tracking-tight text-neutral-100">
-                    {pick.team.shortName || pick.team.name}
-                  </p>
-                  <div className="flex flex-wrap gap-2 text-xs text-neutral-300">
-                    <span className="shrink-0 rounded bg-neutral-900/60 px-2 py-0.5">
-                      Seed {pick.team.seed}
-                    </span>
-                    <span className="shrink-0 rounded bg-neutral-900/60 px-2 py-0.5">
-                      {pick.team.region}
-                    </span>
-                  </div>
-
-                  <p className="pt-1 text-xs font-medium text-neutral-200">Contribution: {points} pts</p>
-                  {role === "VILLAIN" && isEliminated && points > 0 ? (
-                    <p className="text-xs font-semibold text-red-200">+{points} CHAOS EARNED</p>
-                  ) : null}
-
-                  <p className="text-xs text-neutral-300">{threatMeter(role, pick.team.seed)}</p>
-                  <p className="text-xs text-neutral-400">{whatYouNeedNext(role)}</p>
-                </div>
+              {rolePicks.length === 0 ? (
+                <p className="text-sm text-neutral-400">No {role.toLowerCase()} picks yet</p>
               ) : (
-                <p className="text-sm text-neutral-400">Not drafted yet</p>
+                <ul className="space-y-2">
+                  {rolePicks.map((pick) => {
+                    const result = resultByTeamId[pick.teamId];
+                    const status = !result
+                      ? "UNKNOWN"
+                      : result.eliminatedRound === "CHAMP" || result.eliminatedRound === null
+                        ? "ALIVE"
+                        : "ELIMINATED";
+                    const statusLabel = status === "UNKNOWN" ? "TBD" : status === "ELIMINATED" ? "ELIMINATED ☠" : status;
+                    const isEliminated = status === "ELIMINATED";
+                    return (
+                      <li
+                        key={pick.teamId}
+                        className={`rounded-lg border border-neutral-700/80 px-3 py-2 ${isEliminated ? "opacity-70" : ""}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm font-medium text-neutral-100">
+                            {pick.team.shortName || pick.team.name}
+                          </span>
+                          <span
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${
+                              status === "ALIVE"
+                                ? "bg-emerald-500/20 text-emerald-200"
+                                : status === "ELIMINATED"
+                                  ? "bg-red-500/20 text-red-200"
+                                  : "bg-neutral-600/40 text-neutral-400"
+                            }`}
+                          >
+                            {statusLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-neutral-400">
+                          Seed {pick.team.seed} • {pick.team.region}
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
+              <p className="mt-2 text-xs font-medium text-neutral-200">
+                {role} total: {totalRolePoints} pts
+              </p>
             </article>
           );
         })}

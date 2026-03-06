@@ -11,14 +11,17 @@ export type TeamOwner = {
   role: "HERO" | "VILLAIN" | "CINDERELLA";
 };
 
+/** v2: Multiple owners per team (portfolio picks). */
 export function buildTeamOwnershipMap(picks: PickWithOwner[]) {
-  const map: Record<string, TeamOwner> = {};
+  const map: Record<string, TeamOwner[]> = {};
   for (const pick of picks) {
-    map[pick.teamId] = {
+    const o: TeamOwner = {
       ownerDisplayName: pick.member.displayName,
       ownerMemberId: pick.memberId,
       role: pick.role,
     };
+    if (!map[pick.teamId]) map[pick.teamId] = [];
+    map[pick.teamId].push(o);
   }
   return map;
 }

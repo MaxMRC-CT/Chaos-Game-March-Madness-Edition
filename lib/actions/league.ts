@@ -249,10 +249,6 @@ export async function reconnectMember(
     path: "/",
   });
 
-  if (league.status === "DRAFT") {
-    redirect(`/league/${league.id}/draft`);
-  }
-
   redirect(`/league/${league.id}/dashboard`);
 }
 
@@ -305,4 +301,50 @@ export async function setChampionshipPrediction(
   });
 
   return { success: true };
+}
+
+/* ============================================================
+   START TOURNAMENT (v2: lock portfolio picks, set LIVE)
+============================================================ */
+
+export async function startTournament(leagueId: string): Promise<{ error?: string } | null> {
+  const cookieStore = await cookies();
+  const memberId = cookieStore.get(`cl_member_${leagueId}`)?.value;
+  if (!memberId) return { error: "Not signed in to this league" };
+
+  const league = await prisma.league.findUnique({
+    where: { id: leagueId },
+    select: { id: true, status: true },
+  });
+  if (!league) return { error: "League not found" };
+  if (league.status !== "SETUP") return { error: "Tournament can only be started from setup" };
+
+  const member = await prisma.leagueMember.findFirst({
+    where: { id: memberId, leagueId },
+    select: { isAdmin: true },
+  });
+  if (!member?.isAdmin) return { error: "Only the host can start the tournament" };
+
+  const memberCount = await prisma.leagueMember.count({ where: { leagueId } });
+  const expectedPicks = memberCount * 6;
+  const actualPicks = await prisma.portfolioPick.count({ where: { leagueId } });
+  if (actualPicks < expectedPicks) {
+    return { error: `All players must complete their roster (2/2/2) before starting. Current: ${actualPicks}/${expectedPicks} picks.` };
+  }
+
+  await prisma.league.update({
+    where: { id: leagueId },
+    data: { status: "LIVE" },
+  });
+
+  return null;
+}
+
+export async function startTournamentFromForm(
+  _prevState: { error?: string } | null,
+  formData: FormData,
+): Promise<{ error?: string } | null> {
+  const leagueId = String(formData.get("leagueId") || "").trim();
+  if (!leagueId) return { error: "League not found" };
+  return startTournament(leagueId);
 }
