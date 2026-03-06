@@ -30,13 +30,15 @@ async function generateUniqueReconnectCode() {
       where: { reconnectCode },
       select: { id: true },
     });
-    if (!existing) {
-      return reconnectCode;
-    }
+    if (!existing) return reconnectCode;
   }
 
   throw new Error("Failed to generate reconnect code");
 }
+
+/* ============================================================
+   CREATE LEAGUE
+============================================================ */
 
 export async function createLeague(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
@@ -45,6 +47,7 @@ export async function createLeague(formData: FormData) {
   const year = await prisma.tournamentYear.findUnique({
     where: { year: 2026 },
   });
+
   if (!year) throw new Error("TournamentYear 2026 not found. Run seed.");
 
   const code = await generateLeagueCode();
@@ -82,23 +85,48 @@ export async function createLeague(formData: FormData) {
     path: "/",
   });
 
-  redirect(`/league/${league.id}/lobby`);
+  redirect(`/league/${league.id}/dashboard`);
 }
 
-export async function joinLeague(prevState: ActionState, formData: FormData): Promise<ActionState> {
+/* ============================================================
+   JOIN LEAGUE
+============================================================ */
+
+export async function joinLeague(
+  prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   void prevState;
+
   const code = String(formData.get("code") || "").trim();
   const rawNickname = String(formData.get("nickname") || "");
 
-  if (!/^\d{6}$/.test(code)) return { error: "Enter a valid 6-digit Game PIN" };
+  if (!/^\d{6}$/.test(code)) {
+    return { error: "Enter a valid 6-digit Game PIN" };
+  }
 
   const displayName = normalizeDisplayName(rawNickname);
-  if (!displayName) return { error: "Nickname is required" };
+  if (!displayName) {
+    return { error: "Nickname is required" };
+  }
 
   const nicknameKey = makeNicknameKey(displayName);
 
-  const league = await prisma.league.findUnique({ where: { code } });
-  if (!league) return { error: "Game PIN not found" };
+  const league = await prisma.league.findUnique({
+    where: { code },
+    select: { id: true, status: true },
+  });
+
+  if (!league) {
+    return { error: "Game PIN not found" };
+  }
+
+  /* 🚫 BLOCK JOIN IF DRAFT, LIVE, OR COMPLETE (only allow during SETUP) */
+  if (league.status === "DRAFT" || league.status === "LIVE" || league.status === "COMPLETE") {
+    return {
+      error: "Joining is closed. This league has started—please reconnect if you already joined.",
+    };
+  }
 
   try {
     const existing = await prisma.leagueMember.findFirst({
@@ -109,7 +137,9 @@ export async function joinLeague(prevState: ActionState, formData: FormData): Pr
       select: { id: true },
     });
 
-    if (existing) return { error: "That nickname is already taken in this league." };
+    if (existing) {
+      return { error: "That nickname is already taken in this league." };
+    }
 
     const reconnectCode = await generateUniqueReconnectCode();
     const deviceToken = crypto.randomUUID();
@@ -156,11 +186,16 @@ export async function joinLeague(prevState: ActionState, formData: FormData): Pr
   }
 }
 
+/* ============================================================
+   RECONNECT MEMBER
+============================================================ */
+
 export async function reconnectMember(
   prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   void prevState;
+
   const code = String(formData.get("code") || "").trim();
   const rawNickname = String(formData.get("nickname") || "");
   const reconnectCode = String(formData.get("reconnectCode") || "")
@@ -218,9 +253,56 @@ export async function reconnectMember(
     redirect(`/league/${league.id}/draft`);
   }
 
-  if (league.status === "LIVE" || league.status === "COMPLETE") {
-    redirect(`/league/${league.id}/dashboard`);
+  redirect(`/league/${league.id}/dashboard`);
+}
+
+/* ============================================================
+   SET CHAMPIONSHIP PREDICTION
+============================================================ */
+
+type SetPredictionResult = { success: true } | { error: string };
+
+export async function setChampionshipPrediction(
+  leagueId: string,
+  prediction: number | string,
+): Promise<SetPredictionResult> {
+  const cookieStore = await cookies();
+  const memberId = cookieStore.get(`cl_member_${leagueId}`)?.value ?? null;
+
+  if (!memberId) {
+    return { error: "Not signed in to this league" };
   }
 
-  redirect(`/league/${league.id}/lobby`);
+  const league = await prisma.league.findUnique({
+    where: { id: leagueId },
+    select: { id: true, status: true },
+  });
+
+  if (!league) {
+    return { error: "League not found" };
+  }
+
+  const member = await prisma.leagueMember.findFirst({
+    where: {
+      id: memberId,
+      leagueId,
+    },
+    select: { id: true },
+  });
+
+  if (!member) {
+    return { error: "You are not a member of this league" };
+  }
+
+  const value = typeof prediction === "string" ? parseInt(prediction, 10) : prediction;
+  if (!Number.isInteger(value) || value < 1 || value > 300) {
+    return { error: "Prediction must be a whole number between 1 and 300" };
+  }
+
+  await prisma.leagueMember.update({
+    where: { id: memberId },
+    data: { championshipPrediction: value },
+  });
+
+  return { success: true };
 }

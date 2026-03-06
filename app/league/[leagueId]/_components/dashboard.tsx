@@ -32,6 +32,7 @@ type LeagueHomeResponse = {
     VILLAIN?: number;
     CINDERELLA?: number;
     rivalry?: number;
+    championshipPrediction?: number | null;
   }>;
   standingsUpdatedAt: string | null;
   events: Array<{ id: string; type: string; payload: unknown; createdAt: string }>;
@@ -173,6 +174,7 @@ export function LeagueHomeDashboard({
                   <th className="px-3 py-2 text-right text-neutral-300">Villain</th>
                   <th className="px-3 py-2 text-right text-neutral-300">Cinderella</th>
                   <th className="px-3 py-2 text-right text-neutral-300">Rivalry</th>
+                  <th className="px-3 py-2 text-right text-neutral-300">TB</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,6 +187,9 @@ export function LeagueHomeDashboard({
                     <td className="px-3 py-2 text-right">{row.VILLAIN ?? 0}</td>
                     <td className="px-3 py-2 text-right">{row.CINDERELLA ?? 0}</td>
                     <td className="px-3 py-2 text-right">{row.rivalry ?? 0}</td>
+                    <td className="px-3 py-2 text-right text-neutral-500">
+                      {row.championshipPrediction != null ? row.championshipPrediction : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

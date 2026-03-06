@@ -84,6 +84,8 @@ export async function GET(request: Request) {
         winnerTeamId: true,
         loserTeamId: true,
         createdAt: true,
+        winner: { select: { id: true, name: true, seed: true, region: true } },
+        loser: { select: { id: true, name: true, seed: true, region: true } },
       },
       orderBy: [{ round: "asc" }, { gameNo: "asc" }],
     }),

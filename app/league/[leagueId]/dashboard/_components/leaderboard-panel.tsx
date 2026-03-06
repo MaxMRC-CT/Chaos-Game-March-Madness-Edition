@@ -1,5 +1,6 @@
 "use client";
 
+import { Trophy } from "lucide-react";
 import { WarRoomResponse } from "./types";
 
 export function LeaderboardPanel({
@@ -25,9 +26,9 @@ export function LeaderboardPanel({
   return (
     <section
       id="power-rankings"
-      className="rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]"
+      className="rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 shadow-lg transition duration-200 sm:p-5 motion-reduce:transition-none supports-[hover:hover]:hover:shadow-xl"
     >
-      <h2 className="mb-3 text-lg font-semibold text-neutral-100">POWER RANKINGS</h2>
+      <h2 className="mb-3 text-base font-semibold tracking-wide text-neutral-100 sm:text-lg">Power Rankings</h2>
       {standings.length === 0 ? (
         <p className="text-sm text-neutral-400">Waiting for results</p>
       ) : (
@@ -44,7 +45,7 @@ export function LeaderboardPanel({
               <li
                 key={row.memberId}
                 className={`rounded-lg border px-3 py-2 text-sm ${
-                  isMe ? "border-emerald-500/30 bg-emerald-500/10" : "border-[#1f2937] bg-[#0f1623]"
+                  isMe ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/10 bg-[#0f1623]/80"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -55,7 +56,14 @@ export function LeaderboardPanel({
                         {row.displayName.slice(0, 2).toUpperCase()}
                       </span>
                       <span>{row.displayName}</span>
-                      {index === 0 ? <span title="Round leader">🔥</span> : null}
+                      <span className="text-[10px] text-neutral-500" title="Championship tiebreak">
+                        TB: {row.championshipPrediction != null ? row.championshipPrediction : "—"}
+                      </span>
+                      {index === 0 ? (
+                        <span className="text-amber-400" title="Round leader" aria-hidden>
+                          <Trophy className="size-3.5" />
+                        </span>
+                      ) : null}
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-[10px] text-neutral-400">
                       {aliveRoles.includes("HERO") ? (

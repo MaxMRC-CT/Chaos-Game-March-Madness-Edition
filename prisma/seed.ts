@@ -1,10 +1,80 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import * as path from "path";
+import * as fs from "fs";
 
 const prisma = new PrismaClient();
 
-async function main() {
-  const year = await prisma.tournamentYear.upsert({
+type TeamInput = {
+  name: string;
+  seed: number;
+  region: string;
+  shortName?: string;
+  logoUrl?: string;
+};
+
+async function seed2025() {
+  const dataPath = path.join(__dirname, "data", "teams_2025.json");
+  if (!fs.existsSync(dataPath)) {
+    throw new Error(
+      `teams_2025.json not found at ${dataPath}. Create prisma/data/teams_2025.json with 68 teams.`
+    );
+  }
+
+  const raw = fs.readFileSync(dataPath, "utf-8");
+  let teams2025: TeamInput[];
+  try {
+    teams2025 = JSON.parse(raw) as TeamInput[];
+  } catch (e) {
+    throw new Error(`teams_2025.json is invalid JSON: ${(e as Error).message}`);
+  }
+
+  if (teams2025.length !== 68) {
+    throw new Error(
+      `teams_2025.json must contain exactly 68 teams. Found ${teams2025.length}.`
+    );
+  }
+
+  const year2025 = await prisma.tournamentYear.upsert({
+    where: { year: 2025 },
+    update: {},
+    create: {
+      year: 2025,
+      name: "NCAA March Madness 2025",
+    },
+  });
+
+  for (const team of teams2025) {
+    const existing = await prisma.team.findFirst({
+      where: {
+        tournamentYearId: year2025.id,
+        name: team.name,
+      },
+    });
+
+    if (!existing) {
+      await prisma.team.create({
+        data: {
+          tournamentYearId: year2025.id,
+          name: team.name,
+          seed: team.seed,
+          region: team.region,
+          shortName: team.shortName ?? null,
+          logoUrl: team.logoUrl ?? null,
+        },
+      });
+    }
+  }
+
+  const total2025 = await prisma.team.count({
+    where: { tournamentYearId: year2025.id },
+  });
+  console.log(`✅ Seed complete (2025: ${total2025} teams)`);
+  return total2025;
+}
+
+async function seed2026() {
+  const year2026 = await prisma.tournamentYear.upsert({
     where: { year: 2026 },
     update: {},
     create: {
@@ -13,8 +83,7 @@ async function main() {
     },
   });
 
-  const teams = [
-    // EAST
+  const teams2026: TeamInput[] = [
     { name: "UConn", seed: 1, region: "East" },
     { name: "Iowa State", seed: 2, region: "East" },
     { name: "Illinois", seed: 3, region: "East" },
@@ -31,8 +100,6 @@ async function main() {
     { name: "Morehead State", seed: 14, region: "East" },
     { name: "South Dakota State", seed: 15, region: "East" },
     { name: "Stetson", seed: 16, region: "East" },
-
-    // WEST
     { name: "North Carolina", seed: 1, region: "West" },
     { name: "Arizona", seed: 2, region: "West" },
     { name: "Baylor", seed: 3, region: "West" },
@@ -49,8 +116,6 @@ async function main() {
     { name: "Colgate", seed: 14, region: "West" },
     { name: "Long Beach State", seed: 15, region: "West" },
     { name: "Wagner", seed: 16, region: "West" },
-
-    // SOUTH
     { name: "Houston", seed: 1, region: "South" },
     { name: "Marquette", seed: 2, region: "South" },
     { name: "Kentucky", seed: 3, region: "South" },
@@ -67,8 +132,6 @@ async function main() {
     { name: "Oakland", seed: 14, region: "South" },
     { name: "Western Kentucky", seed: 15, region: "South" },
     { name: "Longwood", seed: 16, region: "South" },
-
-    // MIDWEST
     { name: "Purdue", seed: 1, region: "Midwest" },
     { name: "Tennessee", seed: 2, region: "Midwest" },
     { name: "Creighton", seed: 3, region: "Midwest" },
@@ -87,10 +150,10 @@ async function main() {
     { name: "Grambling State", seed: 16, region: "Midwest" },
   ];
 
-  for (const team of teams) {
+  for (const team of teams2026) {
     const existing = await prisma.team.findFirst({
       where: {
-        tournamentYearId: year.id,
+        tournamentYearId: year2026.id,
         name: team.name,
       },
     });
@@ -98,16 +161,27 @@ async function main() {
     if (!existing) {
       await prisma.team.create({
         data: {
-          tournamentYearId: year.id,
+          tournamentYearId: year2026.id,
           name: team.name,
           seed: team.seed,
           region: team.region,
+          shortName: team.shortName ?? null,
+          logoUrl: team.logoUrl ?? null,
         },
       });
     }
   }
 
-  console.log("✅ Seed complete (68 teams added)");
+  const total2026 = await prisma.team.count({
+    where: { tournamentYearId: year2026.id },
+  });
+  console.log(`✅ Seed complete (2026: ${total2026} teams)`);
+  return total2026;
+}
+
+async function main() {
+  await seed2025();
+  await seed2026();
 }
 
 main()

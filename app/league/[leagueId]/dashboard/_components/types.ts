@@ -6,13 +6,16 @@ export type WarRoomResponse = {
     code: string;
     currentPick: number;
     currentRound: "R64" | "R32" | "S16" | "E8" | "F4" | "FINAL" | "CHAMP";
+    tournamentYear?: { year: number };
   };
+  bracketConfig?: { finalFourPairings: [string, string][] };
   me: {
     memberId: string;
     displayName: string;
     isAdmin: boolean;
     draftPosition: number | null;
     hasReconnectToken: boolean;
+    championshipPrediction: number | null;
   } | null;
   members: Array<{
     id: string;
@@ -55,6 +58,8 @@ export type WarRoomResponse = {
     winnerTeamId: string;
     loserTeamId: string;
     createdAt: string;
+    winner?: { id: string; name: string; seed: number; region: string };
+    loser?: { id: string; name: string; seed: number; region: string };
   }>;
   standings: Array<{
     memberId: string;
@@ -64,6 +69,7 @@ export type WarRoomResponse = {
     VILLAIN?: number;
     CINDERELLA?: number;
     rivalry?: number;
+    championshipPrediction?: number | null;
   }>;
   standingsDelta: Record<string, number>;
   standingsUpdatedAt: string | null;
@@ -94,4 +100,6 @@ export type WarRoomResponse = {
       ownerMemberId: string;
     }
   >;
+  /** Present only when ENV_NAME=development */
+  roundCounts?: { R64: number; R32: number; S16: number; E8: number; F4: number; NCG: number };
 };

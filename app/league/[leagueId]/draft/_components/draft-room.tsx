@@ -123,28 +123,21 @@ export function DraftRoom({ leagueId }: DraftRoomProps) {
     return (
       <main className="mx-auto min-h-dvh max-w-6xl space-y-3 p-6">
         <p className="text-red-600">{loadError || "Draft unavailable"}</p>
-        <Link href={`/league/${leagueId}/lobby`} className="text-sm underline">
-          Back to lobby
+        <Link href={`/league/${leagueId}/dashboard`} className="text-sm underline">
+          Back to War Room
         </Link>
       </main>
     );
   }
 
   if (state.league.status !== "DRAFT") {
-    const destination =
-      state.league.status === "LIVE" || state.league.status === "COMPLETE"
-        ? `/league/${leagueId}/dashboard`
-        : `/league/${leagueId}/lobby`;
-
     return (
       <main className="mx-auto min-h-dvh max-w-6xl space-y-3 p-6">
         <p className="text-sm text-neutral-700">
           Draft is not live right now. Current status: {state.league.status}
         </p>
-        <Link href={destination} className="text-sm underline">
-          {state.league.status === "LIVE" || state.league.status === "COMPLETE"
-            ? "Go to Dashboard"
-            : "Back to Lobby"}
+        <Link href={`/league/${leagueId}/dashboard`} className="text-sm underline">
+          Go to War Room
         </Link>
       </main>
     );

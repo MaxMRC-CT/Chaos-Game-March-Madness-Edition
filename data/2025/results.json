@@ -1,0 +1,13 @@
+{
+  "R64": [
+    { "winnerName": "Duke", "loserName": "St. Francis (PA)" },
+    { "winnerName": "Alabama", "loserName": "Akron" }
+  ],
+  "R32": [
+    { "winnerName": "Duke", "loserName": "Alabama" }
+  ],
+  "S16": [],
+  "E8": [],
+  "F4": [],
+  "NCG": []
+}

@@ -33,6 +33,7 @@ type MemberTotals = {
   CINDERELLA: number;
   rivalry: number;
   total: number;
+  championshipPrediction: number | null;
 };
 
 export function computeHeroPoints(
@@ -154,11 +155,41 @@ function isChampion(result: { wins: number; eliminatedRound: Round | null }) {
   return result.eliminatedRound === "CHAMP" || result.wins >= 6;
 }
 
+/**
+ * Chaos League v1.0 tiebreak: closest WITHOUT going over; if all over, closest absolute diff.
+ * Only applies when champTotal is set and both members have predictions.
+ */
+function championshipTiebreakCompare(
+  a: { championshipPrediction: number | null; displayName: string },
+  b: { championshipPrediction: number | null; displayName: string },
+  champTotal: number,
+): number {
+  const ap = a.championshipPrediction;
+  const bp = b.championshipPrediction;
+  if (ap == null || bp == null) return 0;
+  const aOver = ap > champTotal;
+  const bOver = bp > champTotal;
+  if (!aOver && bOver) return -1; // a wins
+  if (aOver && !bOver) return 1; // b wins
+  if (!aOver && !bOver) {
+    return bp - ap; // higher prediction wins (closer without going over)
+  }
+  // both over: closest absolute difference wins
+  const aDiff = Math.abs(ap - champTotal);
+  const bDiff = Math.abs(bp - champTotal);
+  if (aDiff !== bDiff) return aDiff - bDiff; // smaller diff wins
+  return a.displayName.localeCompare(b.displayName); // stable
+}
+
 export async function computeLeagueStandings(leagueId: string) {
-  const [members, picks, results, games] = await Promise.all([
+  const [league, members, picks, results, games] = await Promise.all([
+    prisma.league.findUnique({
+      where: { id: leagueId },
+      select: { championshipTotalPoints: true },
+    }),
     prisma.leagueMember.findMany({
       where: { leagueId },
-      select: { id: true, displayName: true },
+      select: { id: true, displayName: true, championshipPrediction: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.draftPick.findMany({
@@ -194,6 +225,7 @@ export async function computeLeagueStandings(leagueId: string) {
       CINDERELLA: 0,
       rivalry: 0,
       total: 0,
+      championshipPrediction: member.championshipPrediction,
     };
   }
 
@@ -229,12 +261,21 @@ export async function computeLeagueStandings(leagueId: string) {
     }
   }
 
+  const champTotal = league?.championshipTotalPoints ?? null;
+
   const standings = Object.values(base)
     .map((row) => ({
       ...row,
       total: row.HERO + row.VILLAIN + row.CINDERELLA + row.rivalry,
     }))
-    .sort((a, b) => b.total - a.total || a.displayName.localeCompare(b.displayName));
+    .sort((a, b) => {
+      if (a.total !== b.total) return b.total - a.total;
+      if (champTotal != null && a.championshipPrediction != null && b.championshipPrediction != null) {
+        const tiebreak = championshipTiebreakCompare(a, b, champTotal);
+        if (tiebreak !== 0) return tiebreak;
+      }
+      return a.displayName.localeCompare(b.displayName);
+    });
 
   await prisma.$transaction(async (tx) => {
     await tx.leagueScore.upsert({

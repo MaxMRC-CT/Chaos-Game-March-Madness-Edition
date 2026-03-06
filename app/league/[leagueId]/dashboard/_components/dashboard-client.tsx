@@ -1,8 +1,10 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BrandLockup } from "@/app/(dashboard)/_components/BrandLockup";
+import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
+import { setChampionshipPrediction } from "@/lib/actions/league";
 import { LeaderboardPanel } from "./leaderboard-panel";
 import { LiveFeed } from "./live-feed";
 import { MyTeam } from "./my-team";
@@ -18,6 +20,24 @@ const ROUND_LABELS: Record<WarRoomResponse["league"]["currentRound"], string> = 
   CHAMP: "Champion",
 };
 
+const panelClass =
+  "rounded-xl border border-neutral-800 bg-neutral-900/95 shadow-lg";
+const panelHover =
+  "transition duration-200 motion-reduce:transition-none supports-[hover:hover]:hover:shadow-xl";
+const innerCard = "rounded-xl border border-neutral-700/80 bg-neutral-800/60";
+const innerCardHover =
+  "transition duration-150 supports-[hover:hover]:hover:bg-neutral-800/80";
+const innerPill = "rounded bg-neutral-900/60 px-2 py-0.5";
+const headingKicker =
+  "text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-500";
+const sectionTitle =
+  "text-base font-semibold tracking-wide text-neutral-100 sm:text-lg";
+
+const showChampionshipModal = (data: WarRoomResponse) =>
+  (data.league.status === "LIVE" || data.league.status === "COMPLETE") &&
+  data.me &&
+  data.me.championshipPrediction == null;
+
 export default function DashboardClient({
   leagueId,
   initial,
@@ -27,7 +47,9 @@ export default function DashboardClient({
 }) {
   const [data, setData] = useState<WarRoomResponse>(initial);
   const [copied, setCopied] = useState(false);
-  const [expandedFeed, setExpandedFeed] = useState(false);
+  const [predictionValue, setPredictionValue] = useState("");
+  const [predictionError, setPredictionError] = useState<string | null>(null);
+  const [predictionPending, setPredictionPending] = useState(false);
 
   const load = useCallback(
     async (limit = 15, mode: "all" | "highlights" = "all") => {
@@ -46,9 +68,9 @@ export default function DashboardClient({
 
   useEffect(() => {
     if (data.league.status !== "LIVE") return;
-    const id = window.setInterval(() => void load(expandedFeed ? 30 : 15, "all"), 5000);
+    const id = window.setInterval(() => void load(15, "all"), 5000);
     return () => window.clearInterval(id);
-  }, [data.league.status, expandedFeed, load]);
+  }, [data.league.status, load]);
 
   const myStanding = data.me
     ? data.standings.find((row) => row.memberId === data.me?.memberId) ?? null
@@ -110,190 +132,367 @@ export default function DashboardClient({
     }
   }
 
+  async function handleSavePrediction(e: React.FormEvent) {
+    e.preventDefault();
+    setPredictionError(null);
+    const num = parseInt(predictionValue, 10);
+    if (!Number.isInteger(num) || num < 1 || num > 300) {
+      setPredictionError("Enter a whole number between 1 and 300");
+      return;
+    }
+    setPredictionPending(true);
+    const result = await setChampionshipPrediction(leagueId, num);
+    setPredictionPending(false);
+    if ("success" in result && result.success) {
+      void load();
+    } else if ("error" in result) {
+      setPredictionError(result.error);
+    }
+  }
+
   const cta = commandCta(data.league.status, leagueId, Boolean(data.me?.isAdmin));
+  const statusStyle = getStatusStyle(data.league.status);
+  const myDelta = data.me ? data.standingsDelta[data.me.memberId] || 0 : 0;
+  const deltaClass = getDeltaClass(myDelta);
 
   return (
-    <main className="min-h-dvh text-neutral-100">
-      <div className="mx-auto flex max-w-[1600px] gap-4 p-4">
-        <aside className="sticky top-4 hidden h-[calc(100dvh-2rem)] w-[240px] shrink-0 rounded-xl border border-[#1f2937] bg-[#111827] p-4 lg:block">
-          <BrandLockup />
-          <nav className="mt-4 space-y-1 text-sm">
-            <NavItem href={`/league/${leagueId}/dashboard`} active>
-              🏟 War Room
-            </NavItem>
-            <NavItem href={`/league/${leagueId}/bracket`}>🧩 Full Bracket</NavItem>
-            <NavItem href={`/league/${leagueId}/standings`}>🏆 Power Rankings</NavItem>
-            <NavItem href={`/league/${leagueId}/dashboard#rivalries`}>⚔ Rivalries</NavItem>
-            <NavItem href={`/league/${leagueId}/dashboard#feed`}>📡 Live Feed</NavItem>
-            {data.me?.isAdmin ? <NavItem href={`/league/${leagueId}/admin/results`}>⚙ Admin</NavItem> : null}
-          </nav>
-        </aside>
+    <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">
+      <div className="mx-auto flex min-w-0 max-w-[1600px] gap-4 p-4">
+        <LeagueSidebarNav leagueId={leagueId} showAdmin={Boolean(data.me?.isAdmin)} />
 
-        <div className="min-w-0 flex-1 space-y-4">
-          <header className="rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">
-            <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr_1fr]">
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">{data.league.name}</h1>
-                <div className="mt-2 flex items-center gap-2 text-xs">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 font-medium text-emerald-300">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-                    {data.league.status}
-                  </span>
-                  <span className="text-neutral-300">{ROUND_LABELS[data.league.currentRound]}</span>
-                </div>
-                <p className="mt-2 text-xs text-neutral-400">Tip-off in 2d 4h</p>
-                <p className="mt-1 text-sm text-neutral-300">Next Tip: {nextTip}</p>
-                <div className="mt-3">
-                  {cta.kind === "link" ? (
-                    <Link href={cta.href} className="rounded-md border border-[#1f2937] bg-[#0f1623] px-3 py-1.5 text-xs">
-                      {cta.label}
+        <div className="min-w-0 flex-1">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            <div className="min-w-0 space-y-4 lg:col-span-8">
+              <header className={`${panelClass} ${panelHover} p-6 sm:p-6`}>
+                <div className="grid gap-5">
+                  {/* 1) League context */}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className={headingKicker}>
+                        {ROUND_LABELS[data.league.currentRound]}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-neutral-200">
+                        {data.league.name}
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-[11px] font-medium ${statusStyle.pill}`}
+                    >
+                      <span className={`h-2 w-2 rounded-full ${statusStyle.dot}`} />
+                      {formatLeagueStatus(data.league.status)}
+                    </span>
+                  </div>
+
+                  {/* 2) Player identity */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-neutral-50 shadow-inner">
+                      {initials || "G"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-lg font-semibold">
+                        {data.me?.displayName || "Guest"}
+                      </p>
+                      <p className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                        <span>{data.me?.isAdmin ? "League Manager" : "League Member"}</span>
+                        {myRank ? (
+                          <>
+                            <span>•</span>
+                            <span>Rank #{myRank}</span>
+                          </>
+                        ) : null}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3) Stats chips row */}
+                  <div className="flex flex-wrap gap-2">
+                    <InfoChip>
+                      <span className="text-neutral-400">Points</span>
+                      <span className="ml-2 font-semibold">
+                        {myStanding?.total ?? 0}
+                      </span>
+                    </InfoChip>
+                    <InfoChip>
+                      <span className="text-neutral-400">Δ</span>
+                      <span className={`ml-2 font-semibold ${deltaClass}`}>
+                        {formatDelta(myDelta)}
+                      </span>
+                    </InfoChip>
+                    <InfoChip className="max-w-full min-w-0">
+                      <span className="text-neutral-400">Next tip</span>
+                      <span className="ml-2 max-w-[190px] truncate text-xs font-medium text-neutral-100 sm:max-w-[260px]">
+                        {nextTip}
+                      </span>
+                    </InfoChip>
+                  </div>
+
+                  {/* 4) PIN row + reconnect status */}
+                  <div className="mt-2 border-t border-white/10 pt-4">
+                    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <InfoChip className="bg-neutral-900/60 border-white/15">
+                          <span className="text-neutral-400">PIN</span>
+                          <span className="ml-2 font-mono text-[12px]">
+                            {data.league.code}
+                          </span>
+                        </InfoChip>
+                        <button
+                          type="button"
+                          onClick={copyPin}
+                          aria-label="Copy PIN"
+                          className="inline-flex items-center rounded-full border border-white/10 bg-transparent px-3 py-1 text-xs text-neutral-100 transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] active:scale-95"
+                        >
+                          {copied ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                      {reconnectSaved ? (
+                        <p className="text-xs font-medium text-emerald-400 sm:text-right">
+                          Reconnect saved
+                        </p>
+                      ) : (
+                        <p className="text-xs font-medium text-amber-300 sm:text-right">
+                          Reconnect not saved
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 5) Primary action: full-width View Full Bracket */}
+                  <Link
+                    href={`/league/${leagueId}/bracket`}
+                    className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-md shadow-emerald-900/20 transition hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] active:scale-[0.99]"
+                  >
+                    View Full Bracket
+                  </Link>
+
+                  {/* 6) Secondary actions row */}
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+                    {cta.kind === "link" ? (
+                      <Link
+                        href={cta.href}
+                        className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-white/15 bg-transparent px-3 text-xs font-medium text-neutral-100 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] sm:h-9 sm:text-sm"
+                      >
+                        {cta.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={cta.href}
+                        className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-white/15 bg-transparent px-3 text-xs font-medium text-neutral-100 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] sm:h-9 sm:text-sm"
+                      >
+                        {cta.label}
+                      </a>
+                    )}
+                    <Link
+                      href={`/join?code=${encodeURIComponent(data.league.code)}`}
+                      className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-white/15 bg-transparent px-3 text-xs font-medium text-neutral-100 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] sm:h-9 sm:text-sm"
+                    >
+                      Share
                     </Link>
+                  </div>
+                </div>
+              </header>
+
+              <section id="hot-seat" className={`${panelClass} ${panelHover} p-4 sm:p-5`}>
+                <h2 className={`mb-3 ${sectionTitle}`}>
+                  Chaos Hot Seat
+                </h2>
+                {data.games.length === 0 ? (
+                  <div className={`${innerCard} p-4 text-center sm:p-6`}>
+                    <p className="text-sm text-neutral-400">Tournament hasn&apos;t started yet.</p>
+                    <p className="mt-1 text-xs text-neutral-500">Results will appear here once games begin.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {data.hotSeatMatchups.map((matchup) => (
+                      <Link
+                        key={matchup.id}
+                        href={`/league/${leagueId}/bracket#region-${matchup.region.toLowerCase()}`}
+                        className={`${innerCard} p-3 ${innerCardHover}`}
+                      >
+                        <p className="text-sm font-semibold text-neutral-100">{matchup.label}</p>
+                        <p className="mt-1 text-xs text-neutral-400">
+                          {matchup.teamA.seed} vs {matchup.teamB.seed} • {matchup.region}
+                        </p>
+                        <div className="mt-2 space-y-1 text-xs text-neutral-300">
+                          <p>Hero owners: {joinOrDash(matchup.impact.heroOwners)}</p>
+                          <p>Villain owners: {joinOrDash(matchup.impact.villainOwners)}</p>
+                          <p>Cinderella owners: {joinOrDash(matchup.impact.cinderellaOwners)}</p>
+                        </div>
+                        <div className={`mt-2 ${innerPill} text-xs text-neutral-200`}>
+                          <p>{matchup.potentialSwing.ifTeamAWins}</p>
+                          <p className="mt-1">{matchup.potentialSwing.ifTeamBWins}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <div className="grid grid-cols-1 gap-4 2xl:grid-cols-12">
+                <div className="min-w-0 2xl:col-span-7">
+                  <MyTeam myPicks={data.myPicks} standingsRow={myStanding} resultByTeamId={resultByTeamId} />
+                </div>
+
+                <section
+                  id="rivalries"
+                  className={`${panelClass} ${panelHover} min-w-0 2xl:col-span-5 p-4 sm:p-5`}
+                >
+                  <h2 className={`mb-3 ${sectionTitle}`}>
+                    Rivalry Moments
+                  </h2>
+                  {rivalryMoments.length === 0 ? (
+                    <p className="text-sm text-neutral-400">No rivalry swings yet.</p>
                   ) : (
-                    <a href={cta.href} className="rounded-md border border-[#1f2937] bg-[#0f1623] px-3 py-1.5 text-xs">
-                      {cta.label}
-                    </a>
+                    <ul className="space-y-2">
+                      {rivalryMoments.map((event) => (
+                        <li
+                          key={event.id}
+                          className={`${innerCard} ${innerCardHover} min-w-0 px-3 py-2 text-sm`}
+                        >
+                          <p className="min-w-0 break-words text-neutral-100 sm:truncate">
+                            {formatRivalryMoment(event, data)}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-[#1f2937] bg-[#0f1623] p-3 text-sm text-neutral-300">
-                <p className="text-xs uppercase tracking-wide text-neutral-400">View</p>
-                <Link href={`/league/${leagueId}/bracket`} className="mt-1 inline-block underline">
-                  View Full Bracket
-                </Link>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-start gap-3 lg:justify-end">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-neutral-700 font-semibold">
-                  {initials}
-                </span>
-                <div className="text-right text-xs text-neutral-300">
-                  <p>{data.me?.displayName || "Guest"}</p>
-                  <p>
-                    #{myRank || "-"} • {myStanding?.total ?? 0} pts • {formatDelta(data.standingsDelta[data.me?.memberId || ""] || 0)}
-                  </p>
-                  <p className="text-emerald-300">Reconnect saved {reconnectSaved ? "✅" : "—"}</p>
-                </div>
-                <div className="rounded-full border border-neutral-700 bg-neutral-800 px-3 py-1 text-sm">
-                  PIN <span className="font-mono font-semibold">{data.league.code}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyPin}
-                  className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs"
-                >
-                  {copied ? "Copied" : "Copy"}
-                </button>
-                <Link
-                  href={`/join?code=${encodeURIComponent(data.league.code)}`}
-                  className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs"
-                >
-                  Share
-                </Link>
+                </section>
               </div>
             </div>
-          </header>
 
-          <section id="hot-seat" className="rounded-xl border border-[#1f2937] bg-[#111827] p-4">
-            <h2 className="mb-3 text-lg font-semibold text-neutral-100">CHAOS HOT SEAT</h2>
-            <div className="grid gap-3 xl:grid-cols-2">
-              {data.hotSeatMatchups.map((matchup) => (
-                <Link
-                  key={matchup.id}
-                  href={`/league/${leagueId}/bracket#region-${matchup.region.toLowerCase()}`}
-                  className="rounded-lg border border-[#1f2937] bg-[#0f1623] p-3 transition duration-200 hover:brightness-110"
-                >
-                  <p className="text-sm font-semibold text-neutral-100">{matchup.label}</p>
-                  <p className="mt-1 text-xs text-neutral-400">
-                    {matchup.teamA.seed} vs {matchup.teamB.seed} • {matchup.region}
-                  </p>
-                  <div className="mt-2 space-y-1 text-xs text-neutral-300">
-                    <p>Hero owners: {joinOrDash(matchup.impact.heroOwners)}</p>
-                    <p>Villain owners: {joinOrDash(matchup.impact.villainOwners)}</p>
-                    <p>Cinderella owners: {joinOrDash(matchup.impact.cinderellaOwners)}</p>
+            <div className="min-w-0 lg:col-span-4">
+              <div className="min-w-0 space-y-4 lg:sticky lg:top-4">
+                <p className={headingKicker}>
+                  War Room Intel
+                </p>
+                <div className="space-y-4">
+                  <div className="min-w-0">
+                    <LeaderboardPanel
+                      standings={data.standings}
+                      me={data.me}
+                      aliveRolesByMemberId={aliveRolesByMemberId}
+                      standingsDelta={data.standingsDelta}
+                      highlightEvents={data.highlightEvents}
+                      ownershipMap={data.ownershipMap}
+                    />
                   </div>
-                  <div className="mt-2 rounded bg-neutral-900/60 p-2 text-xs text-neutral-200">
-                    <p>{matchup.potentialSwing.ifTeamAWins}</p>
-                    <p className="mt-1">{matchup.potentialSwing.ifTeamBWins}</p>
-                  </div>
-                </Link>
-              ))}
+
+                  <section id="feed">
+                    <LiveFeed
+                      allEvents={data.recentEvents}
+                      highlightEvents={data.highlightEvents}
+                      picks={data.picks}
+                      members={data.members}
+                      teams={data.teams}
+                      limit={10}
+                      compact
+                      maxHeightClass="max-h-[260px]"
+                      showFilters={false}
+                      title="Recent Activity"
+                      subtitle="Last 10 events"
+                      linkToFeed
+                      linkToFeedHref={`/league/${leagueId}/standings?tab=feed`}
+                    />
+                  </section>
+                </div>
+              </div>
             </div>
-          </section>
-
-          <MyTeam myPicks={data.myPicks} standingsRow={myStanding} resultByTeamId={resultByTeamId} />
-
-          <section
-            id="rivalries"
-            className="rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]"
-          >
-            <h2 className="mb-3 text-sm font-semibold tracking-wide text-neutral-100">RIVALRY MOMENTS</h2>
-            {rivalryMoments.length === 0 ? (
-              <p className="text-sm text-neutral-400">No rivalry swings yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {rivalryMoments.map((event) => (
-                  <li key={event.id} className="rounded-lg border border-[#1f2937] bg-[#0f1623] px-3 py-2 text-sm">
-                    <p className="text-neutral-100">{formatRivalryMoment(event, data)}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          </div>
         </div>
-
-        <aside className="w-full shrink-0 space-y-4 lg:w-[320px]">
-          <LeaderboardPanel
-            standings={data.standings}
-            me={data.me}
-            aliveRolesByMemberId={aliveRolesByMemberId}
-            standingsDelta={data.standingsDelta}
-            highlightEvents={data.highlightEvents}
-            ownershipMap={data.ownershipMap}
-          />
-
-          <section id="feed">
-            <LiveFeed
-              allEvents={data.recentEvents}
-              highlightEvents={data.highlightEvents}
-              picks={data.picks}
-              members={data.members}
-              teams={data.teams}
-              expanded={expandedFeed}
-              onExpand={async () => {
-                setExpandedFeed(true);
-                await load(30, "all");
-              }}
-            />
-          </section>
-        </aside>
       </div>
+
+      {showChampionshipModal(data) ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          aria-modal="true"
+          role="dialog"
+          aria-labelledby="championship-tiebreak-title"
+        >
+          <div className="w-full max-w-md rounded-xl border border-[#1f2937] bg-[#111827] p-6 shadow-xl">
+            <h2 id="championship-tiebreak-title" className="text-lg font-semibold text-neutral-100">
+              Championship Tiebreak
+            </h2>
+            <p className="mt-2 text-sm text-neutral-300">
+              Predict the combined total points scored in the National Championship. Closest WITHOUT
+              going over wins tiebreaks.
+            </p>
+            <form onSubmit={handleSavePrediction} className="mt-4 space-y-3">
+              <input
+                type="number"
+                min={1}
+                max={300}
+                value={predictionValue}
+                onChange={(e) => setPredictionValue(e.target.value)}
+                placeholder="e.g. 145"
+                className="w-full rounded-lg border border-[#1f2937] bg-[#0f1623] px-3 py-2 text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                disabled={predictionPending}
+                autoFocus
+              />
+              {predictionError ? (
+                <p className="text-sm text-red-400">{predictionError}</p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={predictionPending}
+                className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
+              >
+                {predictionPending ? "Saving..." : "Save Prediction"}
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
 
-function NavItem({
-  href,
-  active = false,
-  children,
-}: {
-  href: string;
-  active?: boolean;
-  children: React.ReactNode;
-}) {
+function formatLeagueStatus(status: WarRoomResponse["league"]["status"]) {
+  if (status === "LIVE") return "Live";
+  if (status === "COMPLETE") return "Final";
+  if (status === "SETUP") return "Lobby";
+  if (status === "DRAFT") return "Draft";
+  return status;
+}
+
+function getStatusStyle(status: WarRoomResponse["league"]["status"]) {
+  if (status === "LIVE") {
+    return {
+      pill: "bg-emerald-500/15 text-emerald-300",
+      dot: "bg-emerald-400 animate-pulse",
+    };
+  }
+  if (status === "COMPLETE") {
+    return {
+      pill: "bg-neutral-500/15 text-neutral-200",
+      dot: "bg-neutral-300",
+    };
+  }
+  // SETUP / DRAFT / other pre-live states
+  return {
+    pill: "bg-amber-500/15 text-amber-200",
+    dot: "bg-amber-300",
+  };
+}
+
+function getDeltaClass(delta: number) {
+  if (delta > 0) return "text-emerald-300";
+  if (delta < 0) return "text-red-300";
+  return "text-neutral-200";
+}
+
+function InfoChip({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <Link
-      href={href}
-      className={`block rounded-md px-3 py-2 transition duration-200 ${
-        active
-          ? "border-l-2 border-blue-400 bg-blue-500/10 text-neutral-100"
-          : "text-neutral-300 hover:bg-neutral-700/40 hover:text-neutral-100"
+    <span
+      className={`inline-flex h-7 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-xs ${
+        className || ""
       }`}
     >
       {children}
-    </Link>
+    </span>
   );
 }
+
+const MotionLink = motion(Link);
 
 function commandCta(
   status: WarRoomResponse["league"]["status"],
@@ -333,5 +532,5 @@ function formatRivalryMoment(event: WarRoomResponse["highlightEvents"][number], 
   const loserTeam = data.teams.find((team) => team.id === loserTeamId);
   const member = data.members.find((m) => m.id === String(payload.memberId || ""));
 
-  return `⚔ ${member?.displayName || "Manager"} ${delta >= 0 ? "+" : ""}${delta} • ${winnerTeam?.shortName || winnerTeam?.name || "Team"} over ${loserTeam?.shortName || loserTeam?.name || "Team"}`;
+  return `${member?.displayName || "Manager"} ${delta >= 0 ? "+" : ""}${delta} • ${winnerTeam?.shortName || winnerTeam?.name || "Team"} over ${loserTeam?.shortName || loserTeam?.name || "Team"}`;
 }

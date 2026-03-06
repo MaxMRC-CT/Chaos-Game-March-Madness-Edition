@@ -9,6 +9,7 @@ import {
   computeHeroPoints,
   computeVillainPoints,
 } from "@/lib/scoring/compute";
+import { getBracketConfig } from "@/lib/bracket/config";
 
 const ROUND_ORDER: Round[] = ["R64", "R32", "S16", "E8", "F4", "FINAL"];
 const HIGHLIGHT_TYPES = new Set(["RIVALRY_BONUS", "TEAM_ELIMINATED", "SCORE_RECALCULATED"]);
@@ -21,6 +22,7 @@ type StandingRow = {
   VILLAIN?: number;
   CINDERELLA?: number;
   rivalry?: number;
+  championshipPrediction?: number | null;
 };
 
 type Ownership = {
@@ -70,6 +72,7 @@ export async function GET(request: Request) {
         code: true,
         tournamentYearId: true,
         currentPick: true,
+        tournamentYear: { select: { year: true } },
       },
     });
 
@@ -86,6 +89,7 @@ export async function GET(request: Request) {
           isAdmin: true,
           draftPosition: true,
           deviceToken: true,
+          championshipPrediction: true,
         },
         orderBy: [{ draftPosition: "asc" }, { createdAt: "asc" }],
       }),
@@ -121,6 +125,8 @@ export async function GET(request: Request) {
           winnerTeamId: true,
           loserTeamId: true,
           createdAt: true,
+          winner: { select: { id: true, name: true, seed: true, region: true } },
+          loser: { select: { id: true, name: true, seed: true, region: true } },
         },
         orderBy: [{ round: "asc" }, { gameNo: "asc" }],
       }),
@@ -164,7 +170,7 @@ export async function GET(request: Request) {
       return acc;
     }, {});
 
-    const standings = normalizeStandings(score?.totals, members);
+    const standings = normalizeStandings(score?.totals, members.map((m) => ({ id: m.id, displayName: m.displayName, championshipPrediction: m.championshipPrediction })));
     const standingsDelta = computeStandingsDelta(snapshots, members);
 
     const highlightEvents = allRecentEvents
@@ -185,6 +191,21 @@ export async function GET(request: Request) {
 
     const myPicks = me ? picks.filter((pick) => pick.memberId === me.id) : [];
 
+    const roundCounts =
+      process.env.ENV_NAME === "development"
+        ? (() => {
+            const c: Record<string, number> = { R64: 0, R32: 0, S16: 0, E8: 0, F4: 0, NCG: 0 };
+            for (const g of games) {
+              const key = g.round === "FINAL" ? "NCG" : g.round;
+              if (key in c) c[key]++;
+            }
+            return c;
+          })()
+        : undefined;
+
+    const year = league.tournamentYear?.year ?? new Date().getFullYear();
+    const bracketConfig = getBracketConfig(year);
+
     return NextResponse.json({
       league: {
         id: league.id,
@@ -193,7 +214,9 @@ export async function GET(request: Request) {
         code: league.code,
         currentPick: league.currentPick,
         currentRound,
+        tournamentYear: league.tournamentYear ? { year: league.tournamentYear.year } : undefined,
       },
+      bracketConfig,
       me: me
         ? {
             memberId: me.id,
@@ -201,6 +224,7 @@ export async function GET(request: Request) {
             isAdmin: me.isAdmin,
             draftPosition: me.draftPosition,
             hasReconnectToken: Boolean(me.deviceToken),
+            championshipPrediction: me.championshipPrediction,
           }
         : null,
       members: members.map((member) => ({
@@ -221,6 +245,7 @@ export async function GET(request: Request) {
       highlightEvents,
       hotSeatMatchups,
       ownershipMap,
+      ...(roundCounts != null && { roundCounts }),
     });
   } catch (error: unknown) {
     console.error("WAR ROOM API ERROR:", error);
@@ -236,8 +261,10 @@ export async function GET(request: Request) {
 
 function normalizeStandings(
   rawTotals: unknown,
-  members: Array<{ id: string; displayName: string }>,
+  members: Array<{ id: string; displayName: string; championshipPrediction: number | null }>,
 ) {
+  const predictionByMemberId = new Map(members.map((m) => [m.id, m.championshipPrediction]));
+
   if (!Array.isArray(rawTotals)) {
     return members
       .map((member) => ({
@@ -248,11 +275,16 @@ function normalizeStandings(
         VILLAIN: 0,
         CINDERELLA: 0,
         rivalry: 0,
+        championshipPrediction: member.championshipPrediction,
       }))
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
   }
 
-  return rawTotals as StandingRow[];
+  const rows = rawTotals as StandingRow[];
+  return rows.map((row) => ({
+    ...row,
+    championshipPrediction: row.championshipPrediction ?? predictionByMemberId.get(row.memberId) ?? null,
+  }));
 }
 
 function computeStandingsDelta(

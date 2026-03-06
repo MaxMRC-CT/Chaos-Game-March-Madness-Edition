@@ -1,5 +1,6 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import DashboardClient from "./_components/dashboard-client";
+import { PreDraftWarRoom } from "./_components/pre-draft-war-room";
 import { WarRoomResponse } from "./_components/types";
 
 async function getSummary(leagueId: string): Promise<WarRoomResponse | null> {
@@ -14,37 +15,26 @@ async function getSummary(leagueId: string): Promise<WarRoomResponse | null> {
 
 export default async function DashboardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ leagueId: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const { leagueId } = await params;
+  const { view } = await searchParams;
+  if (view === "rivalries") redirect(`/league/${leagueId}/standings?tab=rivalries`);
+  if (view === "feed") redirect(`/league/${leagueId}/standings?tab=feed`);
   const summary = await getSummary(leagueId);
 
   if (!summary) {
     return <main style={{ padding: 24 }}>League not found.</main>;
   }
 
-  if (summary.league.status === "SETUP") {
-    return (
-      <main className="mx-auto min-h-dvh max-w-3xl space-y-4 p-6">
-        <p className="text-sm text-neutral-700">This league is still in setup.</p>
-        <Link href={`/league/${leagueId}/lobby`} className="underline">
-          Go to Lobby
-        </Link>
-      </main>
-    );
+  // Pre-draft: SETUP (waiting for host) or DRAFT (draft in progress) — show PreDraftWarRoom
+  if (summary.league.status === "SETUP" || summary.league.status === "DRAFT") {
+    return <PreDraftWarRoom leagueId={leagueId} initial={summary} />;
   }
 
-  if (summary.league.status === "DRAFT") {
-    return (
-      <main className="mx-auto min-h-dvh max-w-3xl space-y-4 p-6">
-        <p className="text-sm text-neutral-700">Draft is in progress.</p>
-        <Link href={`/league/${leagueId}/draft`} className="underline">
-          Go to Draft
-        </Link>
-      </main>
-    );
-  }
-
+  // Post-draft: LIVE or COMPLETE — render existing War Room unchanged
   return <DashboardClient leagueId={leagueId} initial={summary} />;
 }

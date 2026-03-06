@@ -33,6 +33,7 @@ export async function GET(request: Request) {
         displayName: true,
         isAdmin: true,
         draftPosition: true,
+        championshipPrediction: true,
       },
       orderBy: [{ draftPosition: "asc" }, { createdAt: "asc" }],
     }),
@@ -74,6 +75,14 @@ export async function GET(request: Request) {
   const me = memberCookie ? members.find((member) => member.id === memberCookie) ?? null : null;
   const myPicks = me ? picks.filter((pick) => pick.memberId === me.id) : [];
 
+  type StandingRow = { memberId?: string; championshipPrediction?: unknown; [k: string]: unknown };
+  const rawStandings = (Array.isArray(standings?.totals) ? standings.totals : []) as StandingRow[];
+  const predictionByMemberId = new Map(members.map((m) => [m.id, m.championshipPrediction]));
+  const standingsTop = rawStandings.map((row) => ({
+    ...row,
+    championshipPrediction: row.championshipPrediction ?? (row.memberId ? predictionByMemberId.get(row.memberId as string) : null) ?? null,
+  }));
+
   return NextResponse.json({
     league,
     me: me
@@ -86,7 +95,7 @@ export async function GET(request: Request) {
       : null,
     members,
     myPicks,
-    standingsTop: Array.isArray(standings?.totals) ? standings?.totals : [],
+    standingsTop,
     standingsUpdatedAt: standings?.updatedAt ?? null,
     events,
     allPicks: picks,
