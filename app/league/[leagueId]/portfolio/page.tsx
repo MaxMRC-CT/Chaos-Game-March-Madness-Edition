@@ -34,7 +34,7 @@ export default async function PortfolioPage({
 
   const member = await prisma.leagueMember.findFirst({
     where: { leagueId, id: memberId },
-    select: { id: true },
+    select: { id: true, championshipPrediction: true },
   });
   if (!member) {
     redirect(`/join?code=${encodeURIComponent(league.code)}`);
@@ -69,7 +69,7 @@ export default async function PortfolioPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{league.name}</h1>
             <p className="mt-1 text-sm text-neutral-400">
-              Build your roster: 2 Heroes, 2 Villains, 2 Cinderellas (seed 10+)
+              Build your roster: 2 Heroes, 2 Villains, 2 Cinderellas (seed 10+), plus championship tiebreaker
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -96,6 +96,7 @@ export default async function PortfolioPage({
           initialPicks={myPicks.map((p) => ({ teamId: p.teamId, role: p.role }))}
           picksByTeamId={picksByTeamId}
           ownershipPct={ownershipPct}
+          initialChampionshipPrediction={member.championshipPrediction ?? undefined}
         />
       </div>
     </main>

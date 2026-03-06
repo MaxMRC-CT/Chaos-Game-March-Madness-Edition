@@ -136,6 +136,12 @@ export async function POST(request: NextRequest) {
             role: p.role,
           })),
         });
+        // Also set championship tiebreaker (100–200) so Dev replay flow works
+        const tb = 100 + Math.floor(Math.random() * 101);
+        await prisma.leagueMember.update({
+          where: { id: member.id },
+          data: { championshipPrediction: tb },
+        });
         autofilled++;
       }
     }
@@ -164,6 +170,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "lock") {
+    if (league.status !== "SETUP" && league.status !== "LOCKED") {
+      return NextResponse.json(
+        { ok: false, error: "League already LIVE or COMPLETE." },
+        { status: 400 },
+      );
+    }
     const allMembers = await prisma.leagueMember.findMany({
       where: { leagueId: league.id },
       select: { id: true },
@@ -182,6 +194,18 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+    const missingTiebreaker = await prisma.leagueMember.count({
+      where: { leagueId: league.id, championshipPrediction: null },
+    });
+    if (missingTiebreaker > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `All members need a championship tiebreaker. Use Autofill to set.`,
+        },
+        { status: 400 },
+      );
+    }
     await prisma.league.update({
       where: { id: league.id },
       data: { status: LeagueStatus.LIVE },
@@ -194,6 +218,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "unlock") {
+    if (league.status !== "LOCKED" && league.status !== "LIVE") {
+      return NextResponse.json(
+        { ok: false, error: "Can only unlock from LOCKED or LIVE." },
+        { status: 400 },
+      );
+    }
     await prisma.league.update({
       where: { id: league.id },
       data: { status: LeagueStatus.SETUP },

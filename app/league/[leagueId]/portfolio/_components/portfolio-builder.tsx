@@ -29,6 +29,9 @@ type RegionBucket = {
 
 type PickEntry = { teamId: string; role: RoleType };
 
+const TIEBREAKER_MIN = 1;
+const TIEBREAKER_MAX = 300;
+
 export function PortfolioBuilder({
   leagueId,
   leagueStatus,
@@ -36,6 +39,7 @@ export function PortfolioBuilder({
   initialPicks,
   picksByTeamId,
   ownershipPct,
+  initialChampionshipPrediction,
 }: {
   leagueId: string;
   leagueStatus: string;
@@ -43,14 +47,23 @@ export function PortfolioBuilder({
   initialPicks: PickEntry[];
   picksByTeamId: Record<string, RoleType>;
   ownershipPct: number;
+  initialChampionshipPrediction?: number;
 }) {
   const [picks, setPicks] = useState<PickEntry[]>(() => initialPicks);
+  const [tiebreaker, setTiebreaker] = useState<string>(
+    initialChampionshipPrediction != null ? String(initialChampionshipPrediction) : "",
+  );
   type FormState = { ok: true; saved?: boolean } | { ok: false; error: string } | null;
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     async (_prev: FormState, formData: FormData) => {
       const raw = formData.get("picks");
       const parsed = typeof raw === "string" ? JSON.parse(raw) as PickEntry[] : [];
-      return savePortfolioPicks(leagueId, parsed) as Promise<FormState>;
+      const tbRaw = formData.get("championshipPrediction");
+      const championshipPrediction =
+        typeof tbRaw === "string" && tbRaw.trim()
+          ? parseInt(tbRaw, 10)
+          : undefined;
+      return savePortfolioPicks(leagueId, parsed, championshipPrediction) as Promise<FormState>;
     },
     null,
   );
@@ -58,11 +71,18 @@ export function PortfolioBuilder({
   const counts = { HERO: 0, VILLAIN: 0, CINDERELLA: 0 };
   for (const p of picks) counts[p.role]++;
 
-  const isLocked = leagueStatus !== "SETUP";
-  const isValid =
+  const tiebreakerNum = tiebreaker.trim() ? parseInt(tiebreaker, 10) : NaN;
+  const tiebreakerValid =
+    Number.isInteger(tiebreakerNum) &&
+    tiebreakerNum >= TIEBREAKER_MIN &&
+    tiebreakerNum <= TIEBREAKER_MAX;
+
+  const isLocked = leagueStatus !== "SETUP"; // LOCKED, DRAFT, LIVE, COMPLETE all lock picks
+  const rosterValid =
     counts.HERO === PICKS_PER_ROLE &&
     counts.VILLAIN === PICKS_PER_ROLE &&
     counts.CINDERELLA === PICKS_PER_ROLE;
+  const isValid = rosterValid && tiebreakerValid;
 
   function togglePick(teamId: string, role: RoleType, teamSeed: number) {
     if (isLocked) return;
@@ -180,6 +200,28 @@ export function PortfolioBuilder({
         ))}
       </div>
 
+      {/* Tiebreaker (part of roster submission) */}
+      {!isLocked && (
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900/80 p-4">
+          <h3 className="mb-2 text-base font-semibold text-neutral-100">
+            Championship Tiebreaker
+          </h3>
+          <p className="mb-3 text-sm text-neutral-400">
+            Predict the combined total points in the National Championship. Closest without going
+            over wins tiebreaks. Enter a number between {TIEBREAKER_MIN} and {TIEBREAKER_MAX}.
+          </p>
+          <input
+            type="number"
+            min={TIEBREAKER_MIN}
+            max={TIEBREAKER_MAX}
+            value={tiebreaker}
+            onChange={(e) => setTiebreaker(e.target.value)}
+            placeholder="e.g. 145"
+            className="w-28 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+          />
+        </div>
+      )}
+
       {/* Submit */}
       {!isLocked && (
         <form action={formAction} className="flex flex-wrap items-center gap-4">
@@ -189,16 +231,27 @@ export function PortfolioBuilder({
             value={JSON.stringify(picks)}
             readOnly
           />
+          <input
+            type="hidden"
+            name="championshipPrediction"
+            value={tiebreakerValid ? tiebreakerNum : ""}
+            readOnly
+          />
           <button
             type="submit"
             disabled={pending || !isValid}
             className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {pending ? "Saving…" : "Save roster"}
+            {pending ? "Saving…" : "Submit roster"}
           </button>
-          {!isValid && (
+          {!rosterValid && (
             <span className="text-sm text-neutral-400">
               Select 2 Heroes, 2 Villains, 2 Cinderellas (seed 10+)
+            </span>
+          )}
+          {rosterValid && !tiebreakerValid && (
+            <span className="text-sm text-neutral-400">
+              Enter championship tiebreaker ({TIEBREAKER_MIN}–{TIEBREAKER_MAX})
             </span>
           )}
         </form>

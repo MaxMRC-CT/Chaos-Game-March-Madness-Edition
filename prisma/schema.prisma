@@ -45,6 +45,10 @@ model League {
   currentPick             Int                   @default(0)
   createdAt               DateTime              @default(now())
   championshipTotalPoints Int?
+  /// Optional: when set, league auto-locks at this time if still SETUP. Eastern Time semantics.
+  lockDeadline            DateTime?
+  /// Optional: first tournament tip-off (Eastern). LIVE threshold = firstTipOff - 60min when set.
+  firstTipOff             DateTime?
   picks                   DraftPick[]
   tournamentYear          TournamentYear        @relation(fields: [tournamentYearId], references: [id])
   events                  LeagueEvent[]
@@ -172,6 +176,7 @@ model PortfolioPick {
 
 enum LeagueStatus {
   SETUP
+  LOCKED
   DRAFT
   LIVE
   COMPLETE

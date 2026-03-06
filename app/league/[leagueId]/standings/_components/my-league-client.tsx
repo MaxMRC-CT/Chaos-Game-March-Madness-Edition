@@ -89,7 +89,7 @@ export default function MyLeagueClient({
   }, [data?.picks]);
 
   const standings = data?.standings ?? [];
-  const showPortfolio = data?.league.status === "SETUP" || data?.league.status === "DRAFT";
+  const showPortfolio = data?.league.status === "SETUP" || data?.league.status === "LOCKED" || data?.league.status === "DRAFT";
 
   return (
     <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">

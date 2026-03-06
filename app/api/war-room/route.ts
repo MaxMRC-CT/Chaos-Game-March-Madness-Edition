@@ -10,6 +10,7 @@ import {
   computeVillainPoints,
 } from "@/lib/scoring/compute";
 import { getBracketConfig } from "@/lib/bracket/config";
+import { evaluateStatusTransitions } from "@/lib/league/lifecycle";
 
 const ROUND_ORDER: Round[] = ["R64", "R32", "S16", "E8", "F4", "FINAL"];
 const HIGHLIGHT_TYPES = new Set(["RIVALRY_BONUS", "TEAM_ELIMINATED", "SCORE_RECALCULATED"]);
@@ -72,6 +73,8 @@ export async function GET(request: Request) {
         code: true,
         tournamentYearId: true,
         currentPick: true,
+        lockDeadline: true,
+        firstTipOff: true,
         tournamentYear: { select: { year: true } },
       },
     });
@@ -79,6 +82,24 @@ export async function GET(request: Request) {
     if (!league) {
       return NextResponse.json({ error: "League not found" }, { status: 404 });
     }
+
+    await evaluateStatusTransitions(leagueId);
+
+    const leagueRefreshed = await prisma.league.findUnique({
+      where: { id: leagueId },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        code: true,
+        tournamentYearId: true,
+        currentPick: true,
+        lockDeadline: true,
+        firstTipOff: true,
+        tournamentYear: { select: { year: true } },
+      },
+    });
+    const leagueForResponse = leagueRefreshed ?? league;
 
     const [members, picks, teams, teamResults, games, score, allRecentEvents] = await Promise.all([
       prisma.leagueMember.findMany({
@@ -210,13 +231,15 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       league: {
-        id: league.id,
-        name: league.name,
-        status: league.status,
-        code: league.code,
-        currentPick: league.currentPick,
+        id: leagueForResponse.id,
+        name: leagueForResponse.name,
+        status: leagueForResponse.status,
+        code: leagueForResponse.code,
+        currentPick: leagueForResponse.currentPick,
+        lockDeadline: leagueForResponse.lockDeadline?.toISOString() ?? null,
+        firstTipOff: leagueForResponse.firstTipOff?.toISOString() ?? null,
         currentRound,
-        tournamentYear: league.tournamentYear ? { year: league.tournamentYear.year } : undefined,
+        tournamentYear: leagueForResponse.tournamentYear ? { year: leagueForResponse.tournamentYear.year } : undefined,
       },
       bracketConfig,
       me: me

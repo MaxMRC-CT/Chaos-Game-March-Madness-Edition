@@ -2,7 +2,9 @@ export type WarRoomResponse = {
   league: {
     id: string;
     name: string;
-    status: "SETUP" | "DRAFT" | "LIVE" | "COMPLETE";
+    status: "SETUP" | "LOCKED" | "DRAFT" | "LIVE" | "COMPLETE";
+    lockDeadline?: string | null;
+    firstTipOff?: string | null;
     code: string;
     currentPick: number;
     currentRound: "R64" | "R32" | "S16" | "E8" | "F4" | "FINAL" | "CHAMP";

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { generateLeagueCode } from "@/lib/league/pin";
 import { makeNicknameKey, normalizeDisplayName } from "@/lib/league/nickname";
@@ -121,8 +122,8 @@ export async function joinLeague(
     return { error: "Game PIN not found" };
   }
 
-  /* 🚫 BLOCK JOIN IF DRAFT, LIVE, OR COMPLETE (only allow during SETUP) */
-  if (league.status === "DRAFT" || league.status === "LIVE" || league.status === "COMPLETE") {
+  /* 🚫 BLOCK JOIN IF LOCKED, DRAFT, LIVE, OR COMPLETE (only allow during SETUP) */
+  if (league.status === "LOCKED" || league.status === "DRAFT" || league.status === "LIVE" || league.status === "COMPLETE") {
     return {
       error: "Joining is closed. This league has started—please reconnect if you already joined.",
     };
@@ -304,7 +305,9 @@ export async function setChampionshipPrediction(
 }
 
 /* ============================================================
-   START TOURNAMENT (v2: lock portfolio picks, set LIVE)
+   FORCE START (Host Override) — Chaos v2 hybrid lifecycle
+   Host can force league to LIVE from SETUP or LOCKED.
+   Primary path is automatic (lock when rosters complete, live at threshold).
 ============================================================ */
 
 export async function startTournament(leagueId: string): Promise<{ error?: string } | null> {
@@ -317,13 +320,15 @@ export async function startTournament(leagueId: string): Promise<{ error?: strin
     select: { id: true, status: true },
   });
   if (!league) return { error: "League not found" };
-  if (league.status !== "SETUP") return { error: "Tournament can only be started from setup" };
+  if (league.status !== "SETUP" && league.status !== "LOCKED") {
+    return { error: "Tournament already started or completed" };
+  }
 
   const member = await prisma.leagueMember.findFirst({
     where: { id: memberId, leagueId },
     select: { isAdmin: true },
   });
-  if (!member?.isAdmin) return { error: "Only the host can start the tournament" };
+  if (!member?.isAdmin) return { error: "Only the host can force start" };
 
   const memberCount = await prisma.leagueMember.count({ where: { leagueId } });
   const expectedPicks = memberCount * 6;
@@ -332,12 +337,20 @@ export async function startTournament(leagueId: string): Promise<{ error?: strin
     return { error: `All players must complete their roster (2/2/2) before starting. Current: ${actualPicks}/${expectedPicks} picks.` };
   }
 
+  const membersWithoutTiebreaker = await prisma.leagueMember.count({
+    where: { leagueId, championshipPrediction: null },
+  });
+  if (membersWithoutTiebreaker > 0) {
+    return { error: `All players must submit a championship tiebreaker before starting. ${membersWithoutTiebreaker} player(s) still missing.` };
+  }
+
   await prisma.league.update({
     where: { id: leagueId },
     data: { status: "LIVE" },
   });
 
-  return null;
+  revalidatePath(`/league/${leagueId}/dashboard`);
+  redirect(`/league/${leagueId}/dashboard`);
 }
 
 export async function startTournamentFromForm(

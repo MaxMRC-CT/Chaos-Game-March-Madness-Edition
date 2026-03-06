@@ -13,7 +13,7 @@ type AvailabilityState =
   | { tone: "red"; message: string };
 
 type JoinMode = "join" | "reconnect";
-type LeagueStatus = "SETUP" | "DRAFT" | "LIVE" | "COMPLETE";
+type LeagueStatus = "SETUP" | "LOCKED" | "DRAFT" | "LIVE" | "COMPLETE";
 
 export default function JoinClient() {
   const [joinState, joinFormAction, joinPending] = useActionState(joinLeague, null);
@@ -105,9 +105,9 @@ export default function JoinClient() {
     };
   }, [code]);
 
-  // Auto-switch to reconnect only when joining is closed (DRAFT, LIVE, or COMPLETE)
+  // Auto-switch to reconnect only when joining is closed (LOCKED, DRAFT, LIVE, or COMPLETE)
   React.useEffect(() => {
-    if (leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE") {
+    if (leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE") {
       setMode("reconnect");
     }
   }, [leagueStatus]);
@@ -116,8 +116,8 @@ export default function JoinClient() {
   React.useEffect(() => {
     if (mode !== "join") return;
 
-    // If league is DRAFT/LIVE/COMPLETE, joining is closed, no need to check nickname availability
-    if (leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE") {
+    // If league is LOCKED/DRAFT/LIVE/COMPLETE, joining is closed, no need to check nickname availability
+    if (leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE") {
       setAvailability({
         tone: "red",
         message: "Joining is closed for this league. Please reconnect.",
@@ -191,7 +191,7 @@ export default function JoinClient() {
   }, [joinState]);
 
   const joinClosed =
-    leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE";
+    leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE";
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 p-6 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white">

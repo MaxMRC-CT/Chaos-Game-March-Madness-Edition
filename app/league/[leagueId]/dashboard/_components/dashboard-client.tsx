@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
-import { setChampionshipPrediction } from "@/lib/actions/league";
 import { LeaderboardPanel } from "./leaderboard-panel";
 import { LiveFeed } from "./live-feed";
 import { MyTeam } from "./my-team";
@@ -33,11 +32,6 @@ const headingKicker =
 const sectionTitle =
   "text-base font-semibold tracking-wide text-neutral-100 sm:text-lg";
 
-const showChampionshipModal = (data: WarRoomResponse) =>
-  (data.league.status === "LIVE" || data.league.status === "COMPLETE") &&
-  data.me &&
-  data.me.championshipPrediction == null;
-
 export default function DashboardClient({
   leagueId,
   initial,
@@ -47,9 +41,6 @@ export default function DashboardClient({
 }) {
   const [data, setData] = useState<WarRoomResponse>(initial);
   const [copied, setCopied] = useState(false);
-  const [predictionValue, setPredictionValue] = useState("");
-  const [predictionError, setPredictionError] = useState<string | null>(null);
-  const [predictionPending, setPredictionPending] = useState(false);
 
   const load = useCallback(
     async (limit = 15, mode: "all" | "highlights" = "all") => {
@@ -129,24 +120,6 @@ export default function DashboardClient({
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
       setCopied(false);
-    }
-  }
-
-  async function handleSavePrediction(e: React.FormEvent) {
-    e.preventDefault();
-    setPredictionError(null);
-    const num = parseInt(predictionValue, 10);
-    if (!Number.isInteger(num) || num < 1 || num > 300) {
-      setPredictionError("Enter a whole number between 1 and 300");
-      return;
-    }
-    setPredictionPending(true);
-    const result = await setChampionshipPrediction(leagueId, num);
-    setPredictionPending(false);
-    if ("success" in result && result.success) {
-      void load();
-    } else if ("error" in result) {
-      setPredictionError(result.error);
     }
   }
 
@@ -401,47 +374,6 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {showChampionshipModal(data) ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          aria-modal="true"
-          role="dialog"
-          aria-labelledby="championship-tiebreak-title"
-        >
-          <div className="w-full max-w-md rounded-xl border border-[#1f2937] bg-[#111827] p-6 shadow-xl">
-            <h2 id="championship-tiebreak-title" className="text-lg font-semibold text-neutral-100">
-              Championship Tiebreak
-            </h2>
-            <p className="mt-2 text-sm text-neutral-300">
-              Predict the combined total points scored in the National Championship. Closest WITHOUT
-              going over wins tiebreaks.
-            </p>
-            <form onSubmit={handleSavePrediction} className="mt-4 space-y-3">
-              <input
-                type="number"
-                min={1}
-                max={300}
-                value={predictionValue}
-                onChange={(e) => setPredictionValue(e.target.value)}
-                placeholder="e.g. 145"
-                className="w-full rounded-lg border border-[#1f2937] bg-[#0f1623] px-3 py-2 text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-                disabled={predictionPending}
-                autoFocus
-              />
-              {predictionError ? (
-                <p className="text-sm text-red-400">{predictionError}</p>
-              ) : null}
-              <button
-                type="submit"
-                disabled={predictionPending}
-                className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
-              >
-                {predictionPending ? "Saving..." : "Save Prediction"}
-              </button>
-            </form>
-          </div>
-        </div>
-      ) : null}
     </main>
   );
 }
@@ -450,6 +382,7 @@ function formatLeagueStatus(status: WarRoomResponse["league"]["status"]) {
   if (status === "LIVE") return "Live";
   if (status === "COMPLETE") return "Final";
   if (status === "SETUP") return "Lobby";
+  if (status === "LOCKED") return "Locked";
   if (status === "DRAFT") return "Draft";
   return status;
 }
@@ -499,11 +432,11 @@ function commandCta(
   leagueId: string,
   isAdmin: boolean,
 ) {
-  if (status === "SETUP") {
+  if (status === "SETUP" || status === "DRAFT") {
     return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Build roster" };
   }
-  if (status === "DRAFT") {
-    return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Build roster" };
+  if (status === "LOCKED") {
+    return { kind: "anchor" as const, href: "#activity", label: "View activity" };
   }
   if (status === "LIVE") {
     return { kind: "anchor" as const, href: "#hot-seat", label: "View Tonight's Chaos" };

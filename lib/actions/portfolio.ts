@@ -50,9 +50,23 @@ function validatePortfolio(
   return { ok: true };
 }
 
+function validateTiebreaker(
+  value: number | undefined,
+): { ok: true; value: number } | { ok: false; error: string } {
+  if (value == null || value === undefined) {
+    return { ok: false, error: "Championship tiebreaker is required." };
+  }
+  const n = typeof value === "string" ? parseInt(String(value), 10) : value;
+  if (!Number.isInteger(n) || n < 1 || n > 300) {
+    return { ok: false, error: "Tiebreaker must be a whole number between 1 and 300." };
+  }
+  return { ok: true, value: n };
+}
+
 export async function savePortfolioPicks(
   leagueId: string,
   picks: Array<{ teamId: string; role: RoleType }>,
+  championshipPrediction?: number | string,
 ): Promise<PortfolioValidation & { saved?: boolean }> {
   const cookieStore = await cookies();
   const memberId = cookieStore.get(`cl_member_${leagueId}`)?.value;
@@ -68,7 +82,7 @@ export async function savePortfolioPicks(
     return { ok: false, error: "League not found." };
   }
   if (league.status !== "SETUP") {
-    return { ok: false, error: "Picks are locked. Tournament has started." };
+    return { ok: false, error: "Picks are locked. Tournament has started or lock deadline passed." };
   }
 
   const member = await prisma.leagueMember.findFirst({
@@ -92,6 +106,15 @@ export async function savePortfolioPicks(
   const validation = validatePortfolio(picks, teamsByRole);
   if (!validation.ok) return validation;
 
+  const tbValidation = validateTiebreaker(
+    championshipPrediction != null && championshipPrediction !== ""
+      ? typeof championshipPrediction === "string"
+        ? parseInt(championshipPrediction, 10)
+        : championshipPrediction
+      : undefined,
+  );
+  if (!tbValidation.ok) return tbValidation;
+
   await prisma.$transaction(async (tx) => {
     await tx.portfolioPick.deleteMany({
       where: { leagueId, memberId },
@@ -103,6 +126,10 @@ export async function savePortfolioPicks(
         teamId: p.teamId,
         role: p.role,
       })),
+    });
+    await tx.leagueMember.update({
+      where: { id: memberId },
+      data: { championshipPrediction: tbValidation.value },
     });
   });
 

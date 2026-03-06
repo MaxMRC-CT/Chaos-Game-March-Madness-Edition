@@ -30,8 +30,8 @@ export default async function DashboardPage({
     return <main style={{ padding: 24 }}>League not found.</main>;
   }
 
-  // Pre-draft: SETUP (waiting for host) or DRAFT (draft in progress) — show PreDraftWarRoom
-  if (summary.league.status === "SETUP" || summary.league.status === "DRAFT") {
+  // Pre-live: SETUP, LOCKED, or DRAFT — show PreDraftWarRoom (picks editable only in SETUP)
+  if (summary.league.status === "SETUP" || summary.league.status === "LOCKED" || summary.league.status === "DRAFT") {
     return <PreDraftWarRoom leagueId={leagueId} initial={summary} />;
   }
 

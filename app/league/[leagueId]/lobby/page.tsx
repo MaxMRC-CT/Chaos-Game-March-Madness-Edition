@@ -66,7 +66,7 @@ export default async function LobbyPage({
         }))}
       />
 
-      {league.status === "SETUP" && isCurrentMemberAdmin ? (
+      {(league.status === "SETUP" || league.status === "LOCKED") && isCurrentMemberAdmin ? (
         <StartTournamentForm leagueId={leagueId} />
       ) : null}
     </main>

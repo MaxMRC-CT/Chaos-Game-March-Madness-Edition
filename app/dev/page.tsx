@@ -576,13 +576,13 @@ export default function DevControlCenterPage() {
                     callApi("/api/dev/roster-actions", {
                       leagueId: league?.id,
                       code: league?.code,
-                      action: league?.status === "SETUP" ? "lock" : "unlock",
+                      action: league?.status === "SETUP" || league?.status === "LOCKED" ? "lock" : "unlock",
                     })
                   }
                   disabled={!key.trim() || !!loading}
                   className="rounded-lg border border-violet-600/60 bg-violet-900/30 px-4 py-2 text-sm text-violet-200 hover:bg-violet-900/50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {league?.status === "SETUP" ? "Lock picks" : "Unlock picks"}
+                  {league?.status === "SETUP" || league?.status === "LOCKED" ? "Lock picks (→ LIVE)" : "Unlock picks"}
                 </button>
               </div>
             </>
@@ -755,7 +755,7 @@ export default function DevControlCenterPage() {
           )}
           {key.trim() && league && (
             <button
-              onClick={fetchSnapshot}
+              onClick={() => void fetchSnapshot()}
               disabled={!!loading}
               className="mt-3 rounded border border-neutral-600 bg-neutral-800 px-3 py-1.5 text-xs hover:bg-neutral-700 disabled:opacity-50"
             >

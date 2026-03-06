@@ -12,7 +12,7 @@ type LeagueHomeResponse = {
     id: string;
     name: string;
     code: string;
-    status: "LIVE" | "COMPLETE" | "SETUP" | "DRAFT";
+    status: "LIVE" | "COMPLETE" | "SETUP" | "LOCKED" | "DRAFT";
   };
   me: {
     memberId: string;

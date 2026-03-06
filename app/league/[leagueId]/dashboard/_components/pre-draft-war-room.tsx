@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import { BrandLockup } from "@/app/(dashboard)/_components/BrandLockup";
 import { startTournamentFromForm } from "@/lib/actions/league";
+import DashboardClient from "./dashboard-client";
 import { LiveFeed } from "./live-feed";
 import { WarRoomResponse } from "./types";
 
@@ -46,7 +47,12 @@ export function PreDraftWarRoom({
   }, [load]);
 
   const isSetup = data.league.status === "SETUP";
+  const isLocked = data.league.status === "LOCKED";
   const isHost = Boolean(data.me?.isAdmin);
+
+  if (data.league.status === "LIVE" || data.league.status === "COMPLETE") {
+    return <DashboardClient leagueId={leagueId} initial={data} />;
+  }
 
   async function copyPin() {
     try {
@@ -98,8 +104,21 @@ export function PreDraftWarRoom({
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">
-                    Build your roster (2 Heroes, 2 Villains, 2 Cinderellas)
+                    {isSetup
+                      ? "Build your roster (2 Heroes, 2 Villains, 2 Cinderellas)"
+                      : "Picks locked — tournament goes live 60 min before first tip-off"}
                   </span>
+                  {data.league.lockDeadline && isSetup ? (
+                    <span className="rounded-full border border-neutral-600 bg-neutral-800/60 px-2 py-0.5 text-xs text-neutral-400">
+                      Picks lock at{" "}
+                      {new Date(data.league.lockDeadline).toLocaleString("en-US", {
+                        timeZone: "America/New_York",
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}{" "}
+                      ET
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-neutral-700 bg-neutral-800 px-3 py-1.5 font-mono text-sm font-semibold text-neutral-100">
@@ -121,12 +140,19 @@ export function PreDraftWarRoom({
                   </Link>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <Link
-                    href={`/league/${leagueId}/portfolio`}
-                    className="inline-flex rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-                  >
-                    Build roster
-                  </Link>
+                  {isSetup ? (
+                    <Link
+                      href={`/league/${leagueId}/portfolio`}
+                      className="inline-flex rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+                    >
+                      Build roster
+                    </Link>
+                  ) : null}
+                  {isLocked ? (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-neutral-800 px-3 py-1.5 text-xs text-neutral-300">
+                      Picks locked — tournament goes live 60 min before first tip-off
+                    </span>
+                  ) : null}
                   {isSetup && isHost ? (
                     <form action={formAction} className="inline">
                       <input type="hidden" name="leagueId" value={leagueId} />
@@ -135,16 +161,16 @@ export function PreDraftWarRoom({
                         disabled={pending}
                         className="rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-500 disabled:opacity-60"
                       >
-                        {pending ? "Starting…" : "Start tournament"}
+                        {pending ? "Starting…" : "Force start now"}
                       </button>
                       {state?.error ? (
                         <p className="mt-2 text-sm text-red-400">{state.error}</p>
                       ) : null}
                     </form>
-                  ) : isSetup ? (
+                  ) : (isSetup || isLocked) && !isHost ? (
                     <span className="inline-flex items-center gap-2 rounded-full bg-neutral-800 px-3 py-1.5 text-xs text-neutral-300">
                       <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      Waiting for host to start
+                      {isLocked ? "Picks locked — waiting for live" : "Waiting for host or auto-start"}
                     </span>
                   ) : null}
                 </div>
