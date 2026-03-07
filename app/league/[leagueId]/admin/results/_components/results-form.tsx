@@ -88,9 +88,20 @@ export default function ResultsForm({
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-lg bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
+          className={`relative w-full overflow-hidden rounded-lg px-4 py-2 text-sm text-white transition-all ${
+            pending
+              ? "bg-neutral-700"
+              : "bg-black hover:bg-neutral-900"
+          } disabled:cursor-not-allowed disabled:opacity-90`}
         >
-          {pending ? "Saving..." : "Save Results & Recompute"}
+          {pending ? (
+            <>
+              <span className="loading-shimmer absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              <span className="relative">Applying…</span>
+            </>
+          ) : (
+            "Save Results & Recompute"
+          )}
         </button>
 
         {state?.error ? <p className="text-sm text-red-600">{state.error}</p> : null}

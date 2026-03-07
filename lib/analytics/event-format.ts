@@ -89,14 +89,24 @@ export function formatEventStory(
     const delta = Number(payload.delta || 0);
     const rule = String(payload.rule || "RIVALRY");
     const memberName = context.memberById[memberId] || "Manager";
+    const winnerTeamId = String(payload.winnerTeamId || "");
+    const loserTeamId = String(payload.loserTeamId || "");
+    const winnerName = context.teamById[winnerTeamId] || "team";
+    const loserName = context.teamById[loserTeamId] || "rival";
 
     let base: string;
     if (rule === "HERO_OVER_VILLAIN") {
-      base = `Hero advance: ${memberName}'s Hero beats Villain`;
+      base = compact
+        ? `Rivalry swing: ${memberName} +${delta} • ${winnerName} over ${loserName}`
+        : `Head-to-head: ${memberName}'s Hero eliminates rival's Villain (+${delta})`;
     } else if (rule === "CINDERELLA_OVER_HERO") {
-      base = `Cinderella upset: ${memberName}'s Cinderella knocks out Hero`;
+      base = compact
+        ? `Rivalry swing: ${memberName} +${delta} • Cinderella over Hero`
+        : `Head-to-head hit: ${memberName}'s Cinderella knocks out rival's Hero (+${delta})`;
     } else if (rule === "VILLAIN_OVER_HERO") {
-      base = `Villain strike: ${memberName} loses Hero`;
+      base = compact
+        ? `Rivalry swing: ${memberName} ${delta} • Villain over Hero`
+        : `Villain strike: ${memberName} loses Hero to rival's Villain (${delta})`;
     } else {
       base = `Rivalry: ${memberName} ${delta > 0 ? "+" : ""}${delta} (${rule.replace(/_/g, " ")})`;
     }

@@ -19,10 +19,14 @@ import {
   getPickLeverageV23,
   getTopLeveragePicksLeagueWide,
 } from "@/lib/analytics/leverage";
-import { computePersonalityMetrics } from "@/lib/analytics/personality";
+import { computeIdentityMetrics, getIdentityArchetype } from "@/lib/analytics/identity";
 import { buildMomentumSummaries } from "@/lib/analytics/momentum";
 import { computeProjectionForActiveTeam } from "@/lib/analytics/projection";
 import { computeUpsetExposure } from "@/lib/analytics/upset-exposure";
+import {
+  buildRivalryPanel,
+  getContrarianLabel,
+} from "@/lib/analytics/rivalry";
 import { evaluateStatusTransitions } from "@/lib/league/lifecycle";
 
 const ROUND_ORDER: Round[] = ["R64", "R32", "S16", "E8", "F4", "FINAL"];
@@ -314,6 +318,59 @@ export async function GET(request: Request) {
       ownershipMap,
     );
 
+    const roundSummary =
+      leagueForResponse.status === "LIVE" &&
+      snapshots.length >= 2 &&
+      (() => {
+        const chaosSpike = momentumSummaries.biggestJump
+          ? {
+              memberId: momentumSummaries.biggestJump.memberId,
+              displayName: momentumSummaries.biggestJump.displayName,
+              spots: momentumSummaries.biggestJump.spots,
+            }
+          : null;
+
+        let villainShockwave: { teamName: string; heroPct: number } | null = null;
+        let chalkCollapse: { teamName: string; heroPct: number } | null = null;
+        const teamById = new Map(teams.map((t) => [t.id, t]));
+        for (const event of highlightEvents) {
+          if (event.type !== "TEAM_ELIMINATED") continue;
+          const teamId = String((event.payload as Record<string, unknown>)?.teamId ?? "");
+          const team = teamById.get(teamId);
+          const obr = ownershipByRole[teamId] ?? { heroPct: 0, villainPct: 0, cinderellaPct: 0 };
+          const owners = ownershipMap[teamId] ?? [];
+          const hasVillain = owners.some((o) => o.role === "VILLAIN");
+
+          if (!chalkCollapse || obr.heroPct > chalkCollapse.heroPct) {
+            chalkCollapse = {
+              teamName: team?.shortName ?? team?.name ?? "Team",
+              heroPct: obr.heroPct,
+            };
+          }
+          if (hasVillain && (!villainShockwave || obr.heroPct > villainShockwave.heroPct)) {
+            villainShockwave = {
+              teamName: team?.shortName ?? team?.name ?? "Team",
+              heroPct: obr.heroPct,
+            };
+          }
+        }
+
+        let leverageLeader: { memberId: string; displayName: string; chaosIndex: number } | null = null;
+        for (const row of standingsWithLeverage) {
+          const ci = row.chaosIndex ?? 0;
+          if (!leverageLeader || ci > leverageLeader.chaosIndex) {
+            leverageLeader = {
+              memberId: row.memberId,
+              displayName: row.displayName,
+              chaosIndex: ci,
+            };
+          }
+        }
+
+        if (!chaosSpike && !villainShockwave && !chalkCollapse && !leverageLeader) return undefined;
+        return { chaosSpike, villainShockwave, chalkCollapse, leverageLeader };
+      })();
+
     const roundCounts =
       process.env.ENV_NAME === "development"
         ? (() => {
@@ -325,6 +382,48 @@ export async function GET(request: Request) {
             return c;
           })()
         : undefined;
+
+    const picksLite = picks.map((p) => ({
+      memberId: p.memberId,
+      teamId: p.teamId,
+      role: p.role,
+    }));
+    const ownershipMapForRivalry = Object.fromEntries(
+      Object.entries(ownershipMap).map(([teamId, owners]) => [
+        teamId,
+        owners.map((o) => ({ ownerMemberId: o.ownerMemberId })),
+      ]),
+    );
+    const teamById = Object.fromEntries(
+      teams.map((t) => [t.id, { shortName: t.shortName, name: t.name }]),
+    );
+    const rivalryPanel =
+      me && picks.length > 0
+        ? buildRivalryPanel(
+            me.id,
+            picksLite,
+            standings.map((s) => ({ memberId: s.memberId, displayName: s.displayName, total: s.total })),
+            highlightEvents,
+            ownershipMapForRivalry,
+            teamById,
+          )
+        : undefined;
+
+    const contrarianLabels: Record<string, string> = {};
+    for (const member of members) {
+      const label = getContrarianLabel(
+        member.id,
+        picksLite,
+        ownershipByRole,
+        member.id === me?.id && myLeagueAnalytics?.identity
+          ? {
+              chalkIndex: myLeagueAnalytics.identity.fieldAlignment,
+              leverageIndex: myLeagueAnalytics.identity.upsideVsField,
+            }
+          : null,
+      );
+      if (label) contrarianLabels[member.id] = label;
+    }
 
     const year = league.tournamentYear?.year ?? new Date().getFullYear();
     const bracketConfig = getBracketConfig(year);
@@ -372,11 +471,14 @@ export async function GET(request: Request) {
       ownershipMap,
       ownershipByRole,
       momentumSummaries,
+      ...(roundSummary != null && { roundSummary }),
       ...(myLeagueAnalytics != null && { myLeagueAnalytics }),
       top5LeveragePicks,
       upsetExposure,
       standingsWithLeverage,
       ...(roundCounts != null && { roundCounts }),
+      ...(rivalryPanel != null && { rivalryPanel }),
+      ...(Object.keys(contrarianLabels).length > 0 && { contrarianLabels }),
     });
   } catch (error: unknown) {
     console.error("WAR ROOM API ERROR:", error);
@@ -573,10 +675,8 @@ function buildMyLeagueAnalytics({
     picksWithOwnershipForAnalytics,
     resultByTeamIdForAnalytics,
   );
-  const personality = computePersonalityMetrics(
-    picksWithOwnershipForAnalytics,
-    resultByTeamIdForAnalytics,
-  );
+  const identityMetrics = computeIdentityMetrics(picksWithOwnershipForAnalytics);
+  const identityArchetype = getIdentityArchetype(identityMetrics);
 
   // v2.3 Per-pick leverage (v2.3 formula) for sorting
   const pickLeveragePerPick = picksWithOwnershipForAnalytics.map((p) => {
@@ -646,7 +746,10 @@ function buildMyLeagueAnalytics({
     bestCinderellaPerformer,
     scoreByRole: { hero, villain, cinderella, total },
     pickLeverage: { portfolioLeverage, highestLeverageHit, mostValuableContrarianHit },
-    personality,
+    identity: {
+      ...identityMetrics,
+      archetype: identityArchetype,
+    },
     pickLeveragePerPick,
     chaosIndex,
     projectionPreviews,

@@ -153,12 +153,13 @@ export type WarRoomResponse = {
         ownershipPct: number;
       } | null;
     };
-    personality?: {
-      chalkIndex: number;
-      leverageIndex: number;
-      volatilityIndex: number;
-      villainAggressionScore: number;
-      cinderellaRiskScore: number;
+    identity?: {
+      fieldAlignment: number;
+      upsideVsField: number;
+      riskProfile: number;
+      antiChalkExposure: number;
+      upsetDependency: number;
+      archetype: { name: string; explanation: string };
     };
   };
   momentumSummaries?: {
@@ -188,6 +189,13 @@ export type WarRoomResponse = {
       highSeedTeamCount: number;
     };
   };
+  /** v2.4 Round summary when LIVE and round just applied */
+  roundSummary?: {
+    chaosSpike: { memberId: string; displayName: string; spots: number } | null;
+    villainShockwave: { teamName: string; heroPct: number } | null;
+    chalkCollapse: { teamName: string; heroPct: number } | null;
+    leverageLeader: { memberId: string; displayName: string; chaosIndex: number } | null;
+  };
   /** v2.3 Standings with chaosIndex and portfolioLeverage for toggle sorting */
   standingsWithLeverage?: Array<{
     memberId: string;
@@ -203,4 +211,24 @@ export type WarRoomResponse = {
   }>;
   /** Present only when ENV_NAME=development */
   roundCounts?: { R64: number; R32: number; S16: number; E8: number; F4: number; NCG: number };
+
+  /** Rivalry layer: strategic intel per viewer (when me is set) */
+  rivalryPanel?: {
+    closestRival: RivalryInsight | null;
+    strategicCollision: RivalryInsight | null;
+    directConflict: RivalryInsight | null;
+    biggestThreat: RivalryInsight | null;
+    mostOpposed: RivalryInsight | null;
+  };
+  /** Contrarian labels by memberId. Sparse: only members with a label. */
+  contrarianLabels?: Record<string, string>;
+}
+
+export type RivalryInsight = {
+  type: string;
+  label: string;
+  memberId: string;
+  displayName: string;
+  detail: string;
+  score: number;
 };

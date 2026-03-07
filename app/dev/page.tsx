@@ -658,9 +658,18 @@ export default function DevControlCenterPage() {
                 })
               }
               disabled={!key.trim() || !!loading || !league}
-              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`relative overflow-hidden rounded-lg px-4 py-2 text-sm font-medium text-white transition-all ${
+                loading ? "bg-amber-700" : "bg-amber-600 hover:bg-amber-500"
+              } disabled:cursor-not-allowed disabled:opacity-50`}
             >
-              Apply Round
+              {loading ? (
+                <>
+                  <span className="loading-shimmer absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                  <span className="relative">Applying…</span>
+                </>
+              ) : (
+                "Apply Round"
+              )}
             </button>
             <button
               onClick={() =>

@@ -2,9 +2,10 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
 import { LeaderboardPanel } from "./leaderboard-panel";
+import { RoundSummaryCard } from "./RoundSummaryCard";
 import { LiveFeed } from "./live-feed";
 import { MyTeam } from "./my-team";
 import { WarRoomResponse } from "./types";
@@ -41,6 +42,8 @@ export default function DashboardClient({
 }) {
   const [data, setData] = useState<WarRoomResponse>(initial);
   const [copied, setCopied] = useState(false);
+  const prevStandingsRef = useRef<WarRoomResponse["standings"] | null>(null);
+  const [rankDelta, setRankDelta] = useState<Record<string, number>>({});
 
   const load = useCallback(
     async (limit = 15, mode: "all" | "highlights" = "all") => {
@@ -52,6 +55,17 @@ export default function DashboardClient({
       );
       if (!response.ok) return;
       const payload = (await response.json()) as WarRoomResponse;
+      const prev = prevStandingsRef.current;
+      if (prev && prev.length > 0 && payload.standings.length > 0) {
+        const prevRank = new Map(prev.map((r, i) => [r.memberId, i + 1]));
+        const delta: Record<string, number> = {};
+        payload.standings.forEach((r, i) => {
+          const pr = prevRank.get(r.memberId) ?? payload.standings.length + 1;
+          delta[r.memberId] = pr - (i + 1);
+        });
+        setRankDelta(delta);
+      }
+      prevStandingsRef.current = payload.standings;
       setData(payload);
     },
     [leagueId],
@@ -265,6 +279,10 @@ export default function DashboardClient({
                 </div>
               </header>
 
+              {data.roundSummary ? (
+                <RoundSummaryCard roundSummary={data.roundSummary} />
+              ) : null}
+
               <section id="hot-seat" className={`${panelClass} ${panelHover} p-4 sm:p-5`}>
                 <h2 className={`mb-3 ${sectionTitle}`}>
                   Chaos Hot Seat
@@ -318,6 +336,31 @@ export default function DashboardClient({
                   <h2 className={`mb-3 ${sectionTitle}`}>
                     Rivalry Moments
                   </h2>
+                  {data.rivalryPanel &&
+                    (data.rivalryPanel.closestRival ||
+                      data.rivalryPanel.directConflict ||
+                      data.rivalryPanel.strategicCollision) ? (
+                    <div className="mb-3 space-y-2 rounded-lg border border-violet-500/20 bg-violet-950/20 p-3">
+                      {data.rivalryPanel.closestRival && (
+                        <p className="text-xs text-violet-300">
+                          <span className="font-medium">Closest rival:</span>{" "}
+                          {data.rivalryPanel.closestRival.detail}
+                        </p>
+                      )}
+                      {data.rivalryPanel.directConflict && (
+                        <p className="text-xs text-violet-300">
+                          <span className="font-medium">Direct conflict:</span>{" "}
+                          {data.rivalryPanel.directConflict.detail}
+                        </p>
+                      )}
+                      {data.rivalryPanel.strategicCollision && (
+                        <p className="text-xs text-violet-300">
+                          <span className="font-medium">Strategic collision:</span>{" "}
+                          {data.rivalryPanel.strategicCollision.detail}
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
                   {rivalryMoments.length === 0 ? (
                     <p className="text-sm text-neutral-400">No rivalry swings yet.</p>
                   ) : (
@@ -353,6 +396,8 @@ export default function DashboardClient({
                       highlightEvents={data.highlightEvents}
                       ownershipMap={data.ownershipMap}
                       momentumSummaries={data.momentumSummaries}
+                      rankDelta={rankDelta}
+                      contrarianLabels={data.contrarianLabels}
                     />
                   </div>
 

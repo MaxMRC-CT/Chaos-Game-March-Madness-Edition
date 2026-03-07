@@ -1,18 +1,22 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Activity, BarChart3, Flame, Swords, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildTeamOwnershipMap } from "@/lib/league/ownership";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
 import { EventTimeline } from "@/app/league/[leagueId]/dashboard/_components/event-timeline";
 import { LeaderboardPanel } from "@/app/league/[leagueId]/dashboard/_components/leaderboard-panel";
+import { RoundSummaryCard } from "@/app/league/[leagueId]/dashboard/_components/RoundSummaryCard";
 import { RivalriesView } from "@/app/league/[leagueId]/dashboard/_components/rivalries-view";
 import { MyLeaguePortfolioPanel } from "./my-league-portfolio-panel";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
 
 const TABS = ["standings", "portfolio", "power", "rivalries", "feed"] as const;
+
+const LAYOUT_TRANSITION = { type: "tween" as const, duration: 0.22, ease: "easeOut" } as const;
 type Tab = (typeof TABS)[number];
 
 export default function MyLeagueClient({
@@ -30,6 +34,8 @@ export default function MyLeagueClient({
   );
   const [data, setData] = useState<WarRoomResponse | null>(initial);
   const [error, setError] = useState<string | null>(null);
+  const prevStandingsRef = useRef<WarRoomResponse["standings"] | null>(null);
+  const [rankDelta, setRankDelta] = useState<Record<string, number>>({});
 
   const load = useCallback(async () => {
     try {
@@ -39,6 +45,17 @@ export default function MyLeagueClient({
       );
       if (!response.ok) throw new Error("Failed to load");
       const payload = (await response.json()) as WarRoomResponse;
+      const prev = prevStandingsRef.current;
+      if (prev && prev.length > 0 && payload.standings.length > 0) {
+        const prevRank = new Map(prev.map((r, i) => [r.memberId, i + 1]));
+        const delta: Record<string, number> = {};
+        payload.standings.forEach((r, i) => {
+          const pr = prevRank.get(r.memberId) ?? payload.standings.length + 1;
+          delta[r.memberId] = pr - (i + 1);
+        });
+        setRankDelta(delta);
+      }
+      prevStandingsRef.current = payload.standings;
       setData(payload);
       setError(null);
     } catch {
@@ -123,6 +140,24 @@ export default function MyLeagueClient({
                     {data?.league.status ?? "—"}
                   </span>
                   <span className="text-sm text-neutral-400">Standings, portfolio, power, rivalries, feed</span>
+                  {data?.rivalryPanel &&
+                    (data.rivalryPanel.closestRival ||
+                      data.rivalryPanel.directConflict ||
+                      data.rivalryPanel.strategicCollision) && (
+                      <Link
+                        href={`${pathname}?tab=rivalries`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-300 transition hover:bg-violet-500/20"
+                      >
+                        <Swords className="size-3" />
+                        {data.rivalryPanel.closestRival
+                          ? `Closest rival: ${data.rivalryPanel.closestRival.displayName}`
+                          : data.rivalryPanel.directConflict
+                            ? `Direct conflict: ${data.rivalryPanel.directConflict.displayName}`
+                            : data.rivalryPanel.strategicCollision
+                              ? `Strategic collision: ${data.rivalryPanel.strategicCollision.displayName}`
+                              : "Rivalry intel"}
+                      </Link>
+                    )}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -188,6 +223,12 @@ export default function MyLeagueClient({
 
           {error ? <p className="text-sm text-red-500">{error}</p> : null}
 
+          {data?.roundSummary && data.league.status === "LIVE" ? (
+            <div className="mb-4">
+              <RoundSummaryCard roundSummary={data.roundSummary} />
+            </div>
+          ) : null}
+
           {activeTab === "standings" ? (
             <section className="overflow-hidden rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">
               <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -225,7 +266,7 @@ export default function MyLeagueClient({
                       </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <motion.tbody layout>
                     {displayStandings.map((row, index) => {
                       const value =
                         standingsView === "points"
@@ -233,17 +274,64 @@ export default function MyLeagueClient({
                           : standingsView === "leverage"
                             ? (row as { portfolioLeverage?: number }).portfolioLeverage ?? 0
                             : (row as { chaosIndex?: number }).chaosIndex ?? 0;
+                      const rankChange = standingsView === "points" ? rankDelta[row.memberId] ?? 0 : 0;
+                      const biggestJumpId = data?.momentumSummaries?.biggestJump?.memberId;
+                      const clientBiggestJump =
+                        standingsView === "points" && !biggestJumpId
+                          ? displayStandings.reduce<{ memberId: string; delta: number } | null>(
+                              (best, r) => {
+                                const d = rankDelta[r.memberId] ?? 0;
+                                if (d <= 0) return best;
+                                return !best || d > best.delta ? { memberId: r.memberId, delta: d } : best;
+                              },
+                              null,
+                            )?.memberId
+                          : null;
+                      const isNewLeader = index === 0 && rankChange > 0;
+                      const showHighlight =
+                        standingsView === "points" &&
+                        (biggestJumpId === row.memberId ||
+                          clientBiggestJump === row.memberId ||
+                          isNewLeader);
                       return (
-                      <tr
+                      <motion.tr
                         key={row.memberId}
-                        className="border-t border-[#1f2937] transition-colors hover:bg-white/5"
+                        layout
+                        transition={LAYOUT_TRANSITION}
+                        className={`border-t border-[#1f2937] transition-colors hover:bg-white/5 ${
+                          showHighlight ? "standings-highlight-pulse" : ""
+                        }`}
                       >
                         <td className="px-2 py-2 sm:px-4 sm:py-3">
-                          <span className="inline-flex rounded-full bg-neutral-700 px-2 py-0.5 text-[10px] font-medium tabular-nums">
-                            {index + 1}
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="inline-flex rounded-full bg-neutral-700 px-2 py-0.5 text-[10px] font-medium tabular-nums">
+                              {index + 1}
+                            </span>
+                            {rankChange !== 0 ? (
+                              <span
+                                className={`text-[10px] font-semibold ${
+                                  rankChange > 0 ? "text-emerald-400" : "text-red-400"
+                                }`}
+                                title={rankChange > 0 ? `Up ${rankChange}` : `Down ${-rankChange}`}
+                              >
+                                {rankChange > 0 ? "↑" : "↓"} {Math.abs(rankChange)}
+                              </span>
+                            ) : null}
                           </span>
                         </td>
-                        <td className="px-2 py-2 text-neutral-100 sm:px-4 sm:py-3">{row.displayName}</td>
+                        <td className="px-2 py-2 text-neutral-100 sm:px-4 sm:py-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            {row.displayName}
+                            {data?.contrarianLabels?.[row.memberId] ? (
+                              <span
+                                className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300"
+                                title={data.contrarianLabels[row.memberId]}
+                              >
+                                {data.contrarianLabels[row.memberId]}
+                              </span>
+                            ) : null}
+                          </span>
+                        </td>
                         <td className="px-2 py-2 text-right font-semibold tabular-nums text-neutral-100 sm:px-4 sm:py-3">
                           {value}
                         </td>
@@ -262,9 +350,9 @@ export default function MyLeagueClient({
                         <td className="hidden px-2 py-2 text-right text-[10px] tabular-nums text-neutral-500 sm:table-cell sm:px-4 sm:py-3">
                           {row.championshipPrediction != null ? row.championshipPrediction : "—"}
                         </td>
-                      </tr>
+                      </motion.tr>
                     );})}
-                  </tbody>
+                  </motion.tbody>
                 </table>
               </div>
             </section>
@@ -285,7 +373,7 @@ export default function MyLeagueClient({
               </Link>
             </section>
           ) : activeTab === "power" && data ? (
-            <LeaderboardPanel
+              <LeaderboardPanel
                 standings={data.standings}
                 me={data.me}
                 aliveRolesByMemberId={aliveRolesByMemberId}
@@ -293,6 +381,8 @@ export default function MyLeagueClient({
                 highlightEvents={data.highlightEvents}
                 ownershipMap={ownershipMap}
                 momentumSummaries={data.momentumSummaries}
+                rankDelta={rankDelta}
+                contrarianLabels={data.contrarianLabels}
               />
           ) : activeTab === "rivalries" && data ? (
             <section className="rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">

@@ -43,3 +43,36 @@ body {
 .brand-vignette {
   background: radial-gradient(circle at center, transparent 36%, rgba(0, 0, 0, 0.52) 100%);
 }
+
+@keyframes standings-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 transparent;
+    background-color: transparent;
+  }
+  15%, 85% {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.12);
+    background-color: rgba(16, 185, 129, 0.04);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.18);
+    background-color: rgba(16, 185, 129, 0.06);
+  }
+}
+
+.standings-highlight-pulse {
+  animation: standings-glow-pulse 2.5s ease-out;
+  animation-fill-mode: both;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.loading-shimmer {
+  animation: shimmer 1.5s infinite;
+}

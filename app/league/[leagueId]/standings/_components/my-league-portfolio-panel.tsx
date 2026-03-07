@@ -1,8 +1,47 @@
 "use client";
 
-import { BarChart3, Gauge, Shield, Sparkles, Target, TrendingDown, TrendingUp, Zap } from "lucide-react";
-import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { BarChart3, ChevronDown, ChevronUp, Gauge, Shield, Sparkles, Swords, Target, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
+import {
+  getAntiChalkExposureExplanation,
+  getAntiChalkExposureLabel,
+  getFieldAlignmentExplanation,
+  getFieldAlignmentLabel,
+  getRiskProfileExplanation,
+  getRiskProfileLabel,
+  getUpsetDependencyExplanation,
+  getUpsetDependencyLabel,
+  getUpsideVsFieldExplanation,
+  getUpsideVsFieldLabel,
+} from "@/lib/analytics/identity";
+
+function ChaosIndexCell({ value, label }: { value: number; label: string }) {
+  const prevRef = useRef<number | null>(null);
+  const [pulsing, setPulsing] = useState(false);
+  useEffect(() => {
+    if (prevRef.current !== null && prevRef.current !== value) {
+      setPulsing(true);
+      const t = setTimeout(() => setPulsing(false), 400);
+      return () => clearTimeout(t);
+    }
+    prevRef.current = value;
+  }, [value]);
+  return (
+    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wider text-amber-300">{label}</p>
+      <motion.p
+        className="text-lg font-semibold tabular-nums text-neutral-100"
+        animate={pulsing ? { scale: [1, 1.15, 1] } : {}}
+        transition={{ duration: 0.3 }}
+      >
+        {value}
+      </motion.p>
+      <p className="text-xs text-neutral-400">Inverse-ownership weighted</p>
+    </div>
+  );
+}
 
 const ROLE_STYLES = {
   HERO: "border-blue-500/50 bg-blue-500/10 text-blue-200",
@@ -11,6 +50,109 @@ const ROLE_STYLES = {
 } as const;
 
 type SortMode = "default" | "leverage";
+
+type IdentityBlock = NonNullable<WarRoomResponse["myLeagueAnalytics"]>["identity"];
+
+function IdentityMetricCard({
+  label,
+  score,
+  interpretationLabel,
+  explanation,
+}: {
+  label: string;
+  score: number;
+  interpretationLabel: string;
+  explanation: string;
+}) {
+  return (
+    <div className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-3 py-2.5">
+      <div className="mb-1 flex items-baseline justify-between">
+        <p className="text-[10px] uppercase tracking-wider text-neutral-400">{label}</p>
+        <span className="text-xl font-semibold tabular-nums text-neutral-100">{score}</span>
+      </div>
+      <div className="h-1 overflow-hidden rounded-full bg-neutral-700">
+        <div
+          className="h-full rounded-full bg-amber-500/60"
+          style={{ width: `${Math.min(100, score)}%` }}
+        />
+      </div>
+      <p className="mt-1.5 text-sm font-medium text-amber-200/90">{interpretationLabel}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground leading-snug">{explanation}</p>
+    </div>
+  );
+}
+
+function PortfolioIdentityBlock({ identity }: { identity: NonNullable<IdentityBlock> }) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const metrics = [
+    {
+      label: "Field Alignment",
+      score: identity.fieldAlignment,
+      interpretationLabel: getFieldAlignmentLabel(identity.fieldAlignment),
+      explanation: getFieldAlignmentExplanation(identity.fieldAlignment),
+    },
+    {
+      label: "Upside vs Field",
+      score: identity.upsideVsField,
+      interpretationLabel: getUpsideVsFieldLabel(identity.upsideVsField),
+      explanation: getUpsideVsFieldExplanation(identity.upsideVsField),
+    },
+    {
+      label: "Risk Profile",
+      score: identity.riskProfile,
+      interpretationLabel: getRiskProfileLabel(identity.riskProfile),
+      explanation: getRiskProfileExplanation(identity.riskProfile),
+    },
+    {
+      label: "Anti-Chalk Exposure",
+      score: identity.antiChalkExposure,
+      interpretationLabel: getAntiChalkExposureLabel(identity.antiChalkExposure),
+      explanation: getAntiChalkExposureExplanation(identity.antiChalkExposure),
+    },
+    {
+      label: "Upset Dependency",
+      score: identity.upsetDependency,
+      interpretationLabel: getUpsetDependencyLabel(identity.upsetDependency),
+      explanation: getUpsetDependencyExplanation(identity.upsetDependency),
+    },
+  ];
+  return (
+    <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4">
+      <h3 className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-300">
+        <Gauge className="size-4" />
+        Portfolio Identity
+      </h3>
+      <p className="mb-3 text-xs text-neutral-500">
+        Locked at tip-off — your strategic identity for the season
+      </p>
+      <div className="relative mb-4 overflow-hidden rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2.5 before:pointer-events-none before:absolute before:inset-0 before:rounded-lg before:bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.08)_0%,transparent_70%)] before:opacity-100">
+        <p className="relative text-lg font-semibold text-amber-200">
+          {identity.archetype.name}
+        </p>
+        <p className="relative mt-0.5 text-sm text-muted-foreground">{identity.archetype.explanation}</p>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        {metrics.map((m) => (
+          <IdentityMetricCard key={m.label} {...m} />
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => setShowAdvanced(!showAdvanced)}
+        className="mt-3 flex items-center gap-1 text-[11px] text-neutral-500 hover:text-neutral-400"
+      >
+        {showAdvanced ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+        Show advanced breakdown
+      </button>
+      {showAdvanced && (
+        <div className="mt-2 space-y-1 rounded border border-neutral-700/80 bg-neutral-800/40 px-3 py-2 text-[11px] text-neutral-500">
+          <p>Raw values: Field {identity.fieldAlignment} · Upside {identity.upsideVsField} · Risk {identity.riskProfile} · Anti-chalk {identity.antiChalkExposure} · Upset {identity.upsetDependency}</p>
+          <p>Based on avg ownership, seed spread, and role composition at lock.</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function MyLeaguePortfolioPanel({
   data,
@@ -114,15 +256,21 @@ export function MyLeaguePortfolioPanel({
               pick.role === "HERO" ? obr.heroPct : pick.role === "VILLAIN" ? obr.villainPct : obr.cinderellaPct;
             const lev = leverageMap.get(`${pick.teamId}-${pick.role}`);
             const name = pick.team.shortName || pick.team.name;
+            const isHighLeverage = (lev?.leverage ?? 0) >= 2;
             return (
               <li
                 key={`${pick.teamId}-${pick.role}`}
-                className={`flex items-center justify-between rounded-lg border px-3 py-2 ${ROLE_STYLES[pick.role]}`}
+                className={`flex items-center justify-between rounded-lg border px-3 py-2 transition-shadow duration-200 ${ROLE_STYLES[pick.role]} ${
+                  isHighLeverage ? "shadow-[0_0_12px_rgba(251,98,35,0.15)]" : ""
+                }`}
               >
                 <span className="font-medium">{name}</span>
                 <span className="flex items-center gap-2 text-xs">
                   {lev ? (
-                    <span className="tabular-nums text-amber-300/90" title="Leverage">
+                    <span
+                      className={`tabular-nums ${isHighLeverage ? "font-semibold text-amber-300" : "text-amber-300/90"}`}
+                      title="Leverage"
+                    >
                       {lev.leverage}
                     </span>
                   ) : null}
@@ -159,27 +307,45 @@ export function MyLeaguePortfolioPanel({
         </div>
       )}
 
-      {/* v2.3 Projection preview for active teams */}
+      {/* v2.3 Projection preview for active teams - v2.4 visual upgrade */}
       {analytics.projectionPreviews && analytics.projectionPreviews.length > 0 && (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-emerald-300/90">
             <Target className="size-4" />
             Next-Round Projections
           </h3>
-          <ul className="space-y-2">
-            {analytics.projectionPreviews.map((prev) => (
-              <li
-                key={`${prev.teamId}-${prev.role}`}
-                className="rounded-lg border border-emerald-500/20 bg-neutral-900/60 px-3 py-2 text-sm"
-              >
-                <p className="font-medium text-neutral-100">
-                  {prev.teamName} ({prev.role})
-                </p>
-                <p className="mt-1 text-xs text-neutral-400">
-                  If {prev.role === "VILLAIN" ? "eliminated" : "wins"} next round → +{prev.youSwing} you / +{prev.leagueSwing} league / net ±{prev.netSwing}
-                </p>
-              </li>
-            ))}
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            {analytics.projectionPreviews.map((prev) => {
+              const netSwing = prev.netSwing ?? 0;
+              const netGain = netSwing > 0;
+              const netLoss = netSwing < 0;
+              const borderColor = netGain
+                ? "border-emerald-500/30 hover:border-emerald-500/50"
+                : netLoss
+                  ? "border-red-500/20 hover:border-red-500/40"
+                  : "border-neutral-700/60 hover:border-neutral-600";
+              const netClass = netGain
+                ? "text-emerald-400"
+                : netLoss
+                  ? "text-red-400"
+                  : "text-neutral-400";
+              return (
+                <li
+                  key={`${prev.teamId}-${prev.role}`}
+                  className={`rounded-lg border bg-neutral-900/60 px-3 py-2.5 text-sm shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${borderColor}`}
+                >
+                  <p className="font-medium text-neutral-100">
+                    {prev.teamName} ({prev.role})
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    If {prev.role === "VILLAIN" ? "eliminated" : "wins"} next round → +{prev.youSwing} you / +{prev.leagueSwing} league / net{" "}
+                    <span className={`font-medium ${netClass}`}>
+                      {netSwing > 0 ? "+" : ""}{netSwing}
+                    </span>
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -225,13 +391,7 @@ export function MyLeaguePortfolioPanel({
           </h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {analytics.pickLeverage && analytics.pickLeverage.portfolioLeverage > 0 && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-amber-300">Portfolio Leverage</p>
-                <p className="text-lg font-semibold tabular-nums text-neutral-100">
-                  {analytics.pickLeverage.portfolioLeverage}
-                </p>
-                <p className="text-xs text-neutral-400">Inverse-ownership weighted</p>
-              </div>
+              <ChaosIndexCell value={analytics.pickLeverage.portfolioLeverage} label="Portfolio Leverage" />
             )}
             {analytics.pickLeverage?.highestLeverageHit ? (
               <div className="flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
@@ -267,36 +427,56 @@ export function MyLeaguePortfolioPanel({
         </div>
       )}
 
-      {/* v2.2 Portfolio personality */}
-      {analytics.personality && (
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-300">
-            <Gauge className="size-4" />
-            Portfolio Personality
-          </h3>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            <div className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-2 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-neutral-400">Chalk</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-100">{analytics.personality.chalkIndex}</p>
-            </div>
-            <div className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-2 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-neutral-400">Leverage</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-100">{analytics.personality.leverageIndex}</p>
-            </div>
-            <div className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-2 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-neutral-400">Volatility</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-100">{analytics.personality.volatilityIndex}</p>
-            </div>
-            <div className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-2 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-neutral-400">Villain</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-100">{analytics.personality.villainAggressionScore}</p>
-            </div>
-            <div className="rounded-lg border border-neutral-700 bg-neutral-800/60 px-2 py-2 text-center">
-              <p className="text-[10px] uppercase tracking-wider text-neutral-400">Cinder</p>
-              <p className="text-base font-semibold tabular-nums text-neutral-100">{analytics.personality.cinderellaRiskScore}</p>
-            </div>
+      {/* Rivalry intel */}
+      {data.rivalryPanel &&
+        (data.rivalryPanel.closestRival ||
+          data.rivalryPanel.strategicCollision ||
+          data.rivalryPanel.directConflict ||
+          data.rivalryPanel.biggestThreat ||
+          data.rivalryPanel.mostOpposed) && (
+          <div className="rounded-lg border border-violet-500/30 bg-violet-500/5 p-4">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-violet-300/90">
+              <Swords className="size-4" />
+              Rivalry Intel
+            </h3>
+            <ul className="space-y-2">
+              {data.rivalryPanel.closestRival && (
+                <li className="rounded-lg border border-violet-500/20 bg-neutral-900/60 px-3 py-2 text-sm">
+                  <span className="font-medium text-violet-300">Closest Rival:</span>{" "}
+                  {data.rivalryPanel.closestRival.detail}
+                </li>
+              )}
+              {data.rivalryPanel.strategicCollision && (
+                <li className="rounded-lg border border-violet-500/20 bg-neutral-900/60 px-3 py-2 text-sm">
+                  <span className="font-medium text-violet-300">Strategic Collision:</span>{" "}
+                  {data.rivalryPanel.strategicCollision.detail}
+                </li>
+              )}
+              {data.rivalryPanel.directConflict && (
+                <li className="rounded-lg border border-violet-500/20 bg-neutral-900/60 px-3 py-2 text-sm">
+                  <span className="font-medium text-violet-300">Direct Conflict:</span>{" "}
+                  {data.rivalryPanel.directConflict.detail}
+                </li>
+              )}
+              {data.rivalryPanel.biggestThreat && (
+                <li className="rounded-lg border border-violet-500/20 bg-neutral-900/60 px-3 py-2 text-sm">
+                  <span className="font-medium text-violet-300">Biggest Threat:</span>{" "}
+                  {data.rivalryPanel.biggestThreat.detail}
+                </li>
+              )}
+              {data.rivalryPanel.mostOpposed && (
+                <li className="rounded-lg border border-violet-500/20 bg-neutral-900/60 px-3 py-2 text-sm">
+                  <span className="font-medium text-violet-300">Most Opposed:</span>{" "}
+                  {data.rivalryPanel.mostOpposed.detail}
+                </li>
+              )}
+            </ul>
           </div>
-        </div>
+        )}
+
+      {/* Portfolio Identity — locked to initial picks only */}
+      {analytics.identity && (
+        <PortfolioIdentityBlock identity={analytics.identity} />
       )}
 
       {/* Insights grid */}

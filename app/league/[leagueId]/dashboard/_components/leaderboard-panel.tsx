@@ -1,5 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
+
+const LAYOUT_TRANSITION = { type: "tween" as const, duration: 0.22, ease: "easeOut" as const } as const;
 import { Trophy } from "lucide-react";
 import { WarRoomResponse } from "./types";
 
@@ -11,6 +14,8 @@ export function LeaderboardPanel({
   highlightEvents,
   ownershipMap,
   momentumSummaries,
+  rankDelta,
+  contrarianLabels,
 }: {
   standings: WarRoomResponse["standings"];
   me: WarRoomResponse["me"];
@@ -19,7 +24,23 @@ export function LeaderboardPanel({
   highlightEvents: WarRoomResponse["highlightEvents"];
   ownershipMap: WarRoomResponse["ownershipMap"];
   momentumSummaries?: WarRoomResponse["momentumSummaries"];
+  rankDelta?: Record<string, number>;
+  contrarianLabels?: Record<string, string>;
 }) {
+  const biggestJumpId = momentumSummaries?.biggestJump?.memberId ?? null;
+  const clientBiggestJump =
+    !biggestJumpId && rankDelta
+      ? standings
+          .slice(0, 12)
+          .reduce<{ memberId: string; delta: number } | null>(
+            (best, r) => {
+              const d = rankDelta[r.memberId] ?? 0;
+              if (d <= 0) return best;
+              return !best || d > best.delta ? { memberId: r.memberId, delta: d } : best;
+            },
+            null,
+          )?.memberId ?? null
+      : null;
   const topMoverIds = [...standings]
     .sort((a, b) => Math.abs(standingsDelta[b.memberId] || 0) - Math.abs(standingsDelta[a.memberId] || 0))
     .slice(0, 3)
@@ -34,30 +55,54 @@ export function LeaderboardPanel({
       {standings.length === 0 ? (
         <p className="text-sm text-neutral-400">Waiting for results</p>
       ) : (
-        <ul className="space-y-2">
+        <motion.ul layout className="space-y-2">
           {standings.slice(0, 12).map((row, index) => {
             const isMe = me?.memberId === row.memberId;
             const movement = standingsDelta[row.memberId] || 0;
+            const rankChange = rankDelta?.[row.memberId] ?? 0;
             const aliveRoles = aliveRolesByMemberId[row.memberId] || [];
             const reason = topMoverIds.includes(row.memberId)
               ? movementReasonChip(row.memberId, highlightEvents, ownershipMap, momentumSummaries)
               : null;
+            const isBiggestJump = biggestJumpId === row.memberId || clientBiggestJump === row.memberId;
+            const isNewLeader = index === 0 && rankChange > 0;
+            const showHighlight = isBiggestJump || isNewLeader;
 
             return (
-              <li
+              <motion.li
                 key={row.memberId}
-                className={`rounded-lg border px-3 py-2 text-sm ${
+                layout
+                transition={LAYOUT_TRANSITION}
+                className={`rounded-lg border px-3 py-2 text-sm transition-shadow duration-300 ${
                   isMe ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/10 bg-[#0f1623]/80"
-                }`}
+                } ${showHighlight ? "standings-highlight-pulse" : ""}`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 truncate text-neutral-100">
                       <span className="font-mono text-xs text-neutral-400">#{index + 1}</span>
+                      {rankChange !== 0 ? (
+                        <span
+                          className={`inline-flex items-center text-[10px] font-semibold ${
+                            rankChange > 0 ? "text-emerald-400" : "text-red-400"
+                          }`}
+                          title={rankChange > 0 ? `Moved up ${rankChange}` : `Moved down ${-rankChange}`}
+                        >
+                          {rankChange > 0 ? "↑" : "↓"} {Math.abs(rankChange)}
+                        </span>
+                      ) : null}
                       <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-700 text-[10px] font-semibold">
                         {row.displayName.slice(0, 2).toUpperCase()}
                       </span>
                       <span>{row.displayName}</span>
+                      {contrarianLabels?.[row.memberId] ? (
+                        <span
+                          className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300"
+                          title={contrarianLabels[row.memberId]}
+                        >
+                          {contrarianLabels[row.memberId]}
+                        </span>
+                      ) : null}
                       <span className="text-[10px] text-neutral-500" title="Championship tiebreak">
                         TB: {row.championshipPrediction != null ? row.championshipPrediction : "—"}
                       </span>
@@ -93,10 +138,10 @@ export function LeaderboardPanel({
                     </p>
                   </div>
                 </div>
-              </li>
+              </motion.li>
             );
           })}
-        </ul>
+        </motion.ul>
       )}
     </section>
   );
