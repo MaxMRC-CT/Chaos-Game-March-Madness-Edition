@@ -10,6 +10,7 @@ export function LeaderboardPanel({
   standingsDelta,
   highlightEvents,
   ownershipMap,
+  momentumSummaries,
 }: {
   standings: WarRoomResponse["standings"];
   me: WarRoomResponse["me"];
@@ -17,6 +18,7 @@ export function LeaderboardPanel({
   standingsDelta: WarRoomResponse["standingsDelta"];
   highlightEvents: WarRoomResponse["highlightEvents"];
   ownershipMap: WarRoomResponse["ownershipMap"];
+  momentumSummaries?: WarRoomResponse["momentumSummaries"];
 }) {
   const topMoverIds = [...standings]
     .sort((a, b) => Math.abs(standingsDelta[b.memberId] || 0) - Math.abs(standingsDelta[a.memberId] || 0))
@@ -38,7 +40,7 @@ export function LeaderboardPanel({
             const movement = standingsDelta[row.memberId] || 0;
             const aliveRoles = aliveRolesByMemberId[row.memberId] || [];
             const reason = topMoverIds.includes(row.memberId)
-              ? movementReasonChip(row.memberId, highlightEvents, ownershipMap)
+              ? movementReasonChip(row.memberId, highlightEvents, ownershipMap, momentumSummaries)
               : null;
 
             return (
@@ -104,7 +106,14 @@ function movementReasonChip(
   memberId: string,
   events: WarRoomResponse["highlightEvents"],
   ownershipMap: WarRoomResponse["ownershipMap"],
+  momentumSummaries?: WarRoomResponse["momentumSummaries"],
 ) {
+  if (momentumSummaries?.chaosSpike?.memberId === memberId) {
+    return "Chaos Spike";
+  }
+  if (momentumSummaries?.biggestJump?.memberId === memberId && momentumSummaries.biggestJump.spots >= 2) {
+    return `+${momentumSummaries.biggestJump.spots} spots`;
+  }
   for (const event of events) {
     const payload = (event.payload || {}) as Record<string, unknown>;
     if (event.type === "RIVALRY_BONUS" && String(payload.memberId || "") === memberId) {

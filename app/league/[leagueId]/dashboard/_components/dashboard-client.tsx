@@ -352,6 +352,7 @@ export default function DashboardClient({
                       standingsDelta={data.standingsDelta}
                       highlightEvents={data.highlightEvents}
                       ownershipMap={data.ownershipMap}
+                      momentumSummaries={data.momentumSummaries}
                     />
                   </div>
 
@@ -362,6 +363,7 @@ export default function DashboardClient({
                       picks={data.picks}
                       members={data.members}
                       teams={data.teams}
+                      ownershipByRole={data.ownershipByRole}
                       limit={10}
                       compact
                       maxHeightClass="max-h-[260px]"

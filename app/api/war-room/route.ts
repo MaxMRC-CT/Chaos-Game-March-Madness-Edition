@@ -11,6 +11,18 @@ import {
   computeVillainPoints,
 } from "@/lib/scoring/compute";
 import { getBracketConfig } from "@/lib/bracket/config";
+import {
+  computeChaosIndex,
+  computePortfolioLeverage,
+  getHighestLeverageHit,
+  getMostValuableContrarianHit,
+  getPickLeverageV23,
+  getTopLeveragePicksLeagueWide,
+} from "@/lib/analytics/leverage";
+import { computePersonalityMetrics } from "@/lib/analytics/personality";
+import { buildMomentumSummaries } from "@/lib/analytics/momentum";
+import { computeProjectionForActiveTeam } from "@/lib/analytics/projection";
+import { computeUpsetExposure } from "@/lib/analytics/upset-exposure";
 import { evaluateStatusTransitions } from "@/lib/league/lifecycle";
 
 const ROUND_ORDER: Round[] = ["R64", "R32", "S16", "E8", "F4", "FINAL"];
@@ -230,8 +242,77 @@ export async function GET(request: Request) {
             teamResults,
             ownershipByRole,
             standingsRow: standings.find((s) => s.memberId === me.id) ?? null,
+            currentRound,
+            allPicks: picksWithPickNumber,
+            memberId: me.id,
           })
         : undefined;
+
+    const picksWithOwnershipForTop5 = picksWithPickNumber.map((p) => {
+      const obr = ownershipByRole[p.teamId] ?? { heroPct: 0, villainPct: 0, cinderellaPct: 0 };
+      const pct =
+        p.role === "HERO" ? obr.heroPct : p.role === "VILLAIN" ? obr.villainPct : obr.cinderellaPct;
+      return {
+        teamId: p.teamId,
+        role: p.role,
+        teamName: p.team.shortName || p.team.name,
+        ownershipPct: pct,
+        seed: p.team.seed,
+        memberId: p.memberId,
+        memberDisplayName: p.member.displayName,
+      };
+    });
+    const top5LeveragePicks = getTopLeveragePicksLeagueWide(
+      picksWithOwnershipForTop5,
+      resultByTeamId,
+      5,
+    );
+
+    const teamSeeds = new Map(teams.map((t) => [t.id, t.seed]));
+    const upsetExposure = computeUpsetExposure(
+      picksWithPickNumber.map((p) => ({
+        teamId: p.teamId,
+        role: p.role,
+        memberId: p.memberId,
+        seed: p.team.seed,
+      })),
+      ownershipByRole,
+      memberCount,
+      teamSeeds,
+    );
+
+    const standingsWithLeverage = standings.map((row) => {
+      const memberPicks = picksWithPickNumber.filter((p) => p.memberId === row.memberId);
+      const memberPicksWithOwnership = memberPicks.map((p) => {
+        const obr = ownershipByRole[p.teamId] ?? { heroPct: 0, villainPct: 0, cinderellaPct: 0 };
+        const pct =
+          p.role === "HERO" ? obr.heroPct : p.role === "VILLAIN" ? obr.villainPct : obr.cinderellaPct;
+        return {
+          teamId: p.teamId,
+          role: p.role,
+          teamName: p.team.shortName || p.team.name,
+          ownershipPct: pct,
+          seed: p.team.seed,
+        };
+      });
+      const chaosIndex = computeChaosIndex(memberPicksWithOwnership, resultByTeamId);
+      const portfolioLeverage =
+        memberPicksWithOwnership.length > 0
+          ? chaosIndex / memberPicksWithOwnership.length
+          : 0;
+      return {
+        ...row,
+        chaosIndex,
+        portfolioLeverage: Math.round(portfolioLeverage * 10) / 10,
+      };
+    });
+
+    const momentumSummaries = buildMomentumSummaries(
+      standings,
+      snapshots,
+      highlightEvents,
+      ownershipMap,
+    );
 
     const roundCounts =
       process.env.ENV_NAME === "development"
@@ -290,7 +371,11 @@ export async function GET(request: Request) {
       hotSeatMatchups,
       ownershipMap,
       ownershipByRole,
+      momentumSummaries,
       ...(myLeagueAnalytics != null && { myLeagueAnalytics }),
+      top5LeveragePicks,
+      upsetExposure,
+      standingsWithLeverage,
       ...(roundCounts != null && { roundCounts }),
     });
   } catch (error: unknown) {
@@ -379,12 +464,18 @@ function buildMyLeagueAnalytics({
   teamResults,
   ownershipByRole,
   standingsRow,
+  currentRound,
+  allPicks,
+  memberId,
 }: {
   myPicks: MyPickLite[];
   teams: Array<{ id: string; name: string; shortName: string | null; seed: number; region: string }>;
   teamResults: Array<{ teamId: string; wins: number; eliminatedRound: Round | null }>;
   ownershipByRole: Record<string, { heroPct: number; villainPct: number; cinderellaPct: number }>;
   standingsRow: StandingRow | null;
+  currentRound: Round;
+  allPicks: Array<{ teamId: string; role: "HERO" | "VILLAIN" | "CINDERELLA"; memberId: string; member: { displayName: string }; team: { id: string; name: string; shortName: string | null; seed: number; region: string } }>;
+  memberId: string;
 }) {
   const teamById = new Map(teams.map((t) => [t.id, t]));
   const resultByTeamId = new Map(teamResults.map((r) => [r.teamId, r]));
@@ -459,12 +550,106 @@ function buildMyLeagueAnalytics({
     }
   }
 
+  const picksWithOwnershipForAnalytics = picksWithOwnership.map((p) => ({
+    teamId: p.teamId,
+    role: p.role,
+    teamName: p.team.shortName || p.team.name,
+    ownershipPct: p.ownershipPct,
+    seed: p.team.seed,
+  }));
+  const resultByTeamIdForAnalytics = new Map(
+    teamResults.map((r) => [r.teamId, { teamId: r.teamId, wins: r.wins, eliminatedRound: r.eliminatedRound }]),
+  );
+
+  const portfolioLeverage = computePortfolioLeverage(
+    picksWithOwnershipForAnalytics,
+    resultByTeamIdForAnalytics,
+  );
+  const highestLeverageHit = getHighestLeverageHit(
+    picksWithOwnershipForAnalytics,
+    resultByTeamIdForAnalytics,
+  );
+  const mostValuableContrarianHit = getMostValuableContrarianHit(
+    picksWithOwnershipForAnalytics,
+    resultByTeamIdForAnalytics,
+  );
+  const personality = computePersonalityMetrics(
+    picksWithOwnershipForAnalytics,
+    resultByTeamIdForAnalytics,
+  );
+
+  // v2.3 Per-pick leverage (v2.3 formula) for sorting
+  const pickLeveragePerPick = picksWithOwnershipForAnalytics.map((p) => {
+    const { points, leverage } = getPickLeverageV23(p, resultByTeamIdForAnalytics);
+    return {
+      teamId: p.teamId,
+      role: p.role,
+      teamName: p.teamName,
+      points,
+      leverage,
+      ownershipPct: p.ownershipPct,
+    };
+  });
+
+  // v2.3 Chaos Index (sum of pick leverage)
+  const chaosIndex = computeChaosIndex(
+    picksWithOwnershipForAnalytics,
+    resultByTeamIdForAnalytics,
+  );
+
+  // v2.3 Projection preview for active teams
+  const resultByTeamIdLite = new Map(
+    teamResults.map((r) => [r.teamId, { teamId: r.teamId, wins: r.wins, eliminatedRound: r.eliminatedRound }]),
+  );
+  const allPicksLite = allPicks.map((p) => ({
+    teamId: p.teamId,
+    role: p.role,
+    memberId: p.memberId,
+    teamName: p.team.shortName || p.team.name,
+    seed: p.team.seed,
+  }));
+  const projectionPreviews: Array<{
+    teamId: string;
+    teamName: string;
+    role: string;
+    currentPoints: number;
+    nextRoundPoints: number;
+    pointsDelta: number;
+    avgOwnershipPct: number;
+    youSwing: number;
+    leagueSwing: number;
+    netSwing: number;
+  }> = [];
+  for (const pick of myPicks) {
+    const result = resultByTeamIdLite.get(pick.teamId) ?? null;
+    const preview = computeProjectionForActiveTeam(
+      {
+        teamId: pick.teamId,
+        role: pick.role,
+        memberId,
+        teamName: pick.team.shortName || pick.team.name,
+        seed: pick.team.seed,
+      },
+      result,
+      currentRound,
+      ownershipByRole,
+      memberId,
+      allPicksLite,
+    );
+    if (preview) projectionPreviews.push(preview);
+  }
+
   return {
     mostUniquePick: mostUnique,
     chalkiestPick: chalkiest,
     biggestVillainHit,
     bestCinderellaPerformer,
     scoreByRole: { hero, villain, cinderella, total },
+    pickLeverage: { portfolioLeverage, highestLeverageHit, mostValuableContrarianHit },
+    personality,
+    pickLeveragePerPick,
+    chaosIndex,
+    projectionPreviews,
   };
 }
 

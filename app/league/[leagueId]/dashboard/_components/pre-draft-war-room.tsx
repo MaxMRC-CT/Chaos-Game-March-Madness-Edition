@@ -245,6 +245,7 @@ export function PreDraftWarRoom({
               picks={data.picks}
               members={data.members}
               teams={data.teams}
+              ownershipByRole={data.ownershipByRole}
               limit={10}
               compact
               maxHeightClass="max-h-[260px]"

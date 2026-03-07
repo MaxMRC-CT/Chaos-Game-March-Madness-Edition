@@ -114,7 +114,93 @@ export type WarRoomResponse = {
     biggestVillainHit: { teamId: string; teamName: string; points: number } | null;
     bestCinderellaPerformer: { teamId: string; teamName: string; points: number } | null;
     scoreByRole: { hero: number; villain: number; cinderella: number; total: number };
+    pickLeveragePerPick?: Array<{
+      teamId: string;
+      role: string;
+      teamName: string;
+      points: number;
+      leverage: number;
+      ownershipPct: number;
+    }>;
+    chaosIndex?: number;
+    projectionPreviews?: Array<{
+      teamId: string;
+      teamName: string;
+      role: string;
+      currentPoints: number;
+      nextRoundPoints: number;
+      pointsDelta: number;
+      avgOwnershipPct: number;
+      youSwing: number;
+      leagueSwing: number;
+      netSwing: number;
+    }>;
+    pickLeverage?: {
+      portfolioLeverage: number;
+      highestLeverageHit: {
+        teamId: string;
+        teamName: string;
+        role: string;
+        points: number;
+        leverage: number;
+        ownershipPct: number;
+      } | null;
+      mostValuableContrarianHit: {
+        teamId: string;
+        teamName: string;
+        role: string;
+        points: number;
+        ownershipPct: number;
+      } | null;
+    };
+    personality?: {
+      chalkIndex: number;
+      leverageIndex: number;
+      volatilityIndex: number;
+      villainAggressionScore: number;
+      cinderellaRiskScore: number;
+    };
   };
+  momentumSummaries?: {
+    biggestJump: { memberId: string; displayName: string; spots: number; delta: number } | null;
+    momentumLeader: { memberId: string; displayName: string; total: number } | null;
+    leaderUnderPressure: boolean;
+    chaosSpike: { memberId: string; displayName: string; label: string } | null;
+  };
+  /** v2.3 League-wide top 5 leverage picks */
+  top5LeveragePicks?: Array<{
+    teamId: string;
+    teamName: string;
+    role: string;
+    points: number;
+    leverage: number;
+    ownershipPct: number;
+    memberDisplayName?: string;
+  }>;
+  /** v2.3 Upset exposure summary */
+  upsetExposure?: {
+    totalCinderellaExposurePct: number;
+    totalVillainExposurePct: number;
+    highSeedRiskSummary: {
+      heroExposurePct: number;
+      villainExposurePct: number;
+      cinderellaExposurePct: number;
+      highSeedTeamCount: number;
+    };
+  };
+  /** v2.3 Standings with chaosIndex and portfolioLeverage for toggle sorting */
+  standingsWithLeverage?: Array<{
+    memberId: string;
+    displayName: string;
+    total: number;
+    HERO?: number;
+    VILLAIN?: number;
+    CINDERELLA?: number;
+    rivalry?: number;
+    championshipPrediction?: number | null;
+    chaosIndex: number;
+    portfolioLeverage: number;
+  }>;
   /** Present only when ENV_NAME=development */
   roundCounts?: { R64: number; R32: number; S16: number; E8: number; F4: number; NCG: number };
 };

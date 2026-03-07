@@ -90,7 +90,22 @@ export default function MyLeagueClient({
   }, [data?.picks]);
 
   const standings = data?.standings ?? [];
+  const standingsWithLeverage = data?.standingsWithLeverage ?? [];
   const showPortfolio = data?.league.status === "SETUP" || data?.league.status === "LOCKED" || data?.league.status === "DRAFT";
+
+  type StandingsViewMode = "points" | "leverage" | "chaos";
+  const [standingsView, setStandingsView] = useState<StandingsViewMode>("points");
+
+  const displayStandings = useMemo(() => {
+    if (standingsView === "points") return standings;
+    const withLev = standingsWithLeverage.length > 0 ? standingsWithLeverage : standings.map((r) => ({ ...r, chaosIndex: 0, portfolioLeverage: 0 }));
+    if (standingsView === "leverage") {
+      return [...withLev].sort((a, b) => (b.portfolioLeverage ?? 0) - (a.portfolioLeverage ?? 0));
+    }
+    return [...withLev].sort((a, b) => (b.chaosIndex ?? 0) - (a.chaosIndex ?? 0));
+  }, [standings, standingsWithLeverage, standingsView]);
+
+  const valueLabel = standingsView === "points" ? "Total" : standingsView === "leverage" ? "Leverage" : "Chaos";
 
   return (
     <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">
@@ -175,13 +190,30 @@ export default function MyLeagueClient({
 
           {activeTab === "standings" ? (
             <section className="overflow-hidden rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-neutral-500">View by</span>
+                {(["points", "leverage", "chaos"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setStandingsView(mode)}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] ${
+                      standingsView === mode
+                        ? "bg-amber-500/20 text-amber-300"
+                        : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
+                    }`}
+                  >
+                    {mode === "points" ? "Points" : mode === "leverage" ? "Leverage" : "Chaos Index"}
+                  </button>
+                ))}
+              </div>
               <div className="overflow-x-auto rounded-lg">
                 <table className="min-w-full text-sm">
                   <thead className="sticky top-0 z-10 bg-[#0f1623]">
                     <tr className="border-b border-[#1f2937]">
                       <th className="px-2 py-2 text-left text-neutral-400 sm:px-4 sm:py-3">Rank</th>
                       <th className="px-2 py-2 text-left text-neutral-400 sm:px-4 sm:py-3">Player</th>
-                      <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">Total</th>
+                      <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">{valueLabel}</th>
                       <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">Hero</th>
                       <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">Villain</th>
                       <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">Cinderella</th>
@@ -194,7 +226,14 @@ export default function MyLeagueClient({
                     </tr>
                   </thead>
                   <tbody>
-                    {standings.map((row, index) => (
+                    {displayStandings.map((row, index) => {
+                      const value =
+                        standingsView === "points"
+                          ? row.total ?? 0
+                          : standingsView === "leverage"
+                            ? (row as { portfolioLeverage?: number }).portfolioLeverage ?? 0
+                            : (row as { chaosIndex?: number }).chaosIndex ?? 0;
+                      return (
                       <tr
                         key={row.memberId}
                         className="border-t border-[#1f2937] transition-colors hover:bg-white/5"
@@ -206,7 +245,7 @@ export default function MyLeagueClient({
                         </td>
                         <td className="px-2 py-2 text-neutral-100 sm:px-4 sm:py-3">{row.displayName}</td>
                         <td className="px-2 py-2 text-right font-semibold tabular-nums text-neutral-100 sm:px-4 sm:py-3">
-                          {row.total ?? 0}
+                          {value}
                         </td>
                         <td className="px-2 py-2 text-right tabular-nums text-neutral-300 sm:px-4 sm:py-3">
                           {row.HERO ?? 0}
@@ -224,7 +263,7 @@ export default function MyLeagueClient({
                           {row.championshipPrediction != null ? row.championshipPrediction : "—"}
                         </td>
                       </tr>
-                    ))}
+                    );})}
                   </tbody>
                 </table>
               </div>
@@ -253,18 +292,41 @@ export default function MyLeagueClient({
                 standingsDelta={data.standingsDelta}
                 highlightEvents={data.highlightEvents}
                 ownershipMap={ownershipMap}
+                momentumSummaries={data.momentumSummaries}
               />
           ) : activeTab === "rivalries" && data ? (
             <section className="rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">
               <RivalriesView data={data} rivalryMoments={rivalryMoments} />
             </section>
           ) : activeTab === "feed" && data ? (
-            <section className="rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">
+            <section className="space-y-4 rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">
+              {data.momentumSummaries &&
+                (data.momentumSummaries.biggestJump ||
+                  data.momentumSummaries.chaosSpike ||
+                  data.momentumSummaries.leaderUnderPressure) && (
+                  <div className="flex flex-wrap gap-2 rounded-lg border border-neutral-800 bg-neutral-900/80 p-3">
+                    {data.momentumSummaries.chaosSpike ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-medium text-amber-300">
+                        Chaos Spike: {data.momentumSummaries.chaosSpike.label}
+                      </span>
+                    ) : data.momentumSummaries.biggestJump ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-300">
+                        Biggest Jump: {data.momentumSummaries.biggestJump.displayName} +{data.momentumSummaries.biggestJump.spots} spots
+                      </span>
+                    ) : null}
+                    {data.momentumSummaries.leaderUnderPressure ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/20 px-2.5 py-1 text-xs font-medium text-violet-300">
+                        Leader Under Pressure
+                      </span>
+                    ) : null}
+                  </div>
+                )}
               <EventTimeline
                 events={data.recentEvents}
                 picks={data.picks}
                 members={data.members}
                 teams={data.teams}
+                ownershipByRole={data.ownershipByRole}
               />
             </section>
           ) : null}
