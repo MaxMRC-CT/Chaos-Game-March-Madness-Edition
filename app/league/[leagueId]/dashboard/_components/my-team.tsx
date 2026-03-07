@@ -14,10 +14,12 @@ export function MyTeam({
   myPicks,
   standingsRow,
   resultByTeamId,
+  ownershipByRole,
 }: {
   myPicks: WarRoomResponse["myPicks"];
   standingsRow: WarRoomResponse["standings"][number] | null;
   resultByTeamId: Record<string, WarRoomResponse["teamResults"][number] | undefined>;
+  ownershipByRole?: WarRoomResponse["ownershipByRole"];
 }) {
   return (
     <section className="space-y-3 rounded-2xl border border-white/10 bg-[#111827]/95 backdrop-blur-sm p-4 sm:p-5 shadow-[0_0_18px_rgba(251,98,35,0.06)] transition duration-200 motion-reduce:transition-none motion-reduce:transform-none supports-[hover:hover]:hover:-translate-y-1 supports-[hover:hover]:hover:shadow-[0_0_28px_rgba(251,98,35,0.14)]">
@@ -56,6 +58,14 @@ export function MyTeam({
                         : "ELIMINATED";
                     const statusLabel = status === "UNKNOWN" ? "TBD" : status === "ELIMINATED" ? "ELIMINATED ☠" : status;
                     const isEliminated = status === "ELIMINATED";
+                    const obr = ownershipByRole?.[pick.teamId];
+                    const ownedPct = obr
+                      ? pick.role === "HERO"
+                        ? obr.heroPct
+                        : pick.role === "VILLAIN"
+                          ? obr.villainPct
+                          : obr.cinderellaPct
+                      : null;
                     return (
                       <li
                         key={pick.teamId}
@@ -79,6 +89,9 @@ export function MyTeam({
                         </div>
                         <p className="mt-1 text-xs text-neutral-400">
                           Seed {pick.team.seed} • {pick.team.region}
+                          {ownedPct != null ? (
+                            <span className="ml-1 text-neutral-500">· {ownedPct}% owned</span>
+                          ) : null}
                         </p>
                       </li>
                     );

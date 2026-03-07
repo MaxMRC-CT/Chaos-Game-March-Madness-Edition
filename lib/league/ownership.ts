@@ -25,3 +25,43 @@ export function buildTeamOwnershipMap(picks: PickWithOwner[]) {
   }
   return map;
 }
+
+/** v2.1: League ownership % by role per team. After picks lock. */
+export type OwnershipByRole = {
+  heroPct: number;
+  villainPct: number;
+  cinderellaPct: number;
+};
+
+export function computeOwnershipByRole(
+  picks: Array<{ teamId: string; role: "HERO" | "VILLAIN" | "CINDERELLA"; memberId: string }>,
+  memberCount: number,
+): Record<string, OwnershipByRole> {
+  const result: Record<string, OwnershipByRole> = {};
+  if (memberCount <= 0) return result;
+
+  const byTeam = new Map<
+    string,
+    { hero: number; villain: number; cinderella: number }
+  >();
+  for (const pick of picks) {
+    let entry = byTeam.get(pick.teamId);
+    if (!entry) {
+      entry = { hero: 0, villain: 0, cinderella: 0 };
+      byTeam.set(pick.teamId, entry);
+    }
+    if (pick.role === "HERO") entry.hero++;
+    else if (pick.role === "VILLAIN") entry.villain++;
+    else entry.cinderella++;
+  }
+
+  for (const [teamId, counts] of byTeam) {
+    result[teamId] = {
+      heroPct: Math.round((counts.hero / memberCount) * 100),
+      villainPct: Math.round((counts.villain / memberCount) * 100),
+      cinderellaPct: Math.round((counts.cinderella / memberCount) * 100),
+    };
+  }
+
+  return result;
+}

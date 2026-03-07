@@ -88,6 +88,8 @@ export type WarRoomResponse = {
       heroOwners: string[];
       villainOwners: string[];
       cinderellaOwners: string[];
+      teamAOwnership?: { heroPct: number; villainPct: number; cinderellaPct: number };
+      teamBOwnership?: { heroPct: number; villainPct: number; cinderellaPct: number };
     };
     potentialSwing: {
       ifTeamAWins: string;
@@ -102,6 +104,17 @@ export type WarRoomResponse = {
       ownerMemberId: string;
     }>
   >;
+  ownershipByRole: Record<
+    string,
+    { heroPct: number; villainPct: number; cinderellaPct: number }
+  >;
+  myLeagueAnalytics?: {
+    mostUniquePick: { teamId: string; teamName: string; role: string; ownershipPct: number } | null;
+    chalkiestPick: { teamId: string; teamName: string; role: string; ownershipPct: number } | null;
+    biggestVillainHit: { teamId: string; teamName: string; points: number } | null;
+    bestCinderellaPerformer: { teamId: string; teamName: string; points: number } | null;
+    scoreByRole: { hero: number; villain: number; cinderella: number; total: number };
+  };
   /** Present only when ENV_NAME=development */
   roundCounts?: { R64: number; R32: number; S16: number; E8: number; F4: number; NCG: number };
 };

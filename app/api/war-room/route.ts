@@ -4,6 +4,7 @@ import { Round } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
+import { computeOwnershipByRole } from "@/lib/league/ownership";
 import {
   computeCinderellaPoints,
   computeHeroPoints,
@@ -192,6 +193,12 @@ export async function GET(request: Request) {
       return acc;
     }, {});
 
+    const memberCount = members.length;
+    const ownershipByRole = computeOwnershipByRole(
+      picks.map((p) => ({ teamId: p.teamId, role: p.role, memberId: p.memberId })),
+      memberCount,
+    );
+
     const standings = normalizeStandings(score?.totals, members.map((m) => ({ id: m.id, displayName: m.displayName, championshipPrediction: m.championshipPrediction })));
     const standingsDelta = computeStandingsDelta(snapshots, members);
 
@@ -207,12 +214,24 @@ export async function GET(request: Request) {
       games,
       teams,
       ownershipMap,
+      ownershipByRole,
       resultByTeamId,
       currentRound,
     });
 
     const picksWithPickNumber = picks.map((p, i) => ({ ...p, pickNumber: i + 1 }));
     const myPicks = me ? picksWithPickNumber.filter((pick) => pick.memberId === me.id) : [];
+
+    const myLeagueAnalytics =
+      me && myPicks.length > 0
+        ? buildMyLeagueAnalytics({
+            myPicks,
+            teams,
+            teamResults,
+            ownershipByRole,
+            standingsRow: standings.find((s) => s.memberId === me.id) ?? null,
+          })
+        : undefined;
 
     const roundCounts =
       process.env.ENV_NAME === "development"
@@ -270,6 +289,8 @@ export async function GET(request: Request) {
       highlightEvents,
       hotSeatMatchups,
       ownershipMap,
+      ownershipByRole,
+      ...(myLeagueAnalytics != null && { myLeagueAnalytics }),
       ...(roundCounts != null && { roundCounts }),
     });
   } catch (error: unknown) {
@@ -346,6 +367,107 @@ function extractTotalsMap(totals: unknown) {
   return map;
 }
 
+type MyPickLite = {
+  teamId: string;
+  role: "HERO" | "VILLAIN" | "CINDERELLA";
+  team: { id: string; name: string; shortName: string | null; seed: number; region: string };
+};
+
+function buildMyLeagueAnalytics({
+  myPicks,
+  teams,
+  teamResults,
+  ownershipByRole,
+  standingsRow,
+}: {
+  myPicks: MyPickLite[];
+  teams: Array<{ id: string; name: string; shortName: string | null; seed: number; region: string }>;
+  teamResults: Array<{ teamId: string; wins: number; eliminatedRound: Round | null }>;
+  ownershipByRole: Record<string, { heroPct: number; villainPct: number; cinderellaPct: number }>;
+  standingsRow: StandingRow | null;
+}) {
+  const teamById = new Map(teams.map((t) => [t.id, t]));
+  const resultByTeamId = new Map(teamResults.map((r) => [r.teamId, r]));
+
+  const hero = standingsRow?.HERO ?? 0;
+  const villain = standingsRow?.VILLAIN ?? 0;
+  const cinderella = standingsRow?.CINDERELLA ?? 0;
+  const total = hero + villain + cinderella + (standingsRow?.rivalry ?? 0);
+
+  const picksWithOwnership = myPicks.map((pick) => {
+    const obr = ownershipByRole[pick.teamId] ?? { heroPct: 0, villainPct: 0, cinderellaPct: 0 };
+    const pct =
+      pick.role === "HERO" ? obr.heroPct : pick.role === "VILLAIN" ? obr.villainPct : obr.cinderellaPct;
+    return { ...pick, ownershipPct: pct };
+  });
+
+  const sortedByOwnership = [...picksWithOwnership].sort((a, b) => a.ownershipPct - b.ownershipPct);
+  const mostUnique =
+    sortedByOwnership.length > 0 && sortedByOwnership[0].ownershipPct < 100
+      ? {
+          teamId: sortedByOwnership[0].teamId,
+          teamName: sortedByOwnership[0].team.shortName || sortedByOwnership[0].team.name,
+          role: sortedByOwnership[0].role,
+          ownershipPct: sortedByOwnership[0].ownershipPct,
+        }
+      : null;
+
+  const chalkiest =
+    sortedByOwnership.length > 0
+      ? (() => {
+          const c = sortedByOwnership[sortedByOwnership.length - 1];
+          return {
+            teamId: c.teamId,
+            teamName: c.team.shortName || c.team.name,
+            role: c.role,
+            ownershipPct: c.ownershipPct,
+          };
+        })()
+      : null;
+
+  const villainPicks = myPicks.filter((p) => p.role === "VILLAIN");
+  let biggestVillainHit: { teamId: string; teamName: string; points: number } | null = null;
+  for (const pick of villainPicks) {
+    const result = resultByTeamId.get(pick.teamId);
+    const points = result ? computeVillainPoints(result.eliminatedRound) : 0;
+    const team = teamById.get(pick.teamId) ?? pick.team;
+    if (!biggestVillainHit || points > biggestVillainHit.points) {
+      biggestVillainHit = {
+        teamId: pick.teamId,
+        teamName: team.shortName || team.name,
+        points,
+      };
+    }
+  }
+
+  const cinderellaPicks = myPicks.filter((p) => p.role === "CINDERELLA");
+  let bestCinderellaPerformer: { teamId: string; teamName: string; points: number } | null = null;
+  for (const pick of cinderellaPicks) {
+    const result = resultByTeamId.get(pick.teamId);
+    const wins = result?.wins ?? 0;
+    const reachedS16 = wins >= 2;
+    const reachedE8 = wins >= 3;
+    const reachedF4 = wins >= 4;
+    const points = computeCinderellaPoints(wins, reachedS16, reachedE8, reachedF4);
+    if (!bestCinderellaPerformer || points > bestCinderellaPerformer.points) {
+      const team = teamById.get(pick.teamId) ?? pick.team;
+      bestCinderellaPerformer = {
+        teamId: pick.teamId,
+        teamName: team.shortName || team.name,
+        points,
+      };
+    }
+  }
+
+  return {
+    mostUniquePick: mostUnique,
+    chalkiestPick: chalkiest,
+    biggestVillainHit,
+    bestCinderellaPerformer,
+    scoreByRole: { hero, villain, cinderella, total },
+  };
+}
+
 function deriveCurrentRound(games: Array<{ round: Round }>) {
   const roundsPresent = new Set(games.map((game) => game.round));
   for (let i = ROUND_ORDER.length - 1; i >= 0; i -= 1) {
@@ -360,12 +482,14 @@ function buildHotSeatMatchups({
   games,
   teams,
   ownershipMap,
+  ownershipByRole,
   resultByTeamId,
   currentRound,
 }: {
   games: Array<{ round: Round; gameNo: number; winnerTeamId: string; loserTeamId: string }>;
   teams: TeamLite[];
   ownershipMap: Record<string, Ownership[]>;
+  ownershipByRole: Record<string, { heroPct: number; villainPct: number; cinderellaPct: number }>;
   resultByTeamId: Map<string, TeamResultLite>;
   currentRound: Round;
 }) {
@@ -387,6 +511,7 @@ function buildHotSeatMatchups({
         teamA,
         teamB,
         ownershipMap,
+        ownershipByRole,
         resultByTeamId,
       });
     })
@@ -411,6 +536,7 @@ function buildHotSeatMatchups({
         teamA,
         teamB,
         ownershipMap,
+        ownershipByRole,
         resultByTeamId,
       }),
     );
@@ -426,6 +552,7 @@ function createMatchup({
   teamA,
   teamB,
   ownershipMap,
+  ownershipByRole,
   resultByTeamId,
 }: {
   id: string;
@@ -434,16 +561,21 @@ function createMatchup({
   teamA: TeamLite;
   teamB: TeamLite;
   ownershipMap: Record<string, Ownership[]>;
+  ownershipByRole: Record<string, { heroPct: number; villainPct: number; cinderellaPct: number }>;
   resultByTeamId: Map<string, TeamResultLite>;
 }) {
   const ownersA = ownershipMap[teamA.id] ?? [];
   const ownersB = ownershipMap[teamB.id] ?? [];
   const allOwners = [...ownersA, ...ownersB];
+  const obrA = ownershipByRole[teamA.id] ?? { heroPct: 0, villainPct: 0, cinderellaPct: 0 };
+  const obrB = ownershipByRole[teamB.id] ?? { heroPct: 0, villainPct: 0, cinderellaPct: 0 };
 
   const impact = {
     heroOwners: allOwners.filter((o) => o.role === "HERO").map((o) => o.ownerDisplayName),
     villainOwners: allOwners.filter((o) => o.role === "VILLAIN").map((o) => o.ownerDisplayName),
     cinderellaOwners: allOwners.filter((o) => o.role === "CINDERELLA").map((o) => o.ownerDisplayName),
+    teamAOwnership: obrA,
+    teamBOwnership: obrB,
   };
 
   const teamAWin = simulateMatchupDelta(teamA.id, teamB.id, round, ownershipMap, resultByTeamId);

@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Flame, LayoutGrid, Swords, Zap } from "lucide-react";
+import { Activity, BarChart3, Flame, Swords, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -9,9 +9,10 @@ import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSide
 import { EventTimeline } from "@/app/league/[leagueId]/dashboard/_components/event-timeline";
 import { LeaderboardPanel } from "@/app/league/[leagueId]/dashboard/_components/leaderboard-panel";
 import { RivalriesView } from "@/app/league/[leagueId]/dashboard/_components/rivalries-view";
+import { MyLeaguePortfolioPanel } from "./my-league-portfolio-panel";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
 
-const TABS = ["standings", "power", "rivalries", "feed"] as const;
+const TABS = ["standings", "portfolio", "power", "rivalries", "feed"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function MyLeagueClient({
@@ -106,7 +107,7 @@ export default function MyLeagueClient({
                     <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" aria-hidden />
                     {data?.league.status ?? "—"}
                   </span>
-                  <span className="text-sm text-neutral-400">Standings, power, rivalries, feed</span>
+                  <span className="text-sm text-neutral-400">Standings, portfolio, power, rivalries, feed</span>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -133,19 +134,23 @@ export default function MyLeagueClient({
               const label =
                 t === "standings"
                   ? "Standings"
-                  : t === "power"
-                    ? "Power"
-                    : t === "rivalries"
-                      ? "Rivalries"
-                      : "Feed";
+                  : t === "portfolio"
+                    ? "Portfolio"
+                    : t === "power"
+                      ? "Power"
+                      : t === "rivalries"
+                        ? "Rivalries"
+                        : "Feed";
               const Icon =
                 t === "standings"
                   ? Flame
-                  : t === "power"
-                    ? Zap
-                    : t === "rivalries"
-                      ? Swords
-                      : Activity;
+                  : t === "portfolio"
+                    ? BarChart3
+                    : t === "power"
+                      ? Zap
+                      : t === "rivalries"
+                        ? Swords
+                        : Activity;
               const isActive = activeTab === t;
               return (
                 <Link
@@ -223,6 +228,22 @@ export default function MyLeagueClient({
                   </tbody>
                 </table>
               </div>
+            </section>
+          ) : activeTab === "portfolio" && data?.myLeagueAnalytics ? (
+            <MyLeaguePortfolioPanel
+              data={{ ...data, myLeagueAnalytics: data.myLeagueAnalytics }}
+            />
+          ) : activeTab === "portfolio" && data ? (
+            <section className="rounded-xl border border-[#1f2937] bg-[#111827] p-6 text-center">
+              <p className="text-sm text-neutral-400">
+                Build your roster to see strategic portfolio analytics.
+              </p>
+              <Link
+                href={`/league/${leagueId}/portfolio`}
+                className="mt-3 inline-block text-sm font-medium text-violet-400 hover:text-violet-300"
+              >
+                Go to Roster →
+              </Link>
             </section>
           ) : activeTab === "power" && data ? (
             <LeaderboardPanel

@@ -327,14 +327,14 @@ export default function DevControlCenterPage() {
           <div className="flex flex-wrap gap-4">
             <div>
               <label className="mb-1 block text-xs text-neutral-500">
-                Test users (1–4)
+                Test users (1–14)
               </label>
               <select
                 value={factoryNumUsers}
                 onChange={(e) => setFactoryNumUsers(Number(e.target.value))}
                 className="rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
               >
-                {[1, 2, 3, 4].map((n) => (
+                {Array.from({ length: 14 }, (_, i) => i + 1).map((n) => (
                   <option key={n} value={n}>
                     {n}
                   </option>
@@ -401,9 +401,38 @@ export default function DevControlCenterPage() {
                   {league.id.slice(0, 12)}…
                 </span>
               </div>
-              <div className="overflow-x-auto">
+              <div className="mb-2 flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    copy(members.map((m) => m.loginUrl).join("\n"));
+                  }}
+                  disabled={members.length === 0}
+                  className="rounded border border-neutral-600 bg-neutral-800 px-2 py-1 text-xs hover:bg-neutral-700 disabled:opacity-50"
+                >
+                  Copy all open links
+                </button>
+                <button
+                  onClick={() => {
+                    copy(members.map((m) => m.reconnectCode).join("\n"));
+                  }}
+                  disabled={members.length === 0}
+                  className="rounded border border-neutral-600 bg-neutral-800 px-2 py-1 text-xs hover:bg-neutral-700 disabled:opacity-50"
+                >
+                  Copy all reconnect codes
+                </button>
+                <button
+                  onClick={() => {
+                    members.forEach((m) => window.open(m.loginUrl, "_blank", "noopener,noreferrer"));
+                  }}
+                  disabled={members.length === 0}
+                  className="rounded border border-orange-600/60 bg-orange-900/30 px-2 py-1 text-xs text-orange-200 hover:bg-orange-900/50 disabled:opacity-50"
+                >
+                  Open all in new tabs
+                </button>
+              </div>
+              <div className="max-h-[320px] overflow-auto rounded-lg border border-neutral-700/60">
                 <table className="w-full text-sm">
-                  <thead>
+                  <thead className="sticky top-0 z-10 bg-[#0f1623]">
                     <tr className="border-b border-neutral-600 text-left text-neutral-400">
                       <th className="py-2 pr-4">Nickname</th>
                       <th className="py-2 pr-4">Reconnect</th>
@@ -420,21 +449,23 @@ export default function DevControlCenterPage() {
                         <td className="py-2 pr-4 font-mono text-xs">
                           {m.reconnectCode}
                         </td>
-                        <td className="py-2 flex flex-wrap gap-2">
-                          <button
-                            onClick={() => copy(m.reconnectCode)}
-                            className="rounded border border-neutral-600 bg-neutral-800 px-2 py-1 text-xs hover:bg-neutral-700"
-                          >
-                            Copy
-                          </button>
-                          <a
-                            href={m.loginUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded border border-orange-600/60 bg-orange-900/30 px-2 py-1 text-xs text-orange-200 hover:bg-orange-900/50"
-                          >
-                            Open
-                          </a>
+                        <td className="py-2">
+                          <span className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => copy(m.reconnectCode)}
+                              className="rounded border border-neutral-600 bg-neutral-800 px-2 py-1 text-xs hover:bg-neutral-700"
+                            >
+                              Copy
+                            </button>
+                            <a
+                              href={m.loginUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded border border-orange-600/60 bg-orange-900/30 px-2 py-1 text-xs text-orange-200 hover:bg-orange-900/50"
+                            >
+                              Open
+                            </a>
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -511,9 +542,9 @@ export default function DevControlCenterPage() {
           </h2>
           {rosterStatus.length > 0 ? (
             <>
-              <div className="mb-4 overflow-x-auto">
+              <div className="mb-4 max-h-[320px] overflow-auto rounded-lg border border-neutral-700/60">
                 <table className="w-full text-sm">
-                  <thead>
+                  <thead className="sticky top-0 z-10 bg-[#0f1623]">
                     <tr className="border-b border-neutral-600 text-left text-neutral-400">
                       <th className="py-2 pr-4">Player</th>
                       <th className="py-2 pr-4">H</th>
@@ -703,8 +734,8 @@ export default function DevControlCenterPage() {
                 <h3 className="mb-2 text-sm font-medium text-neutral-300">
                   Standings
                 </h3>
-                <ul className="space-y-1 text-sm">
-                  {snapshot.standings.slice(0, 6).map((s, i) => (
+                <ul className="max-h-64 space-y-1 overflow-y-auto pr-1 text-sm">
+                  {snapshot.standings.map((s, i) => (
                     <li key={s.memberId} className="flex justify-between">
                       <span>
                         {i + 1}. {s.displayName}

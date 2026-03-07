@@ -26,12 +26,12 @@ The Dev Control Center replaces the previous scattered dev/test workflow with a 
 ### 1. Test League Factory
 
 - **Endpoint:** `POST /api/dev/test-league-factory`
-- **Body:** `{ numUsers?: 1–4, pin?: string, resetExisting?: boolean }`
+- **Body:** `{ numUsers?: 1–14, pin?: string, resetExisting?: boolean }`
 - **Flow:**
   1. Ensure 2025 `TournamentYear` + teams exist (error if teams < 12)
   2. If `resetExisting` and league with `pin` exists → delete it
   3. Create league: 2025, status `SETUP`, name "Dev 2025 Test League (Chaos v2)"
-  4. Create 1–4 members (Host, Kara, Alex, Jordan) with unique reconnect codes
+  4. Create 1–14 members (Host, Kara, Alex, Jordan, Sam, Riley, Morgan, Casey, Taylor, Quinn, Avery, Reese, Parker, Blake) with unique reconnect codes
   5. Return `leagueId`, `pin`, `members` with `loginUrl` per member
 - **Login URL:** `{origin}/api/dev/dev-login?leagueId=X&memberId=Y`
 
@@ -74,7 +74,7 @@ The Dev Control Center replaces the previous scattered dev/test workflow with a 
 ## UI design structure
 
 1. **Dev Key** — Single input; all requests send `x-dev-key`
-2. **Test League Factory** — Num users (1–4), optional PIN, reset-existing toggle, “Create Fresh 2025 Test League”
+2. **Test League Factory** — Num users (1–14), optional PIN, reset-existing toggle, “Create Fresh 2025 Test League”
 3. **Test Session Links** — League info + table (nickname, reconnect code, copy, open)
 4. **Roster Status** — Table (H/V/C counts), Autofill, Reset, Lock/Unlock
 5. **Results Simulator** — Round dropdown, Apply Round, Apply Next, Replay Full, Reset Results

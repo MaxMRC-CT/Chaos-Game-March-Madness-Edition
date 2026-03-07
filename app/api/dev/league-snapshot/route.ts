@@ -96,7 +96,6 @@ export async function GET(request: NextRequest) {
     (score.totals as Array<{ memberId: string; displayName: string; total: number }>).length > 0
       ? (score.totals as Array<{ memberId: string; displayName: string; total: number }>)
           .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
-          .slice(0, 10)
       : members.map((m) => ({
           memberId: m.id,
           displayName: m.displayName,

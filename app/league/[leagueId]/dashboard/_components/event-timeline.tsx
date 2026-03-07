@@ -34,26 +34,62 @@ function formatEventStory(
     const eliminatedRound = String(payload.eliminatedRound || "");
     const pick = context.pickByTeamId[teamId];
     const villainCash = pick?.role === "VILLAIN" ? villainCashForRound(eliminatedRound) : 0;
+    const teamName = context.teamById[teamId] || "A team";
+
+    if (villainCash > 0) {
+      return {
+        label: `Villain hit: ${teamName} eliminated — +${villainCash} pts`,
+        roleBadge: pick?.role ? roleBadge(pick.role) : null,
+        deltaText: `+${villainCash}`,
+      };
+    }
     return {
-      label: `${context.teamById[teamId] || "A team"} is out${villainCash > 0 ? ` — Villain owners cash +${villainCash}` : ""}`,
+      label: `${teamName} eliminated`,
       roleBadge: pick?.role ? roleBadge(pick.role) : null,
-      deltaText: villainCash > 0 ? `+${villainCash}` : null,
+      deltaText: null,
     };
   }
 
   if (event.type === "RIVALRY_BONUS") {
     const memberId = String(payload.memberId || "");
     const delta = Number(payload.delta || 0);
-    const rule = String(payload.rule || "RIVALRY").replace(/_/g, " ");
+    const rule = String(payload.rule || "RIVALRY");
+    const memberName = context.memberById[memberId] || "Manager";
+
+    if (rule === "HERO_OVER_VILLAIN") {
+      return {
+        label: `Hero advance: ${memberName}'s Hero beats Villain`,
+        roleBadge: roleBadge("HERO"),
+        deltaText: `+${delta}`,
+      };
+    }
+    if (rule === "CINDERELLA_OVER_HERO") {
+      return {
+        label: `Cinderella upset: ${memberName}'s Cinderella knocks out Hero`,
+        roleBadge: roleBadge("CINDERELLA"),
+        deltaText: `+${delta}`,
+      };
+    }
+    if (rule === "VILLAIN_OVER_HERO") {
+      return {
+        label: `Villain strike: ${memberName} loses Hero`,
+        roleBadge: roleBadge("VILLAIN"),
+        deltaText: `${delta}`,
+      };
+    }
     return {
-      label: `Rivalry swing: ${context.memberById[memberId] || "Manager"} ${delta > 0 ? "+" : ""}${delta} (${rule})`,
+      label: `Rivalry: ${memberName} ${delta > 0 ? "+" : ""}${delta} (${rule.replace(/_/g, " ")})`,
       roleBadge: null,
       deltaText: `${delta > 0 ? "+" : ""}${delta}`,
     };
   }
 
   if (event.type === "SCORE_RECALCULATED") {
-    return { label: "Scores updated", roleBadge: null, deltaText: null };
+    return {
+      label: "Milestone update: scores recalculated",
+      roleBadge: null,
+      deltaText: null,
+    };
   }
 
   return {

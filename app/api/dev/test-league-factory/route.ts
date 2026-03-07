@@ -5,7 +5,22 @@ import { validateDevPanel } from "@/lib/dev/validate-dev";
 import { generateReconnectCode } from "@/lib/utils/reconnect";
 import { makeNicknameKey } from "@/lib/league/nickname";
 
-const NICKNAMES = ["Host", "Kara", "Alex", "Jordan"] as const;
+const NICKNAMES = [
+  "Host",
+  "Kara",
+  "Alex",
+  "Jordan",
+  "Sam",
+  "Riley",
+  "Morgan",
+  "Casey",
+  "Taylor",
+  "Quinn",
+  "Avery",
+  "Reese",
+  "Parker",
+  "Blake",
+] as const;
 
 function randomPin(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -38,7 +53,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const numUsers = Math.min(4, Math.max(1, Number(body.numUsers) ?? 4));
+  const numUsers = Math.min(14, Math.max(1, Number(body.numUsers) ?? 4));
   const pinRaw = body.pin?.trim();
   const pin = pinRaw && /^\d{6}$/.test(pinRaw) ? pinRaw : randomPin();
   const resetExisting = Boolean(body.resetExisting);

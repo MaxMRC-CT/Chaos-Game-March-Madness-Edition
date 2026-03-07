@@ -290,6 +290,11 @@ export default function DashboardClient({
                           <p>Hero owners: {joinOrDash(matchup.impact.heroOwners)}</p>
                           <p>Villain owners: {joinOrDash(matchup.impact.villainOwners)}</p>
                           <p>Cinderella owners: {joinOrDash(matchup.impact.cinderellaOwners)}</p>
+                          {matchup.impact.teamAOwnership && matchup.impact.teamBOwnership ? (
+                            <p className="pt-1 text-[10px] text-neutral-500">
+                              Ownership: {matchup.teamA.shortName || matchup.teamA.name} H:{matchup.impact.teamAOwnership.heroPct}% V:{matchup.impact.teamAOwnership.villainPct}% C:{matchup.impact.teamAOwnership.cinderellaPct}% · {matchup.teamB.shortName || matchup.teamB.name} H:{matchup.impact.teamBOwnership.heroPct}% V:{matchup.impact.teamBOwnership.villainPct}% C:{matchup.impact.teamBOwnership.cinderellaPct}%
+                            </p>
+                          ) : null}
                         </div>
                         <div className={`mt-2 ${innerPill} text-xs text-neutral-200`}>
                           <p>{matchup.potentialSwing.ifTeamAWins}</p>
@@ -303,7 +308,7 @@ export default function DashboardClient({
 
               <div className="grid grid-cols-1 gap-4 2xl:grid-cols-12">
                 <div className="min-w-0 2xl:col-span-7">
-                  <MyTeam myPicks={data.myPicks} standingsRow={myStanding} resultByTeamId={resultByTeamId} />
+                  <MyTeam myPicks={data.myPicks} standingsRow={myStanding} resultByTeamId={resultByTeamId} ownershipByRole={data.ownershipByRole} />
                 </div>
 
                 <section
