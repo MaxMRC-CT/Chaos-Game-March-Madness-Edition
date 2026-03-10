@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { LeagueStatus } from "@prisma/client";
 import { validateDevPanel } from "@/lib/dev/validate-dev";
+import { getAppBaseUrl } from "@/lib/utils/app-url";
 import { generateReconnectCode } from "@/lib/utils/reconnect";
 import { makeNicknameKey } from "@/lib/league/nickname";
 
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
     loginUrl: string;
   }> = [];
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = getAppBaseUrl();
 
   for (let i = 0; i < numUsers; i++) {
     const nickname = NICKNAMES[i] ?? `Player${i + 1}`;

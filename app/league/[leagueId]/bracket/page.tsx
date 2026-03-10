@@ -1,10 +1,10 @@
-
 import BracketClient from "./_components/bracket-client";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
 import { prisma } from "@/lib/db";
+import { getAppBaseUrl } from "@/lib/utils/app-url";
 
 async function getSummary(leagueId: string): Promise<WarRoomResponse | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
+  const baseUrl = getAppBaseUrl();
   const response = await fetch(
     `${baseUrl}/api/war-room?leagueId=${encodeURIComponent(leagueId)}`,
     { cache: "no-store" },

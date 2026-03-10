@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateDevPanel } from "@/lib/dev/validate-dev";
+import { getAppBaseUrl } from "@/lib/utils/app-url";
 import { RoleType } from "@prisma/client";
 
 const PICKS_PER_ROLE = 2;
@@ -101,10 +102,10 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  const origin =
-    request.headers.get("host")?.startsWith("localhost")
-      ? `http://${request.headers.get("host")}`
-      : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const host = request.headers.get("host");
+  const origin = host?.startsWith("localhost")
+    ? `http://${host}`
+    : getAppBaseUrl();
 
   return NextResponse.json({
     ok: true,

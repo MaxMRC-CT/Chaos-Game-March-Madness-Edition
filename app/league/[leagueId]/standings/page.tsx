@@ -1,8 +1,9 @@
+import { getAppBaseUrl } from "@/lib/utils/app-url";
 import { WarRoomResponse } from "../dashboard/_components/types";
 import MyLeagueClient from "./_components/my-league-client";
 
 async function getWarRoomData(leagueId: string): Promise<WarRoomResponse | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
+  const baseUrl = getAppBaseUrl();
   const response = await fetch(
     `${baseUrl}/api/war-room?leagueId=${encodeURIComponent(leagueId)}&limit=30`,
     { cache: "no-store" },

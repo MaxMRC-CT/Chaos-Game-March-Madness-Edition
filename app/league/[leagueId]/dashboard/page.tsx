@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
+import { getAppBaseUrl } from "@/lib/utils/app-url";
 import DashboardClient from "./_components/dashboard-client";
 import { PreDraftWarRoom } from "./_components/pre-draft-war-room";
 import { WarRoomResponse } from "./_components/types";
 
 async function getSummary(leagueId: string): Promise<WarRoomResponse | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
+  const baseUrl = getAppBaseUrl();
   const response = await fetch(
     `${baseUrl}/api/war-room?leagueId=${encodeURIComponent(leagueId)}`,
     { cache: "no-store" },
