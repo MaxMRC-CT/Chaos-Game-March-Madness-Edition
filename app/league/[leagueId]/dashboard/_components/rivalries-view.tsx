@@ -48,9 +48,11 @@ function formatRivalryMoment(
   const winnerTeamId = String(payload.winnerTeamId || "");
   const loserTeamId = String(payload.loserTeamId || "");
   const delta = Number(payload.delta || 0);
-  const winnerTeam = data.teams.find((t) => t.id === winnerTeamId);
-  const loserTeam = data.teams.find((t) => t.id === loserTeamId);
-  const member = data.members.find((m) => m.id === String(payload.memberId || ""));
+  const teams = data.teams ?? [];
+  const members = data.members ?? [];
+  const winnerTeam = teams.find((t) => t.id === winnerTeamId);
+  const loserTeam = teams.find((t) => t.id === loserTeamId);
+  const member = members.find((m) => m.id === String(payload.memberId || ""));
   return {
     member: member?.displayName || "Unknown",
     delta,
@@ -67,7 +69,8 @@ export function RivalriesView({
   data: WarRoomResponse;
   rivalryMoments: WarRoomResponse["highlightEvents"];
 }) {
-  const topSwings = rivalryMoments.slice(0, 3).map((e) => formatRivalryMoment(e, data));
+  const moments = rivalryMoments ?? [];
+  const topSwings = moments.slice(0, 3).map((e) => formatRivalryMoment(e, data));
   const panel = data.rivalryPanel;
   const contrarianLabels = data.contrarianLabels ?? {};
   const insights = panel
@@ -116,7 +119,7 @@ export function RivalriesView({
           Rivalry rules create point swings when your teams face off. Hero over Villain, Cinderella
           over Hero — every matchup matters.
         </p>
-        {rivalryMoments.length === 0 ? (
+        {moments.length === 0 ? (
           <div className="mt-4 rounded-xl border border-[#1f2937] bg-[#0f1623]/60 p-6 text-center">
             <p className="text-sm text-neutral-500">No rivalry swings yet.</p>
             <p className="mt-1 text-xs text-neutral-500">
@@ -127,7 +130,7 @@ export function RivalriesView({
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {topSwings.map((swing, i) => (
               <div
-                key={rivalryMoments[i]?.id ?? i}
+                key={moments[i]?.id ?? i}
                 className="rounded-xl border border-violet-500/30 bg-violet-950/30 p-4 transition hover:border-violet-500/50"
               >
                 <div className="flex items-center justify-between">
@@ -161,11 +164,11 @@ export function RivalriesView({
           Managers with the biggest rivalry swings so far — powered by head-to-head matchups.
         </p>
         <div className="mt-4 rounded-xl border border-[#1f2937] bg-[#0f1623]/60 p-4">
-          {rivalryMoments.length === 0 ? (
+          {moments.length === 0 ? (
             <p className="text-sm text-neutral-500">No momentum data yet</p>
           ) : (
             <ul className="space-y-2">
-              {[...rivalryMoments]
+              {[...moments]
                 .sort((a, b) => {
                   const da = Number((a.payload as Record<string, unknown>)?.delta || 0);
                   const db = Number((b.payload as Record<string, unknown>)?.delta || 0);

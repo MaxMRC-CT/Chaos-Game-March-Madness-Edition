@@ -451,7 +451,7 @@ export default function BetaAdminPage() {
                     Standings
                   </h3>
                   <ul className="max-h-48 space-y-1 overflow-y-auto pr-1 text-sm">
-                    {snapshot.standings.map((s, i) => (
+                    {(snapshot?.standings ?? []).map((s, i) => (
                       <li key={s.memberId} className="flex justify-between">
                         <span>
                           {i + 1}. {s.displayName || "Unknown"}
@@ -463,13 +463,13 @@ export default function BetaAdminPage() {
                     ))}
                   </ul>
                 </div>
-                {snapshot.recentEvents.length > 0 && (
+                {(snapshot?.recentEvents ?? []).length > 0 && (
                   <div className="mt-4">
                     <h3 className="mb-2 text-sm font-medium text-neutral-300">
                       Recent Events
                     </h3>
                     <ul className="max-h-32 space-y-1 overflow-y-auto text-xs text-neutral-500">
-                      {snapshot.recentEvents.slice(0, 5).map((e, i) => (
+                      {(snapshot?.recentEvents ?? []).slice(0, 5).map((e, i) => (
                         <li key={i}>
                           {e.type} —{" "}
                           {new Date(e.createdAt).toLocaleString()}

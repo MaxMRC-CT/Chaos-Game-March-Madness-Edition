@@ -9,6 +9,10 @@ import { RoundSummaryCard } from "./RoundSummaryCard";
 import { LiveFeed } from "./live-feed";
 import { MyTeam } from "./my-team";
 import { WarRoomResponse } from "./types";
+import {
+  normalizeWarRoomPayload,
+  isWarRoomErrorPayload,
+} from "@/lib/war-room/normalize";
 
 const ROUND_LABELS: Record<WarRoomResponse["league"]["currentRound"], string> = {
   R64: "Round of 64",
@@ -40,7 +44,7 @@ export default function DashboardClient({
   leagueId: string;
   initial: WarRoomResponse;
 }) {
-  const [data, setData] = useState<WarRoomResponse>(initial);
+  const [data, setData] = useState<WarRoomResponse>(() => normalizeWarRoomPayload(initial));
   const [copied, setCopied] = useState(false);
   const prevStandingsRef = useRef<WarRoomResponse["standings"] | null>(null);
   const [rankDelta, setRankDelta] = useState<Record<string, number>>({});
@@ -53,8 +57,10 @@ export default function DashboardClient({
           cache: "no-store",
         },
       );
+      const raw = await response.json();
       if (!response.ok) return;
-      const payload = (await response.json()) as WarRoomResponse;
+      if (isWarRoomErrorPayload(raw)) return;
+      const payload = normalizeWarRoomPayload(raw);
       const prev = prevStandingsRef.current;
       if (prev && prev.length > 0 && payload.standings.length > 0) {
         const prevRank = new Map(prev.map((r, i) => [r.memberId, i + 1]));
@@ -501,8 +507,8 @@ function formatDelta(delta: number) {
   return delta > 0 ? `+${delta}` : `${delta}`;
 }
 
-function joinOrDash(values: string[]) {
-  return values.length > 0 ? values.join(", ") : "—";
+function joinOrDash(values: string[] | undefined) {
+  return Array.isArray(values) && values.length > 0 ? values.join(", ") : "—";
 }
 
 function formatRivalryMoment(event: WarRoomResponse["highlightEvents"][number], data: WarRoomResponse) {

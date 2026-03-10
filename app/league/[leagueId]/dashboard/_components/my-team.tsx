@@ -26,7 +26,7 @@ export function MyTeam({
       <h2 className="text-base font-semibold tracking-wide text-neutral-100 sm:text-lg">My Story</h2>
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
         {ROLE_LABELS.map((role) => {
-          const rolePicks = myPicks.filter((item) => item.role === role);
+          const rolePicks = (myPicks ?? []).filter((item) => item.role === role);
           const totalRolePoints =
             role === "HERO"
               ? standingsRow?.HERO ?? 0

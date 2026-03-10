@@ -27,10 +27,11 @@ export function LeaderboardPanel({
   rankDelta?: Record<string, number>;
   contrarianLabels?: Record<string, string>;
 }) {
+  const safeStandings = standings ?? [];
   const biggestJumpId = momentumSummaries?.biggestJump?.memberId ?? null;
   const clientBiggestJump =
     !biggestJumpId && rankDelta
-      ? standings
+      ? safeStandings
           .slice(0, 12)
           .reduce<{ memberId: string; delta: number } | null>(
             (best, r) => {
@@ -41,7 +42,7 @@ export function LeaderboardPanel({
             null,
           )?.memberId ?? null
       : null;
-  const topMoverIds = [...standings]
+  const topMoverIds = [...safeStandings]
     .sort((a, b) => Math.abs(standingsDelta[b.memberId] || 0) - Math.abs(standingsDelta[a.memberId] || 0))
     .slice(0, 3)
     .map((row) => row.memberId);
@@ -52,11 +53,11 @@ export function LeaderboardPanel({
       className="rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 shadow-lg transition duration-200 sm:p-5 motion-reduce:transition-none supports-[hover:hover]:hover:shadow-xl"
     >
       <h2 className="mb-3 text-base font-semibold tracking-wide text-neutral-100 sm:text-lg">Power Rankings</h2>
-      {standings.length === 0 ? (
+      {safeStandings.length === 0 ? (
         <p className="text-sm text-neutral-400">Waiting for results</p>
       ) : (
         <motion.ul layout className="space-y-2">
-          {standings.slice(0, 12).map((row, index) => {
+          {safeStandings.slice(0, 12).map((row, index) => {
             const isMe = me?.memberId === row.memberId;
             const movement = standingsDelta[row.memberId] || 0;
             const rankChange = rankDelta?.[row.memberId] ?? 0;
@@ -159,7 +160,7 @@ function movementReasonChip(
   if (momentumSummaries?.biggestJump?.memberId === memberId && momentumSummaries.biggestJump.spots >= 2) {
     return `+${momentumSummaries.biggestJump.spots} spots`;
   }
-  for (const event of events) {
+  for (const event of events ?? []) {
     const payload = (event.payload || {}) as Record<string, unknown>;
     if (event.type === "RIVALRY_BONUS" && String(payload.memberId || "") === memberId) {
       const delta = Number(payload.delta || 0);

@@ -46,26 +46,32 @@ export function LiveFeed({
 }: LiveFeedProps) {
   const [mode, setMode] = useState<TabMode>("all");
 
-  const events = mode === "highlights" ? highlightEvents : allEvents;
+  const safeAllEvents = allEvents ?? [];
+  const safeHighlightEvents = highlightEvents ?? [];
+  const safeMembers = members ?? [];
+  const safeTeams = teams ?? [];
+  const safePicks = picks ?? [];
+
+  const events = mode === "highlights" ? safeHighlightEvents : safeAllEvents;
   const visibleEvents = limit ? events.slice(0, limit) : events;
 
   const memberById = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const member of members) map[member.id] = member.displayName || "Unknown";
+    for (const member of safeMembers) map[member.id] = member.displayName || "Unknown";
     return map;
-  }, [members]);
+  }, [safeMembers]);
 
   const teamById = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const team of teams) map[team.id] = team.shortName || team.name;
+    for (const team of safeTeams) map[team.id] = team.shortName || team.name;
     return map;
-  }, [teams]);
+  }, [safeTeams]);
 
   const pickByTeamId = useMemo(() => {
     const map: Record<string, WarRoomResponse["picks"][number]> = {};
-    for (const pick of picks) map[pick.teamId] = pick;
+    for (const pick of safePicks) map[pick.teamId] = pick;
     return map;
-  }, [picks]);
+  }, [safePicks]);
 
   const eventContext = useMemo(
     () => ({

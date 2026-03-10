@@ -11,9 +11,11 @@ function formatRivalryMoment(
   const winnerTeamId = String(payload.winnerTeamId || "");
   const loserTeamId = String(payload.loserTeamId || "");
   const delta = Number(payload.delta || 0);
-  const winnerTeam = data.teams.find((t) => t.id === winnerTeamId);
-  const loserTeam = data.teams.find((t) => t.id === loserTeamId);
-  const member = data.members.find((m) => m.id === String(payload.memberId || ""));
+  const teams = data.teams ?? [];
+  const members = data.members ?? [];
+  const winnerTeam = teams.find((t) => t.id === winnerTeamId);
+  const loserTeam = teams.find((t) => t.id === loserTeamId);
+  const member = members.find((m) => m.id === String(payload.memberId || ""));
   return `${member?.displayName || "Unknown"} ${delta >= 0 ? "+" : ""}${delta} • ${winnerTeam?.shortName || winnerTeam?.name || "Team"} over ${loserTeam?.shortName || loserTeam?.name || "Team"}`;
 }
 
@@ -24,7 +26,7 @@ export function RivalryHighlightsCard({
   events: WarRoomResponse["highlightEvents"];
   data: WarRoomResponse;
 }) {
-  const rivalryOnly = events.filter((e) => e.type === "RIVALRY_BONUS").slice(0, 5);
+  const rivalryOnly = (events ?? []).filter((e) => e.type === "RIVALRY_BONUS").slice(0, 5);
 
   return (
     <section className="rounded-xl border border-neutral-800 bg-neutral-900/95 p-3 shadow-lg">

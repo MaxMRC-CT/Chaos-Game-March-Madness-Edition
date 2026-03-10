@@ -13,6 +13,10 @@ import { RoundSummaryCard } from "@/app/league/[leagueId]/dashboard/_components/
 import { RivalriesView } from "@/app/league/[leagueId]/dashboard/_components/rivalries-view";
 import { MyLeaguePortfolioPanel } from "./my-league-portfolio-panel";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
+import {
+  normalizeWarRoomPayload,
+  isWarRoomErrorPayload,
+} from "@/lib/war-room/normalize";
 
 const TABS = ["standings", "portfolio", "power", "rivalries", "feed"] as const;
 
@@ -32,7 +36,9 @@ export default function MyLeagueClient({
   const [activeTab, setActiveTab] = useState<Tab>(
     TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "standings",
   );
-  const [data, setData] = useState<WarRoomResponse | null>(initial);
+  const [data, setData] = useState<WarRoomResponse | null>(() =>
+    initial ? normalizeWarRoomPayload(initial) : null,
+  );
   const [error, setError] = useState<string | null>(null);
   const prevStandingsRef = useRef<WarRoomResponse["standings"] | null>(null);
   const [rankDelta, setRankDelta] = useState<Record<string, number>>({});
@@ -43,19 +49,22 @@ export default function MyLeagueClient({
         `/api/war-room?leagueId=${leagueId}&limit=30`,
         { cache: "no-store" },
       );
+      const raw = await response.json();
       if (!response.ok) throw new Error("Failed to load");
-      const payload = (await response.json()) as WarRoomResponse;
+      if (isWarRoomErrorPayload(raw)) throw new Error(raw.error);
+      const payload = normalizeWarRoomPayload(raw);
       const prev = prevStandingsRef.current;
-      if (prev && prev.length > 0 && payload.standings.length > 0) {
+      const standings = payload.standings;
+      if (prev && prev.length > 0 && standings.length > 0) {
         const prevRank = new Map(prev.map((r, i) => [r.memberId, i + 1]));
         const delta: Record<string, number> = {};
-        payload.standings.forEach((r, i) => {
-          const pr = prevRank.get(r.memberId) ?? payload.standings.length + 1;
+        standings.forEach((r, i) => {
+          const pr = prevRank.get(r.memberId) ?? standings.length + 1;
           delta[r.memberId] = pr - (i + 1);
         });
         setRankDelta(delta);
       }
-      prevStandingsRef.current = payload.standings;
+      prevStandingsRef.current = standings;
       setData(payload);
       setError(null);
     } catch {
@@ -78,14 +87,16 @@ export default function MyLeagueClient({
   const resultByTeamId = useMemo(() => {
     const map: Record<string, WarRoomResponse["teamResults"][number]> = {};
     if (!data) return map;
-    for (const r of data.teamResults) map[r.teamId] = r;
+    const teamResults = data.teamResults ?? [];
+    for (const r of teamResults) map[r.teamId] = r;
     return map;
   }, [data?.teamResults]);
 
   const aliveRolesByMemberId = useMemo(() => {
     const map: Record<string, Array<"HERO" | "VILLAIN" | "CINDERELLA">> = {};
     if (!data) return map;
-    for (const pick of data.picks) {
+    const picks = data.picks ?? [];
+    for (const pick of picks) {
       const result = resultByTeamId[pick.teamId];
       const isAlive =
         !result || result.eliminatedRound === null || result.eliminatedRound === "CHAMP";
@@ -98,12 +109,13 @@ export default function MyLeagueClient({
 
   const rivalryMoments = useMemo(() => {
     if (!data) return [];
-    return data.highlightEvents.filter((e) => e.type === "RIVALRY_BONUS").slice(0, 6);
+    const events = data.highlightEvents ?? [];
+    return events.filter((e) => e.type === "RIVALRY_BONUS").slice(0, 6);
   }, [data?.highlightEvents]);
 
   const ownershipMap = useMemo(() => {
     if (!data) return {};
-    return buildTeamOwnershipMap(data.picks);
+    return buildTeamOwnershipMap(data.picks ?? []);
   }, [data?.picks]);
 
   const standings = data?.standings ?? [];
@@ -115,7 +127,10 @@ export default function MyLeagueClient({
 
   const displayStandings = useMemo(() => {
     if (standingsView === "points") return standings;
-    const withLev = standingsWithLeverage.length > 0 ? standingsWithLeverage : standings.map((r) => ({ ...r, chaosIndex: 0, portfolioLeverage: 0 }));
+    const withLev =
+      standingsWithLeverage.length > 0
+        ? standingsWithLeverage
+        : standings.map((r) => ({ ...r, chaosIndex: 0, portfolioLeverage: 0 }));
     if (standingsView === "leverage") {
       return [...withLev].sort((a, b) => (b.portfolioLeverage ?? 0) - (a.portfolioLeverage ?? 0));
     }

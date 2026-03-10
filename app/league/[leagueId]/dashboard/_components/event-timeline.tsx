@@ -46,23 +46,28 @@ export function EventTimeline({
   const [typeFilter, setTypeFilter] = useState<EventTypeFilter>("all");
   const [search, setSearch] = useState("");
 
+  const safeEvents = events ?? [];
+  const safeMembers = members ?? [];
+  const safeTeams = teams ?? [];
+  const safePicks = picks ?? [];
+
   const memberById = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const member of members) map[member.id] = member.displayName || "Unknown";
+    for (const member of safeMembers) map[member.id] = member.displayName || "Unknown";
     return map;
-  }, [members]);
+  }, [safeMembers]);
 
   const teamById = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const team of teams) map[team.id] = team.shortName || team.name;
+    for (const team of safeTeams) map[team.id] = team.shortName || team.name;
     return map;
-  }, [teams]);
+  }, [safeTeams]);
 
   const pickByTeamId = useMemo(() => {
     const map: Record<string, WarRoomResponse["picks"][number]> = {};
-    for (const pick of picks) map[pick.teamId] = pick;
+    for (const pick of safePicks) map[pick.teamId] = pick;
     return map;
-  }, [picks]);
+  }, [safePicks]);
 
   const eventContext = useMemo(
     () => ({
@@ -75,7 +80,7 @@ export function EventTimeline({
   );
 
   const { filtered, byBucket } = useMemo(() => {
-    const filtered = events.filter(
+    const filtered = safeEvents.filter(
       (e) =>
         matchesTypeFilter(e, typeFilter) &&
         (!search ||
@@ -90,7 +95,7 @@ export function EventTimeline({
       byBucket[getTimeBucket(e.createdAt)].push(e);
     }
     return { filtered, byBucket };
-  }, [events, typeFilter, search, eventContext]);
+  }, [safeEvents, typeFilter, search, eventContext]);
 
   const bucketLabels: Record<"today" | "yesterday" | "older", string> = {
     today: "Today",

@@ -14,6 +14,10 @@ function useBracketDebug() {
 import { NCAA_R64_MATCHUPS } from "@/lib/bracket/espnLayout";
 import { buildTeamOwnershipMap } from "@/lib/league/ownership";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
+import {
+  normalizeWarRoomPayload,
+  isWarRoomErrorPayload,
+} from "@/lib/war-room/normalize";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
 import { RoundSelector, type RoundKey } from "./RoundSelector";
 import { ZoomControls } from "./ZoomControls";
@@ -39,33 +43,7 @@ type RoundCounts = { R64: number; R32: number; S16: number; E8: number; F4: numb
 
 /** Ensure array props exist for bracket rendering. Prevents "Cannot read properties of undefined (reading 'length')" for new leagues. */
 function normalizeWarRoomForBracket(raw: WarRoomResponse | null | undefined): WarRoomResponse {
-  if (raw == null || typeof raw !== "object") {
-    return {
-      league: { id: "", name: "", status: "SETUP", code: "", currentPick: 0, currentRound: "R64" },
-      me: null,
-      members: [],
-      picks: [],
-      myPicks: [],
-      teams: [],
-      teamResults: [],
-      games: [],
-      standings: [],
-      standingsDelta: {},
-      standingsUpdatedAt: null,
-      recentEvents: [],
-      highlightEvents: [],
-      hotSeatMatchups: [],
-      ownershipMap: {},
-      ownershipByRole: {},
-    };
-  }
-  return {
-    ...raw,
-    teams: Array.isArray(raw.teams) ? raw.teams : [],
-    games: Array.isArray(raw.games) ? raw.games : [],
-    teamResults: Array.isArray(raw.teamResults) ? raw.teamResults : [],
-    picks: Array.isArray(raw.picks) ? raw.picks : [],
-  };
+  return normalizeWarRoomPayload(raw);
 }
 
 export default function BracketClient({
@@ -87,9 +65,10 @@ export default function BracketClient({
     const response = await fetch(`/api/war-room?leagueId=${leagueId}`, {
       cache: "no-store",
     });
+    const raw = await response.json();
     if (!response.ok) return;
-    const json = (await response.json()) as WarRoomResponse;
-    setData(normalizeWarRoomForBracket(json));
+    if (isWarRoomErrorPayload(raw)) return;
+    setData(normalizeWarRoomForBracket(raw));
   }, [leagueId]);
 
   useEffect(() => {

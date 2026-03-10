@@ -6,6 +6,10 @@ import Link from "next/link";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import { BrandLockup } from "@/app/(dashboard)/_components/BrandLockup";
 import { startTournamentFromForm } from "@/lib/actions/league";
+import {
+  normalizeWarRoomPayload,
+  isWarRoomErrorPayload,
+} from "@/lib/war-room/normalize";
 import DashboardClient from "./dashboard-client";
 import { LiveFeed } from "./live-feed";
 import { WarRoomResponse } from "./types";
@@ -19,7 +23,9 @@ export function PreDraftWarRoom({
   leagueId: string;
   initial: WarRoomResponse;
 }) {
-  const [data, setData] = useState<WarRoomResponse>(initial);
+  const [data, setData] = useState<WarRoomResponse>(() =>
+    normalizeWarRoomPayload(initial),
+  );
   const [copied, setCopied] = useState(false);
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -32,9 +38,10 @@ export function PreDraftWarRoom({
       `/api/war-room?leagueId=${leagueId}&limit=15&mode=all`,
       { cache: "no-store" },
     );
+    const raw = await response.json();
     if (!response.ok) return;
-    const payload = (await response.json()) as WarRoomResponse;
-    setData(payload);
+    if (isWarRoomErrorPayload(raw)) return;
+    setData(normalizeWarRoomPayload(raw));
   }, [leagueId]);
 
   useEffect(() => {
@@ -51,7 +58,12 @@ export function PreDraftWarRoom({
   const isHost = Boolean(data.me?.isAdmin);
 
   if (data.league.status === "LIVE" || data.league.status === "COMPLETE") {
-    return <DashboardClient leagueId={leagueId} initial={data} />;
+    return (
+      <DashboardClient
+        leagueId={leagueId}
+        initial={normalizeWarRoomPayload(data)}
+      />
+    );
   }
 
   async function copyPin() {
@@ -191,9 +203,11 @@ export function PreDraftWarRoom({
                 <Users className="size-4" />
                 Players in Lobby
               </h2>
-              <p className="mb-3 text-xs text-neutral-400">{data.members.length} players</p>
+              <p className="mb-3 text-xs text-neutral-400">
+                {(data.members ?? []).length} players
+              </p>
               <ul className="max-h-[200px] space-y-2 overflow-y-auto">
-                {data.members.map((m) => (
+                {(data.members ?? []).map((m) => (
                   <li
                     key={m.id}
                     className="flex items-center justify-between rounded-lg border border-[#1f2937] bg-[#0f1623] px-3 py-2 text-sm"
@@ -240,12 +254,12 @@ export function PreDraftWarRoom({
           {/* Recent Activity */}
           <section id="activity">
             <LiveFeed
-              allEvents={data.recentEvents}
-              highlightEvents={data.highlightEvents}
-              picks={data.picks}
-              members={data.members}
-              teams={data.teams}
-              ownershipByRole={data.ownershipByRole}
+              allEvents={data.recentEvents ?? []}
+              highlightEvents={data.highlightEvents ?? []}
+              picks={data.picks ?? []}
+              members={data.members ?? []}
+              teams={data.teams ?? []}
+              ownershipByRole={data.ownershipByRole ?? {}}
               limit={10}
               compact
               maxHeightClass="max-h-[260px]"
