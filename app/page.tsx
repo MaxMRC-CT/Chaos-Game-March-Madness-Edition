@@ -12,121 +12,148 @@ function CreateLeagueFormContent() {
 
   return (
     <>
-      <label className="block text-sm font-medium">Create a league</label>
+      <label htmlFor="league-name" className="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">
+        League name
+      </label>
       <input
+        id="league-name"
         name="name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="e.g., WhatsApp Crew 2026"
-        className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white placeholder:text-neutral-500"
+        className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-neutral-500 focus:border-[#fb6223]/60 focus:outline-none focus:ring-2 focus:ring-[#fb6223]/20 transition-all"
       />
-      <label className="block text-sm font-medium mt-3">Your name</label>
+      <label htmlFor="your-name" className="block text-xs font-medium uppercase tracking-wider text-neutral-400 mt-4 mb-1.5">
+        Your name
+      </label>
       <input
+        id="your-name"
         name="displayName"
         value={displayName}
         onChange={(e) => setDisplayName(e.target.value)}
         placeholder="e.g., Alex"
-        className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white placeholder:text-neutral-500"
+        className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-neutral-500 focus:border-[#fb6223]/60 focus:outline-none focus:ring-2 focus:ring-[#fb6223]/20 transition-all"
       />
       <button
+        type="submit"
         disabled={pending || !name.trim() || !displayName.trim()}
-        className="w-full rounded-xl bg-[#fb6223] hover:bg-[#ff7a3d] transition-colors duration-200 text-white py-3 font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full mt-6 rounded-xl bg-[#fb6223] hover:bg-[#ff7a3d] active:scale-[0.99] transition-all duration-200 text-white py-3.5 font-semibold shadow-lg shadow-[#fb6223]/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#fb6223] disabled:active:scale-100"
       >
-        Create League
+        {pending ? "Creating…" : "Create League"}
       </button>
     </>
   );
 }
 
+const FEATURE_PILLS = [
+  "Your Heroes, Villains, and Cinderellas",
+  "Live standings + rivalry swings",
+  "Win with leverage, not luck",
+];
+
 export default function HomePage() {
   return (
-    <main className="min-h-dvh bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white flex flex-col items-center justify-center p-6">
-      <div className="mx-auto max-w-md rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-8 shadow-xl space-y-6">
-        <div className="relative flex justify-center">
-          <Image
-            src="/chaos-shield.png"
-            alt="Chaos Game"
-            width={180}
-            height={220}
-            priority
-            className="transition-transform duration-300 hover:scale-105 drop-shadow-[0_0_20px_rgba(251,98,35,0.45)]"
-          />
-        </div>
-        <h1 className="text-3xl font-semibold text-white text-center mb-6">
-          Chaos League
-        </h1>
-        <p className="text-sm text-neutral-400 text-center -mt-4">
-          Kahoot-style March Madness draft game.
-        </p>
+    <main className="min-h-dvh bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white relative overflow-hidden">
+      <div className="absolute inset-0 brand-grain opacity-30" aria-hidden />
+      <div className="absolute inset-0 brand-diagonal" aria-hidden />
+      <div className="absolute inset-0 brand-vignette pointer-events-none" aria-hidden />
 
-        <form action={createLeague} className="space-y-3">
-          <CreateLeagueFormContent />
-        </form>
-
-        <a
-          href="/join"
-          className="block text-center text-sm text-neutral-400 hover:text-white transition"
-        >
-          Join with Game PIN
-        </a>
-
-        <div className="flex justify-center gap-4 text-sm">
-          <a
-            href="/my-leagues"
-            className="text-neutral-400 hover:text-white transition"
-          >
-            My Leagues
-          </a>
-          <a
-            href="/guide"
-            className="text-neutral-400 hover:text-white transition"
-          >
-            How to Play
-          </a>
-        </div>
-
-        <section className="mt-10 border-t border-white/10 pt-8">
-          <h2 className="mb-6 text-center text-lg font-medium text-white">
-            How Chaos League Works
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-3">
-            <div className="text-center">
-              <p className="font-medium text-white">1. Draft Your Portfolio</p>
-              <p className="mt-1 text-sm text-neutral-400">
-                Pick 2 Heroes, 2 Villains, 2 Cinderellas. No bracket to fill.
+      <div className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1180px]">
+          {/* Hero: two-column on desktop, stacked on mobile */}
+          <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
+            {/* Left: brand / pitch panel */}
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left lg:max-w-[480px]">
+              <div className="mb-6">
+                <Image
+                  src="/chaos-shield.png"
+                  alt="Chaos League"
+                  width={120}
+                  height={147}
+                  priority
+                  className="drop-shadow-[0_0_24px_rgba(251,98,35,0.4)]"
+                />
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                Chaos League
+              </h1>
+              <p className="mt-3 text-xl font-medium text-[#fb6223]/95">
+                Draft. Leverage. Chaos.
               </p>
+              <p className="mt-4 text-sm leading-relaxed text-neutral-400">
+                A portfolio-based March Madness league where every game shifts the standings.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-2.5 lg:justify-start">
+                {FEATURE_PILLS.map((pill) => (
+                  <span
+                    key={pill}
+                    className="rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs text-neutral-300"
+                  >
+                    {pill}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="text-center">
-              <p className="font-medium text-white">2. Track Every Game</p>
-              <p className="mt-1 text-sm text-neutral-400">
-                Points update live as the tournament unfolds. Rivalries matter.
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="font-medium text-white">3. Outscore Your League</p>
-              <p className="mt-1 text-sm text-neutral-400">
-                Win with leverage and chaos. Tiebreaker is championship total.
-              </p>
+
+            {/* Right: action card */}
+            <div className="w-full max-w-[400px] shrink-0">
+              <div className="rounded-2xl border border-white/10 bg-neutral-900/80 p-8 shadow-xl shadow-black/20 backdrop-blur-md">
+                <h2 className="mb-6 text-sm font-semibold uppercase tracking-wider text-neutral-400">
+                  Create a league
+                </h2>
+                <form action={createLeague} className="space-y-0">
+                  <CreateLeagueFormContent />
+                </form>
+                <div className="mt-6 flex flex-col gap-2 border-t border-white/10 pt-6">
+                  <a
+                    href="/join"
+                    className="text-sm text-neutral-400 hover:text-white transition-colors"
+                  >
+                    Join with Game PIN
+                  </a>
+                  <a
+                    href="/my-leagues"
+                    className="text-sm text-neutral-400 hover:text-white transition-colors"
+                  >
+                    My Leagues
+                  </a>
+                  <a
+                    href="/guide"
+                    className="text-sm text-neutral-400 hover:text-white transition-colors"
+                  >
+                    How to Play
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="mt-6 text-center">
+
+          {/* Bottom info strip */}
+          <div className="mt-16 sm:mt-20 flex flex-col items-center gap-4 text-center">
+            <p className="max-w-[540px] text-sm text-neutral-500">
+              Draft your Heroes, Villains, and Cinderellas. Track every round live. Win with leverage.
+            </p>
             <a
               href="/guide"
-              className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-400 hover:text-white transition-colors"
             >
-              Read Full Guide →
+              Read Full Guide
+              <span className="text-neutral-500" aria-hidden>→</span>
             </a>
           </div>
-        </section>
 
-        {process.env.NODE_ENV === "development" && (
-          <a
-            href="/dev"
-            className="block text-center text-sm text-neutral-400 hover:text-white transition"
-          >
-            Dev Control Center
-          </a>
-        )}
+          {/* Dev link */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="mt-12 flex justify-center">
+              <a
+                href="/dev"
+                className="text-xs text-neutral-500 hover:text-neutral-400 transition-colors"
+              >
+                Dev Control Center
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
