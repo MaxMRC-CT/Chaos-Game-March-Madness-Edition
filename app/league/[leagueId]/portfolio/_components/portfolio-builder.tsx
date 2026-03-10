@@ -77,7 +77,7 @@ export function PortfolioBuilder({
     tiebreakerNum >= TIEBREAKER_MIN &&
     tiebreakerNum <= TIEBREAKER_MAX;
 
-  const isLocked = leagueStatus !== "SETUP"; // LOCKED, DRAFT, LIVE, COMPLETE all lock picks
+  const isLocked = leagueStatus === "LIVE" || leagueStatus === "COMPLETE"; // Editable until league goes live
   const rosterValid =
     counts.HERO === PICKS_PER_ROLE &&
     counts.VILLAIN === PICKS_PER_ROLE &&

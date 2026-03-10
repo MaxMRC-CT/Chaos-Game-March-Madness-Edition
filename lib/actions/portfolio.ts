@@ -81,8 +81,8 @@ export async function savePortfolioPicks(
   if (!league) {
     return { ok: false, error: "League not found." };
   }
-  if (league.status !== "SETUP") {
-    return { ok: false, error: "Picks are locked. Tournament has started or lock deadline passed." };
+  if (league.status !== "SETUP" && league.status !== "LOCKED" && league.status !== "DRAFT") {
+    return { ok: false, error: "Picks are locked. Tournament has started." };
   }
 
   const member = await prisma.leagueMember.findFirst({

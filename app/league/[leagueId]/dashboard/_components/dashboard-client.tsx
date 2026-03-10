@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTournamentFromForm } from "@/lib/actions/league";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
 import { LeaderboardPanel } from "./leaderboard-panel";
 import { RoundSummaryCard } from "./RoundSummaryCard";
@@ -37,12 +38,20 @@ const headingKicker =
 const sectionTitle =
   "text-base font-semibold tracking-wide text-neutral-100 sm:text-lg";
 
+export type PreTipBanner = {
+  variant: "submitted" | "ready";
+  canEditPicks: boolean;
+  isAdmin?: boolean;
+};
+
 export default function DashboardClient({
   leagueId,
   initial,
+  preTipBanner,
 }: {
   leagueId: string;
   initial: WarRoomResponse;
+  preTipBanner?: PreTipBanner;
 }) {
   const [data, setData] = useState<WarRoomResponse>(() => normalizeWarRoomPayload(initial));
   const [copied, setCopied] = useState(false);
@@ -149,7 +158,12 @@ export default function DashboardClient({
     }
   }
 
-  const cta = commandCta(data.league.status, leagueId, Boolean(data.me?.isAdmin));
+  const cta = commandCta(
+    data.league.status,
+    leagueId,
+    Boolean(data.me?.isAdmin),
+    preTipBanner?.canEditPicks,
+  );
   const statusStyle = getStatusStyle(data.league.status);
   const myDelta = data.me ? data.standingsDelta[data.me.memberId] || 0 : 0;
   const deltaClass = getDeltaClass(myDelta);
@@ -162,6 +176,14 @@ export default function DashboardClient({
         <div className="min-w-0 flex-1">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="min-w-0 space-y-4 lg:col-span-8">
+              {preTipBanner ? (
+                <PreTipBannerCard
+                  variant={preTipBanner.variant}
+                  canEditPicks={preTipBanner.canEditPicks}
+                  isAdmin={preTipBanner.isAdmin}
+                  leagueId={leagueId}
+                />
+              ) : null}
               <header className={`${panelClass} ${panelHover} p-6 sm:p-6`}>
                 <div className="grid gap-5">
                   {/* 1) League context */}
@@ -500,7 +522,11 @@ function commandCta(
   status: WarRoomResponse["league"]["status"],
   leagueId: string,
   isAdmin: boolean,
+  canEditPicks?: boolean,
 ) {
+  if (canEditPicks) {
+    return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Edit Picks" };
+  }
   if (status === "SETUP" || status === "DRAFT") {
     return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Build roster" };
   }
@@ -511,6 +537,65 @@ function commandCta(
     return { kind: "anchor" as const, href: "#hot-seat", label: "View Tonight's Chaos" };
   }
   return { kind: "anchor" as const, href: "#power-rankings", label: "Crown the Champion" };
+}
+
+function PreTipBannerCard({
+  variant,
+  canEditPicks,
+  isAdmin,
+  leagueId,
+}: {
+  variant: "submitted" | "ready";
+  canEditPicks: boolean;
+  isAdmin?: boolean;
+  leagueId: string;
+}) {
+  const [state, formAction, pending] = useActionState<{ error?: string } | null, FormData>(
+    startTournamentFromForm,
+    null,
+  );
+
+  return (
+    <div className="rounded-xl border border-emerald-500/30 bg-neutral-900/95 px-4 py-4 shadow-lg ring-1 ring-emerald-500/10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold text-neutral-100">
+            {variant === "ready" ? "Ready for Tip-Off" : "Portfolio submitted"}
+          </p>
+          <p className="mt-1 text-sm text-neutral-400">
+            {variant === "ready"
+              ? "Everyone is in. Portfolios remain editable until the first game locks."
+              : "You're in. You can still edit your picks until the first game locks. Waiting on the remaining managers to finish."}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {canEditPicks ? (
+            <Link
+              href={`/league/${leagueId}/portfolio`}
+              className="inline-flex items-center justify-center rounded-lg border border-emerald-500/50 bg-emerald-500/20 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:bg-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+            >
+              Edit Picks
+            </Link>
+          ) : null}
+          {variant === "ready" && isAdmin ? (
+            <form action={formAction} className="inline">
+              <input type="hidden" name="leagueId" value={leagueId} />
+              <button
+                type="submit"
+                disabled={pending}
+                className="inline-flex items-center justify-center rounded-lg border border-orange-500/50 bg-orange-500/20 px-4 py-2 text-sm font-medium text-orange-200 transition hover:bg-orange-500/30 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+              >
+                {pending ? "Starting…" : "Force start now"}
+              </button>
+            </form>
+          ) : null}
+        </div>
+      </div>
+      {state?.error ? (
+        <p className="mt-3 text-sm text-red-400">{state.error}</p>
+      ) : null}
+    </div>
+  );
 }
 
 function formatDelta(delta: number) {
