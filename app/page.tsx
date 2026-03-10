@@ -8,6 +8,7 @@ import { createLeague } from "@/lib/actions/league";
 function CreateLeagueFormContent() {
   const { pending } = useFormStatus();
   const [name, setName] = React.useState("");
+  const [displayName, setDisplayName] = React.useState("");
 
   return (
     <>
@@ -19,8 +20,16 @@ function CreateLeagueFormContent() {
         placeholder="e.g., WhatsApp Crew 2026"
         className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white placeholder:text-neutral-500"
       />
+      <label className="block text-sm font-medium mt-3">Your name</label>
+      <input
+        name="displayName"
+        value={displayName}
+        onChange={(e) => setDisplayName(e.target.value)}
+        placeholder="e.g., Alex"
+        className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white placeholder:text-neutral-500"
+      />
       <button
-        disabled={pending || !name.trim()}
+        disabled={pending || !name.trim() || !displayName.trim()}
         className="w-full rounded-xl bg-[#fb6223] hover:bg-[#ff7a3d] transition-colors duration-200 text-white py-3 font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Create League

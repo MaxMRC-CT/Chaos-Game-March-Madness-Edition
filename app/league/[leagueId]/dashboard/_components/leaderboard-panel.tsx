@@ -92,9 +92,9 @@ export function LeaderboardPanel({
                         </span>
                       ) : null}
                       <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-700 text-[10px] font-semibold">
-                        {row.displayName.slice(0, 2).toUpperCase()}
+                        {(row.displayName || "?").slice(0, 2).toUpperCase()}
                       </span>
-                      <span>{row.displayName}</span>
+                      <span>{row.displayName || "Unknown"}</span>
                       {contrarianLabels?.[row.memberId] ? (
                         <span
                           className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300"

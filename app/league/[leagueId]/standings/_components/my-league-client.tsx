@@ -321,7 +321,7 @@ export default function MyLeagueClient({
                         </td>
                         <td className="px-2 py-2 text-neutral-100 sm:px-4 sm:py-3">
                           <span className="inline-flex items-center gap-1.5">
-                            {row.displayName}
+                            {row.displayName || "Unknown"}
                             {data?.contrarianLabels?.[row.memberId] ? (
                               <span
                                 className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300"
@@ -401,7 +401,7 @@ export default function MyLeagueClient({
                       </span>
                     ) : data.momentumSummaries.biggestJump ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-300">
-                        Biggest Jump: {data.momentumSummaries.biggestJump.displayName} +{data.momentumSummaries.biggestJump.spots} spots
+                        Biggest Jump: {data.momentumSummaries.biggestJump.displayName || "Unknown"} +{data.momentumSummaries.biggestJump.spots} spots
                       </span>
                     ) : null}
                     {data.momentumSummaries.leaderUnderPressure ? (

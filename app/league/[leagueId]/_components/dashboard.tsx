@@ -117,7 +117,7 @@ export function LeagueHomeDashboard({
               </span>
               {me ? (
                 <span className="rounded-full bg-neutral-800 px-2 py-0.5 text-xs text-neutral-300">
-                  You are: {me.displayName}
+                  You are: {me.displayName || "Unknown"}
                 </span>
               ) : null}
             </div>
@@ -181,7 +181,7 @@ export function LeagueHomeDashboard({
                 {(data?.standingsTop ?? []).map((row, index) => (
                   <tr key={row.memberId} className="border-t border-neutral-800 text-neutral-100">
                     <td className="px-3 py-2">{index + 1}</td>
-                    <td className="px-3 py-2">{row.displayName}</td>
+                    <td className="px-3 py-2">{row.displayName || "Unknown"}</td>
                     <td className="px-3 py-2 text-right font-semibold">{row.total ?? 0}</td>
                     <td className="px-3 py-2 text-right">{row.HERO ?? 0}</td>
                     <td className="px-3 py-2 text-right">{row.VILLAIN ?? 0}</td>

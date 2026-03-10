@@ -14,7 +14,7 @@ function formatRivalryMoment(
   const winnerTeam = data.teams.find((t) => t.id === winnerTeamId);
   const loserTeam = data.teams.find((t) => t.id === loserTeamId);
   const member = data.members.find((m) => m.id === String(payload.memberId || ""));
-  return `${member?.displayName || "Manager"} ${delta >= 0 ? "+" : ""}${delta} • ${winnerTeam?.shortName || winnerTeam?.name || "Team"} over ${loserTeam?.shortName || loserTeam?.name || "Team"}`;
+  return `${member?.displayName || "Unknown"} ${delta >= 0 ? "+" : ""}${delta} • ${winnerTeam?.shortName || winnerTeam?.name || "Team"} over ${loserTeam?.shortName || loserTeam?.name || "Team"}`;
 }
 
 export function RivalryHighlightsCard({

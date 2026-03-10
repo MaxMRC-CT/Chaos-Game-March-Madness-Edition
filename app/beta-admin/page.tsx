@@ -127,6 +127,34 @@ export default function BetaAdminPage() {
     }
   }, [pin]);
 
+  async function callSetStatus(status: string) {
+    if (!league) return;
+    setError(null);
+    setSuccess(null);
+    setLoading("set-status");
+    try {
+      const res = await fetcher(`${API_BASE}/set-status`, {
+        method: "POST",
+        body: JSON.stringify({
+          code: league.code,
+          leagueId: league.id,
+          status,
+        }),
+      });
+      if (res.ok) {
+        setSuccess(String(res.message ?? `Status → ${status}`));
+        setTimeout(() => setSuccess(null), 3000);
+        await loadLeague(league.code);
+      } else {
+        setError(String(res.error ?? "Request failed"));
+      }
+    } catch {
+      setError("Request failed");
+    } finally {
+      setLoading(null);
+    }
+  }
+
   async function callApplyRound(body: {
     code?: string;
     leagueId?: string;
@@ -295,6 +323,46 @@ export default function BetaAdminPage() {
                 <span className="text-neutral-400">
                   Roster: {league.rosterComplete}/{league.rosterTotal} complete
                 </span>
+              </div>
+            </section>
+
+            {/* League State Controls - Beta admin overrides */}
+            <section className="rounded-xl border border-amber-700/50 bg-amber-900/20 p-5">
+              <h2 className="mb-2 text-lg font-semibold text-amber-200">
+                League State Controls
+              </h2>
+              <p className="mb-4 text-xs text-amber-200/80">
+                Beta admin overrides — bypass normal lifecycle timing for simulation
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => callSetStatus("SETUP")}
+                  disabled={!!loading}
+                  className="rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Force Setup
+                </button>
+                <button
+                  onClick={() => callSetStatus("LOCKED")}
+                  disabled={!!loading}
+                  className="rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Force Locked
+                </button>
+                <button
+                  onClick={() => callSetStatus("LIVE")}
+                  disabled={!!loading}
+                  className="rounded-lg border border-amber-600/60 bg-amber-900/40 px-3 py-2 text-sm text-amber-200 hover:bg-amber-900/60 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Force Live
+                </button>
+                <button
+                  onClick={() => callSetStatus("COMPLETE")}
+                  disabled={!!loading}
+                  className="rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Force Complete
+                </button>
               </div>
             </section>
 

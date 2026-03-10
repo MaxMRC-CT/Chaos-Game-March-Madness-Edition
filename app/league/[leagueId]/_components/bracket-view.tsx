@@ -77,7 +77,7 @@ function RegionList({
               </div>
               {drafted ? (
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-300">
-                  {drafted.role} • {drafted.member.displayName}
+                  {drafted.role} • {drafted.member.displayName || "Unknown"}
                 </span>
               ) : null}
             </div>

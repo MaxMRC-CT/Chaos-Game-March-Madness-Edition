@@ -51,7 +51,7 @@ export function LiveFeed({
 
   const memberById = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const member of members) map[member.id] = member.displayName;
+    for (const member of members) map[member.id] = member.displayName || "Unknown";
     return map;
   }, [members]);
 

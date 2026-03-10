@@ -60,9 +60,9 @@ export function LobbyMemberList({ leagueId, initialMembers }: LobbyMemberListPro
             key={member.id}
             className="flex items-center justify-between rounded-lg border px-3 py-2"
           >
-            <span>{member.displayName}</span>
+            <span>{member.displayName || "Unknown"}</span>
             {member.isAdmin ? (
-              <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs">Host</span>
+              <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs">League Manager</span>
             ) : null}
           </li>
         ))}

@@ -514,5 +514,5 @@ function formatRivalryMoment(event: WarRoomResponse["highlightEvents"][number], 
   const loserTeam = data.teams.find((team) => team.id === loserTeamId);
   const member = data.members.find((m) => m.id === String(payload.memberId || ""));
 
-  return `${member?.displayName || "Manager"} ${delta >= 0 ? "+" : ""}${delta} • ${winnerTeam?.shortName || winnerTeam?.name || "Team"} over ${loserTeam?.shortName || loserTeam?.name || "Team"}`;
+  return `${member?.displayName || "Unknown"} ${delta >= 0 ? "+" : ""}${delta} • ${winnerTeam?.shortName || winnerTeam?.name || "Team"} over ${loserTeam?.shortName || loserTeam?.name || "Team"}`;
 }

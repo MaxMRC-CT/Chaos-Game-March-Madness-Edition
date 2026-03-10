@@ -198,10 +198,10 @@ export function PreDraftWarRoom({
                     key={m.id}
                     className="flex items-center justify-between rounded-lg border border-[#1f2937] bg-[#0f1623] px-3 py-2 text-sm"
                   >
-                    <span className="text-neutral-100">{m.displayName}</span>
+                    <span className="text-neutral-100">{m.displayName || "Unknown"}</span>
                     {m.isAdmin ? (
                       <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-300">
-                        Host
+                        League Manager
                       </span>
                     ) : (
                       <span className="text-xs text-neutral-500">Player</span>

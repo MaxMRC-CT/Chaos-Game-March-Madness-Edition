@@ -45,11 +45,17 @@ export async function createLeague(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   if (!name) throw new Error("League name is required");
 
+  const rawDisplayName = String(formData.get("displayName") || "").trim();
+  const displayName = normalizeDisplayName(rawDisplayName);
+  if (!displayName) throw new Error("Your name is required to create a league");
+
+  // Temporary beta sim override: when BETA_SIM_MODE=true, default to 2025 so /beta-admin replay works
+  const defaultYear = process.env.BETA_SIM_MODE === "true" ? 2025 : 2026;
   const year = await prisma.tournamentYear.findUnique({
-    where: { year: 2026 },
+    where: { year: defaultYear },
   });
 
-  if (!year) throw new Error("TournamentYear 2026 not found. Run seed.");
+  if (!year) throw new Error(`TournamentYear ${defaultYear} not found. Run seed.`);
 
   const code = await generateLeagueCode();
 
@@ -61,8 +67,6 @@ export async function createLeague(formData: FormData) {
       tournamentYearId: year.id,
     },
   });
-
-  const displayName = "Host";
   const nicknameKey = makeNicknameKey(displayName);
   const reconnectCode = await generateUniqueReconnectCode();
   const deviceToken = crypto.randomUUID();
