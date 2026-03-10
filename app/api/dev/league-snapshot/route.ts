@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     .slice(0, 5)
     .map(([memberId, delta]) => {
       const m = members.find((x) => x.id === memberId);
-      return { displayName: m?.displayName ?? memberId.slice(0, 8), delta };
+      return { displayName: m?.displayName || "Unknown", delta };
     });
 
   return NextResponse.json({

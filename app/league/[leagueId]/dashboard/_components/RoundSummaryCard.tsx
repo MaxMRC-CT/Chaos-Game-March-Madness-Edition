@@ -54,7 +54,7 @@ export function RoundSummaryCard({ roundSummary }: { roundSummary: RoundSummary 
       node: (
         <RecapCard
         title="Chaos Spike"
-        playerName={roundSummary.chaosSpike.displayName}
+        playerName={roundSummary.chaosSpike.displayName || "Unknown"}
         delta={`+${roundSummary.chaosSpike.spots}`}
         deltaVariant="positive"
         icon={
@@ -106,7 +106,7 @@ export function RoundSummaryCard({ roundSummary }: { roundSummary: RoundSummary 
       node: (
         <RecapCard
         title="Leverage Leader"
-        playerName={roundSummary.leverageLeader.displayName}
+        playerName={roundSummary.leverageLeader.displayName || "Unknown"}
         suffix={`(${roundSummary.leverageLeader.chaosIndex} chaos)`}
         icon={
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-400/15 shadow-[0_0_12px_rgba(251,191,36,0.25)]">

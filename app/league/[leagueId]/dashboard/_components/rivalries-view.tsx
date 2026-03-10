@@ -34,7 +34,7 @@ function RivalryInsightCard({
           </span>
         ) : null}
       </div>
-      <p className="mt-2 font-semibold text-neutral-100">{insight.displayName}</p>
+      <p className="mt-2 font-semibold text-neutral-100">{insight.displayName || "Unknown"}</p>
       <p className="mt-0.5 text-sm text-neutral-400">{insight.detail}</p>
     </div>
   );
@@ -52,7 +52,7 @@ function formatRivalryMoment(
   const loserTeam = data.teams.find((t) => t.id === loserTeamId);
   const member = data.members.find((m) => m.id === String(payload.memberId || ""));
   return {
-    member: member?.displayName || "Manager",
+    member: member?.displayName || "Unknown",
     delta,
     winner: winnerTeam?.shortName || winnerTeam?.name || "Team",
     loser: loserTeam?.shortName || loserTeam?.name || "Team",

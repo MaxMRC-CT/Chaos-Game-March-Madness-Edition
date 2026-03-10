@@ -16,7 +16,7 @@ export function buildTeamOwnershipMap(picks: PickWithOwner[]) {
   const map: Record<string, TeamOwner[]> = {};
   for (const pick of picks) {
     const o: TeamOwner = {
-      ownerDisplayName: pick.member.displayName,
+      ownerDisplayName: pick.member.displayName || "Unknown",
       ownerMemberId: pick.memberId,
       role: pick.role,
     };

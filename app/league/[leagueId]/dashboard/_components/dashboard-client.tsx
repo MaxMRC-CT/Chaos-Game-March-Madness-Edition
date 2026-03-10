@@ -177,7 +177,7 @@ export default function DashboardClient({
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-lg font-semibold">
-                        {data.me?.displayName || "Guest"}
+                        {data.me ? (data.me.displayName || "Unknown") : "Guest"}
                       </p>
                       <p className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                         <span>{data.me?.isAdmin ? "League Manager" : "League Member"}</span>

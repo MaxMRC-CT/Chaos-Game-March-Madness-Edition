@@ -454,7 +454,7 @@ export default function BetaAdminPage() {
                     {snapshot.standings.map((s, i) => (
                       <li key={s.memberId} className="flex justify-between">
                         <span>
-                          {i + 1}. {s.displayName}
+                          {i + 1}. {s.displayName || "Unknown"}
                         </span>
                         <span className="font-mono text-neutral-300">
                           {s.total}

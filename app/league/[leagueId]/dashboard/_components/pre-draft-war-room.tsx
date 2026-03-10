@@ -179,7 +179,7 @@ export function PreDraftWarRoom({
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-neutral-700 font-semibold text-neutral-100">
                   {initials}
                 </span>
-                <p className="text-sm text-neutral-300">{data.me?.displayName || "Guest"}</p>
+                <p className="text-sm text-neutral-300">{data.me ? (data.me.displayName || "Unknown") : "Guest"}</p>
               </div>
             </div>
           </header>

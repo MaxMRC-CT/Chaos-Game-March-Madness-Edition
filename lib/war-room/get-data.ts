@@ -211,7 +211,7 @@ export async function getWarRoomData(
   const ownershipMap = picks.reduce<Record<string, Ownership[]>>((acc, pick) => {
     const o: Ownership = {
       role: pick.role,
-      ownerDisplayName: pick.member.displayName,
+      ownerDisplayName: pick.member.displayName || "Unknown",
       ownerMemberId: pick.memberId,
     };
     if (!acc[pick.teamId]) acc[pick.teamId] = [];
