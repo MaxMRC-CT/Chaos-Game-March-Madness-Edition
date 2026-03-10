@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { LeagueStatus } from "@prisma/client";
 import { validateDevPanel } from "@/lib/dev/validate-dev";
-import { getAppBaseUrl } from "@/lib/utils/app-url";
 import { generateReconnectCode } from "@/lib/utils/reconnect";
 import { makeNicknameKey } from "@/lib/league/nickname";
 
@@ -127,7 +126,7 @@ export async function POST(request: NextRequest) {
     loginUrl: string;
   }> = [];
 
-  const baseUrl = getAppBaseUrl();
+  const origin = new URL(request.url).origin;
 
   for (let i = 0; i < numUsers; i++) {
     const nickname = NICKNAMES[i] ?? `Player${i + 1}`;
@@ -145,7 +144,7 @@ export async function POST(request: NextRequest) {
       },
       select: { id: true, nickname: true, displayName: true, reconnectCode: true },
     });
-    const loginUrl = `${baseUrl}/api/dev/dev-login?leagueId=${encodeURIComponent(leagueId)}&memberId=${encodeURIComponent(member.id)}`;
+    const loginUrl = `${origin}/api/dev/dev-login?leagueId=${encodeURIComponent(leagueId)}&memberId=${encodeURIComponent(member.id)}`;
     members.push({
       ...member,
       loginUrl,

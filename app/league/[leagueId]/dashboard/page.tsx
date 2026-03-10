@@ -1,13 +1,11 @@
 import { redirect } from "next/navigation";
-import { getAppBaseUrl } from "@/lib/utils/app-url";
 import DashboardClient from "./_components/dashboard-client";
 import { PreDraftWarRoom } from "./_components/pre-draft-war-room";
 import { WarRoomResponse } from "./_components/types";
 
 async function getSummary(leagueId: string): Promise<WarRoomResponse | null> {
-  const baseUrl = getAppBaseUrl();
   const response = await fetch(
-    `${baseUrl}/api/war-room?leagueId=${encodeURIComponent(leagueId)}`,
+    `/api/war-room?leagueId=${encodeURIComponent(leagueId)}`,
     { cache: "no-store" },
   );
   if (!response.ok) return null;

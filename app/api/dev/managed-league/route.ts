@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateDevPanel } from "@/lib/dev/validate-dev";
-import { getAppBaseUrl } from "@/lib/utils/app-url";
 import { RoleType } from "@prisma/client";
 
 const PICKS_PER_ROLE = 2;
@@ -102,10 +101,7 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  const host = request.headers.get("host");
-  const origin = host?.startsWith("localhost")
-    ? `http://${host}`
-    : getAppBaseUrl();
+  const origin = new URL(request.url).origin;
 
   return NextResponse.json({
     ok: true,
