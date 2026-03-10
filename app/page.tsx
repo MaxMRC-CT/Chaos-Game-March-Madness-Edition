@@ -70,6 +70,55 @@ export default function HomePage() {
           Join with Game PIN
         </a>
 
+        <div className="flex justify-center gap-4 text-sm">
+          <a
+            href="/my-leagues"
+            className="text-neutral-400 hover:text-white transition"
+          >
+            My Leagues
+          </a>
+          <a
+            href="/guide"
+            className="text-neutral-400 hover:text-white transition"
+          >
+            How to Play
+          </a>
+        </div>
+
+        <section className="mt-10 border-t border-white/10 pt-8">
+          <h2 className="mb-6 text-center text-lg font-medium text-white">
+            How Chaos League Works
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-3">
+            <div className="text-center">
+              <p className="font-medium text-white">1. Draft Your Portfolio</p>
+              <p className="mt-1 text-sm text-neutral-400">
+                Pick 2 Heroes, 2 Villains, 2 Cinderellas. No bracket to fill.
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="font-medium text-white">2. Track Every Game</p>
+              <p className="mt-1 text-sm text-neutral-400">
+                Points update live as the tournament unfolds. Rivalries matter.
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="font-medium text-white">3. Outscore Your League</p>
+              <p className="mt-1 text-sm text-neutral-400">
+                Win with leverage and chaos. Tiebreaker is championship total.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 text-center">
+            <a
+              href="/guide"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+            >
+              Read Full Guide →
+            </a>
+          </div>
+        </section>
+
         {process.env.NODE_ENV === "development" && (
           <a
             href="/dev"
