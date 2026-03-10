@@ -1,14 +1,14 @@
+import { cookies } from "next/headers";
 import BracketClient from "./_components/bracket-client";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
 import { prisma } from "@/lib/db";
+import { getWarRoomData } from "@/lib/war-room/get-data";
 
-async function getSummary(leagueId: string): Promise<WarRoomResponse | null> {
-  const response = await fetch(
-    `/api/war-room?leagueId=${encodeURIComponent(leagueId)}`,
-    { cache: "no-store" },
-  );
-  if (!response.ok) return null;
-  return (await response.json()) as WarRoomResponse;
+async function loadWarRoomData(leagueId: string): Promise<WarRoomResponse | null> {
+  const cookieStore = await cookies();
+  const memberId = cookieStore.get(`cl_member_${leagueId}`)?.value ?? null;
+  const data = await getWarRoomData(leagueId, { memberId });
+  return data as WarRoomResponse | null;
 }
 
 type RoundCounts = { R64: number; R32: number; S16: number; E8: number; F4: number; NCG: number };
@@ -36,7 +36,7 @@ export default async function BracketPage({
 }) {
   const { leagueId } = await params;
   const [summary, roundCounts] = await Promise.all([
-    getSummary(leagueId),
+    loadWarRoomData(leagueId),
     getRoundCounts(leagueId),
   ]);
 

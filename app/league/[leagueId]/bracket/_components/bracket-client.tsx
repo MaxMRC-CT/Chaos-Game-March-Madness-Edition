@@ -37,6 +37,37 @@ const ROLE_BADGE = {
 
 type RoundCounts = { R64: number; R32: number; S16: number; E8: number; F4: number; NCG: number };
 
+/** Ensure array props exist for bracket rendering. Prevents "Cannot read properties of undefined (reading 'length')" for new leagues. */
+function normalizeWarRoomForBracket(raw: WarRoomResponse | null | undefined): WarRoomResponse {
+  if (raw == null || typeof raw !== "object") {
+    return {
+      league: { id: "", name: "", status: "SETUP", code: "", currentPick: 0, currentRound: "R64" },
+      me: null,
+      members: [],
+      picks: [],
+      myPicks: [],
+      teams: [],
+      teamResults: [],
+      games: [],
+      standings: [],
+      standingsDelta: {},
+      standingsUpdatedAt: null,
+      recentEvents: [],
+      highlightEvents: [],
+      hotSeatMatchups: [],
+      ownershipMap: {},
+      ownershipByRole: {},
+    };
+  }
+  return {
+    ...raw,
+    teams: Array.isArray(raw.teams) ? raw.teams : [],
+    games: Array.isArray(raw.games) ? raw.games : [],
+    teamResults: Array.isArray(raw.teamResults) ? raw.teamResults : [],
+    picks: Array.isArray(raw.picks) ? raw.picks : [],
+  };
+}
+
 export default function BracketClient({
   leagueId,
   initial,
@@ -46,7 +77,7 @@ export default function BracketClient({
   initial: WarRoomResponse;
   roundCounts?: RoundCounts | null;
 }) {
-  const [data, setData] = useState(initial);
+  const [data, setData] = useState(() => normalizeWarRoomForBracket(initial));
   const [filter, setFilter] = useState<OwnershipFilter>("ALL");
   const [selectedRound, setSelectedRound] = useState<RoundKey>("R64");
   const [zoom, setZoom] = useState(1);
@@ -57,7 +88,8 @@ export default function BracketClient({
       cache: "no-store",
     });
     if (!response.ok) return;
-    setData((await response.json()) as WarRoomResponse);
+    const json = (await response.json()) as WarRoomResponse;
+    setData(normalizeWarRoomForBracket(json));
   }, [leagueId]);
 
   useEffect(() => {
@@ -65,30 +97,32 @@ export default function BracketClient({
     return () => window.clearInterval(id);
   }, [load]);
 
-  const ownershipByTeamId = useMemo(() => buildTeamOwnershipMap(data.picks), [data.picks]);
+  const ownershipByTeamId = useMemo(() => buildTeamOwnershipMap(data.picks ?? []), [data.picks]);
   const resultByTeamId = useMemo(() => {
     const map: Record<string, WarRoomResponse["teamResults"][number] | undefined> = {};
-    for (const result of data.teamResults) map[result.teamId] = result;
+    for (const result of data.teamResults ?? []) map[result.teamId] = result;
     return map;
   }, [data.teamResults]);
   const teamById = useMemo(() => {
     const map: Record<string, WarRoomResponse["teams"][number]> = {};
-    for (const team of data.teams) map[team.id] = team;
+    for (const team of data.teams ?? []) map[team.id] = team;
     return map;
   }, [data.teams]);
 
-  const hasTeams = data.teams.length > 0;
-  const hasGames = data.games.length > 0;
+  const teams = data.teams ?? [];
+  const games = data.games ?? [];
+  const hasTeams = teams.length > 0;
+  const hasGames = games.length > 0;
   const showDebug = useBracketDebug();
 
   const debugCountsByRound = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const g of data.games) {
+    for (const g of games) {
       const key = g.round === "FINAL" ? "NCG" : g.round;
       c[key] = (c[key] ?? 0) + 1;
     }
     return c;
-  }, [data.games]);
+  }, [games]);
 
   const handleResetView = useCallback(() => {
     setSelectedRound("R64");
@@ -167,11 +201,11 @@ export default function BracketClient({
             {showDebug && (
               <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 font-mono text-xs text-amber-200">
                 <div className="font-semibold text-amber-300">Bracket debug (?bracketDebug=1)</div>
-                <div>games: {data.games.length} · teamResults: {data.teamResults.length} · teams: {data.teams.length}</div>
+                <div>games: {games.length} · teamResults: {(data.teamResults ?? []).length} · teams: {teams.length}</div>
                 <div>by round: {JSON.stringify(debugCountsByRound)}</div>
-                {data.games.length > 0 && (
+                {games.length > 0 && (
                   <div className="mt-1 truncate">
-                    first game: {data.games[0].round} #{data.games[0].gameNo} → winner {data.games[0].winnerTeamId?.slice(0, 8)}… loser {data.games[0].loserTeamId?.slice(0, 8)}…
+                    first game: {games[0].round} #{games[0].gameNo} → winner {games[0].winnerTeamId?.slice(0, 8)}… loser {games[0].loserTeamId?.slice(0, 8)}…
                   </div>
                 )}
               </div>
@@ -233,11 +267,13 @@ function DesktopBracket({
 }) {
   const isFinalsRound = selectedRound === "F4" || selectedRound === "FINAL";
 
+  const safeGames = data.games ?? [];
+  const safeTeams = data.teams ?? [];
   if (isFinalsRound) {
     const finalsGames =
       selectedRound === "F4"
-        ? data.games.filter((g) => g.round === "F4")
-        : data.games.filter((g) => g.round === "FINAL" || g.round === "CHAMP");
+        ? safeGames.filter((g) => g.round === "F4")
+        : safeGames.filter((g) => g.round === "FINAL" || g.round === "CHAMP");
     return (
       <section className="min-w-0 shrink-0 rounded-xl border border-neutral-800 bg-neutral-900/80 p-4 lg:min-w-[280px]">
         <h2 className="mb-3 text-base font-semibold tracking-tight text-neutral-100">
@@ -289,7 +325,7 @@ function DesktopBracket({
     <>
       {REGIONS.map((region) => {
         const regionNorm = region.toLowerCase();
-        const regionTeams = data.teams.filter(
+        const regionTeams = safeTeams.filter(
           (team) => (team.region ?? "").toLowerCase() === regionNorm,
         );
         const isMobileHidden = region !== mobileRegion;
@@ -313,7 +349,7 @@ function DesktopBracket({
               round={regionRound}
               region={region}
               regionTeams={regionTeams}
-              games={data.games}
+              games={safeGames}
               teamById={teamById}
               ownershipByTeamId={ownershipByTeamId}
               resultByTeamId={resultByTeamId}
@@ -421,6 +457,8 @@ function getMatchupsForRound({
   games: WarRoomResponse["games"];
   teamById: Record<string, WarRoomResponse["teams"][number]>;
 }): { pair: [string, string]; winnerTeamId: string | null }[] {
+  const safeGames = games ?? [];
+  const safeTeams = teams ?? [];
   const norm = (r: string) => (r ?? "").toLowerCase();
   const regionNorm = norm(region);
   type TeamLike = { region?: string };
@@ -431,8 +469,8 @@ function getMatchupsForRound({
   const regionOf = (t: TeamLike | undefined) => (t?.region ?? "").trim().toLowerCase();
 
   if (round === "R64") {
-    const r64Games = games.filter((game) => game.round === "R64");
-    const seeded = buildSeedMatchups(teams);
+    const r64Games = safeGames.filter((game) => game.round === "R64");
+    const seeded = buildSeedMatchups(safeTeams);
     const byGameNo = r64Games
       .filter((game) => {
         const winner = getWinner(game);
@@ -469,7 +507,7 @@ function getMatchupsForRound({
       ? byGameNo
       : seeded.map((p) => ({ pair: [p[0].id, p[1].id] as [string, string], winnerTeamId: null }));
   }
-  return games
+  return safeGames
     .filter((g) => g.round === round)
     .filter((g) => {
       const winner = getWinner(g);
@@ -481,7 +519,8 @@ function getMatchupsForRound({
 }
 
 function buildSeedMatchups(teams: WarRoomResponse["teams"]) {
-  const teamBySeed = new Map(teams.map((t) => [t.seed, t]));
+  const safe = Array.isArray(teams) ? teams : [];
+  const teamBySeed = new Map(safe.map((t) => [t.seed, t]));
   const pairs: Array<[WarRoomResponse["teams"][number], WarRoomResponse["teams"][number]]> = [];
   for (const [seedA, seedB] of NCAA_R64_MATCHUPS) {
     const teamA = teamBySeed.get(seedA);
