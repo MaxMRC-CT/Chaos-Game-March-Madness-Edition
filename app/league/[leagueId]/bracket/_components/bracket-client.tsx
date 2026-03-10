@@ -519,15 +519,14 @@ function TeamRow({
   const owners = Array.isArray(owner) ? owner : owner ? [owner] : [];
   const isWinner =
     matchRole === "winner" ||
-    (matchRole == null &&
-      result != null &&
-      (result.eliminatedRound === null || result.eliminatedRound === "CHAMP"));
+    (matchRole == null && result != null
+      ? (result.eliminatedRound === null || result.eliminatedRound === "CHAMP")
+      : false);
   const isLoser =
     matchRole === "loser" ||
-    (matchRole == null &&
-      result != null &&
-      result.eliminatedRound != null &&
-      result.eliminatedRound !== "CHAMP");
+    (matchRole == null && result != null
+      ? (result.eliminatedRound != null && result.eliminatedRound !== "CHAMP")
+      : false);
   const matchesFilter = matchesOwnershipFilter(owners, filter);
 
   return (
