@@ -11,7 +11,11 @@ function useBracketDebug() {
   }, []);
   return show;
 }
-import { NCAA_R64_MATCHUPS } from "@/lib/bracket/espnLayout";
+import {
+  NCAA_R64_MATCHUPS,
+  REGION_GAME_RANGES,
+  R64_REGION_GAME_RANGES,
+} from "@/lib/bracket/espnLayout";
 import { buildTeamOwnershipMap } from "@/lib/league/ownership";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
 import {
@@ -182,6 +186,7 @@ export default function BracketClient({
                 <div className="font-semibold text-amber-300">Bracket debug (?bracketDebug=1)</div>
                 <div>games: {games.length} · teamResults: {(data.teamResults ?? []).length} · teams: {teams.length}</div>
                 <div>by round: {JSON.stringify(debugCountsByRound)}</div>
+                <div>selected: {selectedRound} · region tabs: {REGIONS.join(", ")}</div>
                 {games.length > 0 && (
                   <div className="mt-1 truncate">
                     first game: {games[0].round} #{games[0].gameNo} → winner {games[0].winnerTeamId?.slice(0, 8)}… loser {games[0].loserTeamId?.slice(0, 8)}…
@@ -423,6 +428,26 @@ function RegionRoundContent({
   );
 }
 
+/** gameNo-based region filtering. Canonical for R32/S16/E8; fallback for R64 when team-region filter fails. */
+function gamesInRegionByGameNo<T extends { round: string; gameNo: number }>(
+  games: T[],
+  round: "R64" | "R32" | "S16" | "E8",
+  region: string,
+): T[] {
+  if (round === "R64") {
+    const range = R64_REGION_GAME_RANGES[region as keyof typeof R64_REGION_GAME_RANGES];
+    if (!range) return [];
+    const [lo, hi] = range;
+    return games.filter((g) => g.gameNo >= lo && g.gameNo <= hi);
+  }
+  const ranges = REGION_GAME_RANGES[round as keyof typeof REGION_GAME_RANGES];
+  if (!ranges) return [];
+  const range = ranges[region as keyof typeof ranges];
+  if (!range) return [];
+  const [lo, hi] = range;
+  return games.filter((g) => g.gameNo >= lo && g.gameNo <= hi);
+}
+
 function getMatchupsForRound({
   round,
   region,
@@ -447,25 +472,21 @@ function getMatchupsForRound({
     teamById[g.loserTeamId] ?? (g as { loser?: TeamLike }).loser;
   const regionOf = (t: TeamLike | undefined) => (t?.region ?? "").trim().toLowerCase();
 
+  const showDebug =
+    process.env.NODE_ENV === "development" &&
+    typeof window !== "undefined" &&
+    window.location.search.includes("bracketDebug=1");
+
   if (round === "R64") {
-    const r64Games = safeGames.filter((game) => game.round === "R64");
+    const r64Games = safeGames.filter((g) => g.round === "R64");
     const seeded = buildSeedMatchups(safeTeams);
-    const byGameNo = r64Games
+
+    // Prefer team-region filter (both winner and loser in region)
+    const byRegionFilter = r64Games
       .filter((game) => {
         const winner = getWinner(game);
         const loser = getLoser(game);
-        const pass = regionOf(winner) === regionNorm && regionOf(loser) === regionNorm;
-        if (process.env.NODE_ENV === "development" && r64Games.indexOf(game) < 2) {
-          console.debug("[getMatchupsForRound] R64", region, {
-            gameNo: game.gameNo,
-            winnerInMap: Boolean(teamById[game.winnerTeamId]),
-            loserInMap: Boolean(teamById[game.loserTeamId]),
-            winnerRegion: regionOf(winner) || "(missing)",
-            loserRegion: regionOf(loser) || "(missing)",
-            pass,
-          });
-        }
-        return pass;
+        return regionOf(winner) === regionNorm && regionOf(loser) === regionNorm;
       })
       .sort((a, b) => a.gameNo - b.gameNo)
       .map((game) => ({
@@ -473,28 +494,56 @@ function getMatchupsForRound({
         winnerTeamId: game.winnerTeamId,
       }));
 
-    if (process.env.NODE_ENV === "development" && region === "East") {
-      console.debug("[getMatchupsForRound] R64 summary", {
+    // If region filter failed (e.g. team region missing) but we have R64 games, use gameNo fallback
+    const byGameNo =
+      byRegionFilter.length > 0
+        ? []
+        : gamesInRegionByGameNo(r64Games, "R64", region)
+          .sort((a, b) => a.gameNo - b.gameNo)
+          .map((game) => ({
+            pair: [game.winnerTeamId, game.loserTeamId] as [string, string],
+            winnerTeamId: game.winnerTeamId,
+          }));
+
+    const result = byRegionFilter.length > 0 ? byRegionFilter : byGameNo;
+    const usingSeeded = result.length === 0 && r64Games.length === 0;
+
+    if (showDebug && region === "East") {
+      console.debug("[getMatchupsForRound] R64", {
         region,
-        r64Total: r64Games.length,
-        byGameNoLength: byGameNo.length,
-        teamByIdSize: Object.keys(teamById).length,
-        usingSeeded: byGameNo.length === 0,
+        roundGamesTotal: r64Games.length,
+        byRegionFilterCount: byRegionFilter.length,
+        byGameNoCount: byGameNo.length,
+        resultCount: result.length,
+        usingSeeded,
       });
     }
-    return byGameNo.length > 0
-      ? byGameNo
+
+    return result.length > 0
+      ? result
       : seeded.map((p) => ({ pair: [p[0].id, p[1].id] as [string, string], winnerTeamId: null }));
   }
-  return safeGames
-    .filter((g) => g.round === round)
-    .filter((g) => {
-      const winner = getWinner(g);
-      const loser = getLoser(g);
-      return regionOf(winner) === regionNorm || regionOf(loser) === regionNorm;
-    })
+
+  // R32/S16/E8: use gameNo-based region filtering (canonical, reliable)
+  const roundGames = safeGames.filter((g) => g.round === round);
+  const inRegion = gamesInRegionByGameNo(roundGames, round, region);
+  const matchups = inRegion
     .sort((a, b) => a.gameNo - b.gameNo)
-    .map((g) => ({ pair: [g.winnerTeamId, g.loserTeamId] as [string, string], winnerTeamId: g.winnerTeamId }));
+    .map((g) => ({
+      pair: [g.winnerTeamId, g.loserTeamId] as [string, string],
+      winnerTeamId: g.winnerTeamId,
+    }));
+
+  if (showDebug && region === "East") {
+    console.debug("[getMatchupsForRound]", round, {
+      region,
+      roundGamesTotal: roundGames.length,
+      gamesAfterRegionFilter: matchups.length,
+      usingSeeded: false,
+    });
+  }
+
+  return matchups;
 }
 
 function buildSeedMatchups(teams: WarRoomResponse["teams"]) {

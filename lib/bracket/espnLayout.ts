@@ -37,8 +37,16 @@ function slotForSeedPair(seedA: number, seedB: number): number {
  */
 const SIM_INDEX_TO_NCAA_SLOT = [0, 7, 5, 3, 2, 4, 6, 1];
 
+/** R64 gameNo ranges per region (1-based). East 1-8, West 9-16, South 17-24, Midwest 25-32. */
+export const R64_REGION_GAME_RANGES: Record<Region, [number, number]> = {
+  East: [1, 8],
+  West: [9, 16],
+  South: [17, 24],
+  Midwest: [25, 32],
+};
+
 /** R32/S16/E8 gameNo ranges per region (1-based) */
-const REGION_GAME_RANGES = {
+export const REGION_GAME_RANGES = {
   R32: { East: [1, 4], West: [5, 8], South: [9, 12], Midwest: [13, 16] },
   S16: { East: [1, 2], West: [3, 4], South: [5, 6], Midwest: [7, 8] },
   E8: { East: [1, 1], West: [2, 2], South: [3, 3], Midwest: [4, 4] },

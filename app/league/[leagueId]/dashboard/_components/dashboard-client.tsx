@@ -120,6 +120,12 @@ export default function DashboardClient({
     return data.hotSeatMatchups[0].label;
   }, [data.hotSeatMatchups]);
 
+  const hasReplayOrImportedResults = useMemo(() => {
+    const hasR64 = data.games.some((g) => g.round === "R64");
+    const hasR32 = data.games.some((g) => g.round === "R32");
+    return hasR64 || hasR32;
+  }, [data.games]);
+
   const initials = (data.me?.displayName || "?")
     .split(" ")
     .map((part) => part[0])
@@ -293,7 +299,12 @@ export default function DashboardClient({
                 <h2 className={`mb-3 ${sectionTitle}`}>
                   Chaos Hot Seat
                 </h2>
-                {data.games.length === 0 ? (
+                {hasReplayOrImportedResults && data.hotSeatMatchups.length === 0 ? (
+                  <div className={`${innerCard} p-4 text-center sm:p-6`}>
+                    <p className="text-sm text-neutral-400">No live games right now.</p>
+                    <p className="mt-1 text-xs text-neutral-500">Check back when the next round tips off, or view the Full Bracket for completed results.</p>
+                  </div>
+                ) : data.games.length === 0 ? (
                   <div className={`${innerCard} p-4 text-center sm:p-6`}>
                     <p className="text-sm text-neutral-400">Tournament hasn&apos;t started yet.</p>
                     <p className="mt-1 text-xs text-neutral-500">Results will appear here once games begin.</p>
