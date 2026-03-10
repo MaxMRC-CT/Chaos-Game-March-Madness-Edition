@@ -474,6 +474,7 @@ export async function getWarRoomData(
     myPicks,
     teams,
     teamResults,
+    games,
     standings,
     standingsDelta,
     standingsUpdatedAt: score?.updatedAt ?? null,
