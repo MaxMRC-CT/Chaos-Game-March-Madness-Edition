@@ -76,3 +76,12 @@ body {
 .loading-shimmer {
   animation: shimmer 1.5s infinite;
 }
+
+.prelaunch-hero-glow {
+  background: radial-gradient(
+    ellipse 90% 60% at 50% 20%,
+    rgba(251, 98, 35, 0.12) 0%,
+    rgba(251, 98, 35, 0.04) 35%,
+    transparent 60%
+  );
+}
