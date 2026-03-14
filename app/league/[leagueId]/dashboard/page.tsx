@@ -57,11 +57,6 @@ export default async function DashboardPage({
     championshipByMemberId,
   );
 
-  // Non-submitted member → portfolio builder (redirect to portfolio)
-  if (memberId && !hasSubmitted) {
-    redirect(`/league/${leagueId}/portfolio`);
-  }
-
   // Submitted member: show real War Room (with pre-tip banner if applicable)
   const preTip = isPreTip(summary.league.status);
   const canEdit = canEditPortfolio(summary.league.status);
@@ -70,8 +65,10 @@ export default async function DashboardPage({
     <DashboardClient
       leagueId={leagueId}
       initial={summary}
+      hasSubmittedPortfolio={hasSubmitted}
+      canEditPortfolio={canEdit}
       preTipBanner={
-        preTip
+        preTip && hasSubmitted
           ? {
               variant: readyForTipOff ? "ready" : "submitted",
               canEditPicks: canEdit,

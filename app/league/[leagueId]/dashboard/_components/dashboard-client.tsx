@@ -1,10 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { startTournamentFromForm } from "@/lib/actions/league";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
+import { memberHasSubmittedPortfolio } from "@/lib/league/member-status";
 import { LeaderboardPanel } from "./leaderboard-panel";
 import { RoundSummaryCard } from "./RoundSummaryCard";
 import { LiveFeed } from "./live-feed";
@@ -48,10 +48,14 @@ export default function DashboardClient({
   leagueId,
   initial,
   preTipBanner,
+  hasSubmittedPortfolio = false,
+  canEditPortfolio = false,
 }: {
   leagueId: string;
   initial: WarRoomResponse;
   preTipBanner?: PreTipBanner;
+  hasSubmittedPortfolio?: boolean;
+  canEditPortfolio?: boolean;
 }) {
   const [data, setData] = useState<WarRoomResponse>(() => normalizeWarRoomPayload(initial));
   const [copied, setCopied] = useState(false);
@@ -143,6 +147,81 @@ export default function DashboardClient({
     return data.hotSeatMatchups[0].label;
   }, [data.hotSeatMatchups]);
 
+  const picksByMemberId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const pick of data.picks) {
+      map.set(pick.memberId, (map.get(pick.memberId) ?? 0) + 1);
+    }
+    return map;
+  }, [data.picks]);
+
+  const championshipByMemberId = useMemo(() => {
+    const map = new Map<string, number | null | undefined>();
+    for (const standing of data.standings) {
+      map.set(standing.memberId, standing.championshipPrediction);
+    }
+    if (data.me) {
+      map.set(data.me.memberId, data.me.championshipPrediction);
+    }
+    return map;
+  }, [data.me, data.standings]);
+
+  const memberStatuses = useMemo<Array<WarRoomResponse["members"][number] & {
+    label: string;
+    tone: "idle" | "active" | "ready" | "locked";
+    detail: string;
+  }>>(() => {
+    return data.members.map((member) => {
+      const pickCount = picksByMemberId.get(member.id) ?? 0;
+      const prediction = championshipByMemberId.get(member.id);
+      const hasStarted = pickCount > 0 || prediction != null;
+      const submitted = memberHasSubmittedPortfolio(pickCount, prediction);
+
+      if (data.league.status === "LIVE" || data.league.status === "COMPLETE") {
+        return {
+          ...member,
+          label: submitted ? "Picks Locked" : hasStarted ? "Drafting" : "Not Started",
+          tone: submitted ? "locked" : hasStarted ? "active" : "idle",
+          detail: submitted ? "Roster locked in" : hasStarted ? `${pickCount}/6 picks saved` : "No picks saved yet",
+        };
+      }
+
+      if (data.league.status === "LOCKED") {
+        return {
+          ...member,
+          label: submitted ? "Picks Locked" : hasStarted ? "Drafting" : "Not Started",
+          tone: submitted ? "locked" : hasStarted ? "active" : "idle",
+          detail: submitted ? "Waiting for tip-off" : hasStarted ? `${pickCount}/6 picks saved` : "No picks saved yet",
+        };
+      }
+
+      if (submitted) {
+        return {
+          ...member,
+          label: "Ready",
+          tone: "ready",
+          detail: "All picks submitted",
+        };
+      }
+
+      if (hasStarted) {
+        return {
+          ...member,
+          label: "Drafting",
+          tone: "active",
+          detail: `${pickCount}/6 picks saved`,
+        };
+      }
+
+      return {
+        ...member,
+        label: "Not Started",
+        tone: "idle",
+        detail: "No picks saved yet",
+      };
+    });
+  }, [championshipByMemberId, data.league.status, data.members, picksByMemberId]);
+
   const hasReplayOrImportedResults = useMemo(() => {
     const hasR64 = data.games.some((g) => g.round === "R64");
     const hasR32 = data.games.some((g) => g.round === "R32");
@@ -175,8 +254,8 @@ export default function DashboardClient({
   const cta = commandCta(
     data.league.status,
     leagueId,
-    Boolean(data.me?.isAdmin),
-    preTipBanner?.canEditPicks,
+    hasSubmittedPortfolio,
+    canEditPortfolio,
   );
   const statusStyle = getStatusStyle(data.league.status);
   const myDelta = data.me ? data.standingsDelta[data.me.memberId] || 0 : 0;
@@ -292,31 +371,22 @@ export default function DashboardClient({
                     </div>
                   </div>
 
-                  {/* 5) Primary action: full-width View Full Bracket */}
+                  {/* 5) Primary action: portfolio / roster flow */}
                   <Link
-                    href={`/league/${leagueId}/bracket`}
+                    href={cta.href}
                     className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-md shadow-emerald-900/20 transition hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] active:scale-[0.99]"
                   >
-                    View Full Bracket
+                    {cta.label}
                   </Link>
 
                   {/* 6) Secondary actions row */}
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
-                    {cta.kind === "link" ? (
-                      <Link
-                        href={cta.href}
-                        className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-white/15 bg-transparent px-3 text-xs font-medium text-neutral-100 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] sm:h-9 sm:text-sm"
-                      >
-                        {cta.label}
-                      </Link>
-                    ) : (
-                      <a
-                        href={cta.href}
-                        className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-white/15 bg-transparent px-3 text-xs font-medium text-neutral-100 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] sm:h-9 sm:text-sm"
-                      >
-                        {cta.label}
-                      </a>
-                    )}
+                    <Link
+                      href={`/league/${leagueId}/bracket`}
+                      className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-white/15 bg-transparent px-3 text-xs font-medium text-neutral-100 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] sm:h-9 sm:text-sm"
+                    >
+                      View Full Bracket
+                    </Link>
                     <Link
                       href={`/join?code=${encodeURIComponent(data.league.code)}`}
                       className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-white/15 bg-transparent px-3 text-xs font-medium text-neutral-100 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] sm:h-9 sm:text-sm"
@@ -330,6 +400,37 @@ export default function DashboardClient({
               {data.roundSummary ? (
                 <RoundSummaryCard roundSummary={data.roundSummary} />
               ) : null}
+
+              <section className={`${panelClass} ${panelHover} p-4 sm:p-5`}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className={headingKicker}>League Lobby</p>
+                    <h2 className={sectionTitle}>Managers</h2>
+                  </div>
+                  <InfoChip className="border-white/15 bg-neutral-900/60">
+                    <span className="text-neutral-400">Players</span>
+                    <span className="ml-2 font-semibold">{memberStatuses.length}</span>
+                  </InfoChip>
+                </div>
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                  {memberStatuses.map((member) => (
+                    <div key={member.id} className={`${innerCard} ${innerCardHover} flex items-center justify-between gap-3 p-3`}>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-neutral-100">
+                          {member.displayName}
+                          {member.isAdmin ? (
+                            <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-300">
+                              Host
+                            </span>
+                          ) : null}
+                        </p>
+                        <p className="mt-1 text-xs text-neutral-500">{member.detail}</p>
+                      </div>
+                      <StatusBadge label={member.label} tone={member.tone} />
+                    </div>
+                  ))}
+                </div>
+              </section>
 
               <section id="hot-seat" className={`${panelClass} ${panelHover} p-4 sm:p-5`}>
                 <h2 className={`mb-3 ${sectionTitle}`}>
@@ -530,27 +631,19 @@ function InfoChip({ children, className }: { children: React.ReactNode; classNam
   );
 }
 
-const MotionLink = motion(Link);
-
 function commandCta(
   status: WarRoomResponse["league"]["status"],
   leagueId: string,
-  isAdmin: boolean,
-  canEditPicks?: boolean,
+  hasSubmittedPortfolio: boolean,
+  canEditPicks: boolean,
 ) {
-  if (canEditPicks) {
-    return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Edit Picks" };
+  if (!hasSubmittedPortfolio) {
+    return { href: `/league/${leagueId}/portfolio`, label: "Draft Your Team" };
   }
-  if (status === "SETUP" || status === "DRAFT") {
-    return { kind: "link" as const, href: `/league/${leagueId}/portfolio`, label: "Build roster" };
+  if (canEditPicks && (status === "SETUP" || status === "LOCKED" || status === "DRAFT")) {
+    return { href: `/league/${leagueId}/portfolio`, label: "Edit Picks" };
   }
-  if (status === "LOCKED") {
-    return { kind: "anchor" as const, href: "#activity", label: "View activity" };
-  }
-  if (status === "LIVE") {
-    return { kind: "anchor" as const, href: "#hot-seat", label: "View Tonight's Chaos" };
-  }
-  return { kind: "anchor" as const, href: "#power-rankings", label: "Crown the Champion" };
+  return { href: `/league/${leagueId}/portfolio`, label: "View Your Team" };
 }
 
 function PreTipBannerCard({
@@ -615,6 +708,29 @@ function PreTipBannerCard({
 function formatDelta(delta: number) {
   if (!delta) return "±0";
   return delta > 0 ? `+${delta}` : `${delta}`;
+}
+
+function StatusBadge({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "idle" | "active" | "ready" | "locked";
+}) {
+  const toneClass =
+    tone === "locked"
+      ? "border-neutral-600 bg-neutral-700/40 text-neutral-100"
+      : tone === "ready"
+        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+        : tone === "active"
+          ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
+          : "border-neutral-700 bg-neutral-900/60 text-neutral-400";
+
+  return (
+    <span className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium ${toneClass}`}>
+      {label}
+    </span>
+  );
 }
 
 function joinOrDash(values: string[] | undefined) {

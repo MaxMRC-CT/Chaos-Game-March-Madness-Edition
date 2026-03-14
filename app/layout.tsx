@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -19,8 +19,22 @@ export const metadata: Metadata = {
   },
   description:
     "Chaos League is a strategic, portfolio-driven March Madness competition featuring Hero, Villain, and Cinderella dynamics.",
+  applicationName: "Chaos League",
+  manifest: "/site.webmanifest",
   icons: {
-    icon: "/chao-shield.png",
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: ["/icons/favicon-32.png"],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Chaos League",
+    statusBarStyle: "black-translucent",
   },
   openGraph: {
     title: "Chaos League – March Madness Edition",
@@ -30,7 +44,7 @@ export const metadata: Metadata = {
     siteName: "Chaos League",
     images: [
       {
-        url: "/chao-shield.png",
+        url: "/chaos-shield.png",
         width: 512,
         height: 512,
         alt: "Chaos League Shield Logo",
@@ -43,8 +57,15 @@ export const metadata: Metadata = {
     title: "Chaos League – March Madness Edition",
     description:
       "A strategic March Madness portfolio league built for leverage and chaos.",
-    images: ["/chao-shield.png"],
+    images: ["/chaos-shield.png"],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b0f19",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
