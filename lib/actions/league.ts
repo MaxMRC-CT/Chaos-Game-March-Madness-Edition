@@ -126,8 +126,11 @@ export async function joinLeague(
     return { error: "Game PIN not found" };
   }
 
-  /* 🚫 BLOCK JOIN IF LOCKED, DRAFT, LIVE, OR COMPLETE (only allow during SETUP) */
-  if (league.status === "LOCKED" || league.status === "DRAFT" || league.status === "LIVE" || league.status === "COMPLETE") {
+  /* 🚫 BLOCK JOIN IF LOCKED, DRAFT, LIVE, OR COMPLETE (only allow during SETUP) — unless beta override */
+  const allowBetaJoinAfterStart = process.env.NEXT_PUBLIC_ALLOW_BETA_JOIN_AFTER_START === "true";
+  const statusBlocksJoin =
+    league.status === "LOCKED" || league.status === "DRAFT" || league.status === "LIVE" || league.status === "COMPLETE";
+  if (statusBlocksJoin && !allowBetaJoinAfterStart) {
     return {
       error: "Joining is closed. This league has started—please reconnect if you already joined.",
     };

@@ -7,6 +7,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+/** Beta override: allow joining even when league is LOCKED/LIVE/etc (e.g. 2025 test data). Disable for 2026 production. */
+const ALLOW_BETA_JOIN_AFTER_START = process.env.NEXT_PUBLIC_ALLOW_BETA_JOIN_AFTER_START === "true";
+
 type AvailabilityState =
   | { tone: "neutral"; message: string }
   | { tone: "green"; message: string }
@@ -106,9 +109,11 @@ export default function JoinLeague() {
     };
   }, [code]);
 
-  // Auto-switch to reconnect only when joining is closed (LOCKED, DRAFT, LIVE, or COMPLETE)
+  // Auto-switch to reconnect only when joining is closed (LOCKED, DRAFT, LIVE, or COMPLETE) — unless beta override
   React.useEffect(() => {
-    if (leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE") {
+    const statusClosesJoin =
+      leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE";
+    if (statusClosesJoin && !ALLOW_BETA_JOIN_AFTER_START) {
       setMode("reconnect");
     }
   }, [leagueStatus]);
@@ -117,8 +122,10 @@ export default function JoinLeague() {
   React.useEffect(() => {
     if (mode !== "join") return;
 
-    // If league is LOCKED/DRAFT/LIVE/COMPLETE, joining is closed, no need to check nickname availability
-    if (leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE") {
+    // If league is LOCKED/DRAFT/LIVE/COMPLETE and beta override off, joining is closed
+    const statusClosesJoin =
+      leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE";
+    if (statusClosesJoin && !ALLOW_BETA_JOIN_AFTER_START) {
       setAvailability({
         tone: "red",
         message: "Joining is closed for this league. Please reconnect.",
@@ -192,7 +199,11 @@ export default function JoinLeague() {
   }, [joinState]);
 
   const joinClosed =
-    leagueStatus === "LOCKED" || leagueStatus === "DRAFT" || leagueStatus === "LIVE" || leagueStatus === "COMPLETE";
+    (leagueStatus === "LOCKED" ||
+      leagueStatus === "DRAFT" ||
+      leagueStatus === "LIVE" ||
+      leagueStatus === "COMPLETE") &&
+    !ALLOW_BETA_JOIN_AFTER_START;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 p-6 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white">

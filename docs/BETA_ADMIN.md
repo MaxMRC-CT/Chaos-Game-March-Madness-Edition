@@ -21,6 +21,9 @@ BETA_ADMIN_KEY=<your-secret-key>
 
 # Optional: when true, newly created leagues default to 2025 (for replay compatibility)
 BETA_SIM_MODE=true
+
+# Optional: when true, users can join leagues even after LOCKED/LIVE (for 2025 test data). Remove for 2026 production.
+NEXT_PUBLIC_ALLOW_BETA_JOIN_AFTER_START=true
 ```
 
 **BETA_ADMIN_KEY** (required for beta-admin):
@@ -93,5 +96,6 @@ BETA_SIM_MODE=true
 To remove beta sim enhancements:
 
 1. **BETA_SIM_MODE:** Remove `BETA_SIM_MODE` from env (or set to `false`). In `lib/actions/league.ts`, remove the override and restore hardcoded `2026` if desired.
-2. **League State Controls:** Delete `app/api/beta-admin/set-status/route.ts`; remove the "League State Controls" section and `callSetStatus` from `app/beta-admin/page.tsx`.
-3. Remove the corresponding rows from this doc.
+2. **NEXT_PUBLIC_ALLOW_BETA_JOIN_AFTER_START:** Remove this env var (or set to `false`) for 2026 production so joining locks correctly after tournament start.
+3. **League State Controls:** Delete `app/api/beta-admin/set-status/route.ts`; remove the "League State Controls" section and `callSetStatus` from `app/beta-admin/page.tsx`.
+4. Remove the corresponding rows from this doc.
