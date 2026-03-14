@@ -15,7 +15,7 @@ type AvailabilityState =
 type JoinMode = "join" | "reconnect";
 type LeagueStatus = "SETUP" | "LOCKED" | "DRAFT" | "LIVE" | "COMPLETE";
 
-export default function JoinClient() {
+export default function JoinLeague() {
   const [joinState, joinFormAction, joinPending] = useActionState(joinLeague, null);
   const [reconnectState, reconnectFormAction, reconnectPending] = useActionState(
     reconnectMember,
@@ -42,10 +42,11 @@ export default function JoinClient() {
     nicknameRef.current?.focus();
   }, []);
 
+  // Prefill from ?pin= or ?code= query params
   React.useEffect(() => {
-    const codeFromQuery = String(searchParams.get("code") || "").trim();
-    if (/^\d{6}$/.test(codeFromQuery)) {
-      setCode(codeFromQuery);
+    const pinFromQuery = String(searchParams.get("pin") || searchParams.get("code") || "").trim();
+    if (/^\d{5,6}$/.test(pinFromQuery)) {
+      setCode(pinFromQuery);
     }
   }, [searchParams]);
 
@@ -205,9 +206,10 @@ export default function JoinClient() {
           priority
         />
       </div>
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Join League</h1>
-        <p className="text-sm text-neutral-400">Enter the 6-digit Game PIN and your nickname.</p>
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-semibold">CHAOS LEAGUE</h1>
+        <p className="text-sm text-neutral-400">Beta Season – 2026</p>
+        <p className="text-sm text-neutral-500">Have a Game PIN? Jump right in.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-2 rounded-xl border border-white/10 bg-white/5 p-1 text-sm sm:grid-cols-2 sm:gap-1">
@@ -247,7 +249,7 @@ export default function JoinClient() {
           <input
             name="code"
             inputMode="numeric"
-            placeholder="Game PIN (6 digits)"
+            placeholder="Enter Game PIN (6 digits)"
             className="w-full rounded-lg bg-white/10 border border-white/20 text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#fb6223]"
             value={code}
             onChange={(event) => setCode(event.target.value)}
@@ -277,7 +279,7 @@ export default function JoinClient() {
             disabled={joinPending || joinClosed}
             className="w-full rounded-xl bg-[#fb6223] hover:bg-[#ff7a3d] transition-colors duration-200 text-white py-2 font-medium shadow-lg disabled:opacity-60"
           >
-            {joinPending ? "Joining..." : "Join"}
+            {joinPending ? "Joining..." : "Join League"}
           </button>
 
           {joinState?.error ? <p className="text-sm text-red-400">{joinState.error}</p> : null}
@@ -361,9 +363,14 @@ export default function JoinClient() {
         </div>
       )}
 
-      <Link href="/" className="text-center text-neutral-400 hover:text-white text-sm underline">
-        Back
-      </Link>
+      <div className="mt-4 flex flex-col items-center gap-2 text-center text-sm">
+        <Link href="/create" className="text-neutral-400 hover:text-white underline">
+          Create League
+        </Link>
+        <Link href="/guide" className="text-neutral-500 hover:text-neutral-400 text-xs">
+          How to Play
+        </Link>
+      </div>
     </main>
   );
 }

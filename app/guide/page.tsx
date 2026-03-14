@@ -60,7 +60,7 @@ export default function GuidePage() {
             </div>
 
             <footer className="mt-12 flex flex-wrap gap-4 border-t border-neutral-800 pt-8 text-sm">
-              <Link href="/" className="text-neutral-400 hover:text-white">
+              <Link href="/create" className="text-neutral-400 hover:text-white">
                 Create League
               </Link>
               <Link href="/join" className="text-neutral-400 hover:text-white">

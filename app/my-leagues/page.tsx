@@ -68,7 +68,7 @@ export default async function MyLeaguesPage() {
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-4">
                 <Link
-                  href="/"
+                  href="/create"
                   className="rounded-lg bg-[#fb6223] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#ff7a3d]"
                 >
                   Create League
@@ -117,7 +117,7 @@ export default async function MyLeaguesPage() {
 
           <div className="mt-8 flex flex-wrap gap-4 text-sm">
             <Link
-              href="/"
+              href="/create"
               className="text-neutral-400 hover:text-white"
             >
               Create League
