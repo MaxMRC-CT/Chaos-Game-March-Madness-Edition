@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppSplashShell } from "./_components/app-splash-shell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -78,9 +79,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-dvh antialiased overflow-x-hidden flex flex-col max-w-full`}
       >
-        <div className="flex min-h-dvh w-full min-w-0 max-w-full flex-1 flex-col">
-          {children}
-        </div>
+        <AppSplashShell>
+          <div className="flex min-h-dvh w-full min-w-0 max-w-full flex-1 flex-col">
+            {children}
+          </div>
+        </AppSplashShell>
       </body>
     </html>
   );
