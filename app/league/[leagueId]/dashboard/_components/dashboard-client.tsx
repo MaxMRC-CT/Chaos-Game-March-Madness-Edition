@@ -87,10 +87,24 @@ export default function DashboardClient({
   );
 
   useEffect(() => {
-    if (data.league.status !== "LIVE") return;
-    const id = window.setInterval(() => void load(15, "all"), 5000);
-    return () => window.clearInterval(id);
-  }, [data.league.status, load]);
+    const refresh = () => void load(15, "all");
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    refresh();
+    const id = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [load]);
 
   const myStanding = data.me
     ? data.standings.find((row) => row.memberId === data.me?.memberId) ?? null

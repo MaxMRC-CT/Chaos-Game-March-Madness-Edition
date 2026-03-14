@@ -1,7 +1,9 @@
 "use server";
 
 import { Round } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { revalidateLeagueViews } from "@/lib/league/revalidate";
 import { computeLeagueStandings } from "@/lib/scoring/compute";
 import { cookies } from "next/headers";
 
@@ -154,10 +156,28 @@ export async function updateResults(
           where: { id: leagueId },
           data: { status: "COMPLETE" },
         });
+      } else {
+        const hasLiveResults =
+          games.length > 0 ||
+          teamResults.some(
+            (result) => result.wins > 0 || result.eliminatedRound !== null,
+          );
+
+        if (hasLiveResults) {
+          await tx.league.updateMany({
+            where: {
+              id: leagueId,
+              status: { in: ["SETUP", "LOCKED", "DRAFT"] },
+            },
+            data: { status: "LIVE" },
+          });
+        }
       }
     });
 
     await computeLeagueStandings(leagueId);
+    revalidateLeagueViews(leagueId);
+    revalidatePath(`/league/${leagueId}`);
     return { success: true };
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : "Could not update results" };

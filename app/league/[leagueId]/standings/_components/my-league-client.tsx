@@ -73,9 +73,23 @@ export default function MyLeagueClient({
   }, [leagueId]);
 
   useEffect(() => {
-    void load();
-    const id = window.setInterval(() => void load(), 5000);
-    return () => window.clearInterval(id);
+    const refresh = () => void load();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    refresh();
+    const id = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [load]);
 
   useEffect(() => {
@@ -440,4 +454,3 @@ export default function MyLeagueClient({
     </main>
   );
 }
-

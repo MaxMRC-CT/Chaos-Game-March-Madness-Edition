@@ -5,6 +5,7 @@ import * as fs from "fs";
 import { prisma } from "@/lib/db";
 import { applyRoundGames } from "@/lib/dev/apply-round";
 import { validateBetaAdmin } from "@/lib/beta-admin/validate-beta-admin";
+import { revalidateLeagueViews } from "@/lib/league/revalidate";
 
 const ROUNDS = ["R64", "R32", "S16", "E8", "F4", "NCG"] as const;
 type RoundArg = (typeof ROUNDS)[number];
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
       where: { id: league.id },
       data: { status: "LIVE" },
     });
+    revalidateLeagueViews(league.id);
     return NextResponse.json({
       ok: true,
       action: "reset",

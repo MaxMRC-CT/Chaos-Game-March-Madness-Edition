@@ -4,12 +4,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 function useBracketDebug() {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setShow(new URLSearchParams(window.location.search).get("bracketDebug") === "1");
+  return useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("bracketDebug") === "1";
   }, []);
-  return show;
 }
 import {
   NCAA_R64_MATCHUPS,
@@ -76,8 +74,23 @@ export default function BracketClient({
   }, [leagueId]);
 
   useEffect(() => {
-    const id = window.setInterval(() => void load(), 5000);
-    return () => window.clearInterval(id);
+    const refresh = () => void load();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    refresh();
+    const id = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [load]);
 
   const ownershipByTeamId = useMemo(() => buildTeamOwnershipMap(data.picks ?? []), [data.picks]);
@@ -651,4 +664,3 @@ function matchesOwnershipFilter(
   if (list.length === 0) return false;
   return list.some((o) => o.role === filter);
 }
-

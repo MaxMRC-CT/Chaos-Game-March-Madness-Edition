@@ -1,5 +1,6 @@
 import { Round } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { revalidateLeagueViews } from "@/lib/league/revalidate";
 import { computeLeagueStandings } from "@/lib/scoring/compute";
 
 /**
@@ -104,8 +105,17 @@ export async function applyRoundGames(
       where: { id: leagueId },
       data: { status: "COMPLETE" },
     });
+  } else {
+    await prisma.league.updateMany({
+      where: {
+        id: leagueId,
+        status: { in: ["SETUP", "LOCKED", "DRAFT"] },
+      },
+      data: { status: "LIVE" },
+    });
   }
 
   await computeLeagueStandings(leagueId);
+  revalidateLeagueViews(leagueId);
   return games.length;
 }

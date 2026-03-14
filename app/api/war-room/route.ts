@@ -30,7 +30,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "League not found" }, { status: 404 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    });
   } catch (error: unknown) {
     console.error("WAR ROOM API ERROR:", error);
     return NextResponse.json(
