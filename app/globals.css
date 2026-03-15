@@ -5,10 +5,10 @@
   --foreground: #e8ecf5;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --app-safe-top: calc(var(--safe-top) + 0.875rem);
-  --app-safe-top-tight: calc(var(--safe-top) + 0.625rem);
-  --app-safe-bottom: calc(var(--safe-bottom) + 1rem);
-  --app-nav-clearance: calc(var(--safe-bottom) + 7.75rem);
+  --app-safe-top: calc(var(--safe-top) + 1.2rem);
+  --app-safe-top-tight: calc(var(--safe-top) + 0.95rem);
+  --app-safe-bottom: calc(var(--safe-bottom) + 1.1rem);
+  --app-nav-clearance: calc(var(--safe-bottom) + 6.9rem);
 }
 
 @theme inline {
@@ -32,10 +32,10 @@ body {
 
 @media (max-height: 812px) {
   :root {
-    --app-safe-top: calc(var(--safe-top) + 0.625rem);
-    --app-safe-top-tight: calc(var(--safe-top) + 0.5rem);
-    --app-safe-bottom: calc(var(--safe-bottom) + 0.875rem);
-    --app-nav-clearance: calc(var(--safe-bottom) + 7.1rem);
+    --app-safe-top: calc(var(--safe-top) + 1rem);
+    --app-safe-top-tight: calc(var(--safe-top) + 0.8rem);
+    --app-safe-bottom: calc(var(--safe-bottom) + 1rem);
+    --app-nav-clearance: calc(var(--safe-bottom) + 6.5rem);
   }
 }
 
@@ -59,6 +59,32 @@ body {
 
   .app-nav-clear {
     padding-bottom: var(--app-nav-clearance);
+  }
+
+  .app-page-gutter {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .app-section-gap {
+    gap: 0.875rem;
+  }
+}
+
+@media (min-width: 640px) {
+  @layer utilities {
+    .app-page-gutter {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+}
+
+@media (max-height: 812px) {
+  @layer utilities {
+    .app-section-gap {
+      gap: 0.75rem;
+    }
   }
 }
 

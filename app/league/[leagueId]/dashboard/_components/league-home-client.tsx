@@ -162,10 +162,10 @@ export function LeagueHomeClient({
 
   return (
     <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">
-      <div className="mx-auto flex min-w-0 max-w-[1600px] gap-4 p-4">
+      <div className="app-page-gutter mx-auto flex min-w-0 max-w-[1600px] gap-4 py-3.5 sm:py-4">
         <LeagueSidebarNav leagueId={leagueId} showAdmin={Boolean(data.me?.isAdmin)} />
 
-        <div className="min-w-0 flex-1 space-y-4">
+        <div className="min-w-0 flex-1 space-y-3.5">
           <section className={`${panelClass} p-4 sm:p-5`}>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -185,17 +185,26 @@ export function LeagueHomeClient({
                 <Badge>{formatRound(data.league.currentRound)}</Badge>
                 <Badge>{data.games.length} games completed</Badge>
                 <Badge>PIN {data.league.code}</Badge>
-                {hasMultipleSavedLeagues ? (
-                  <Link
-                    href="/my-leagues"
-                    className="inline-flex items-center rounded-full border border-neutral-700 bg-neutral-800 px-3 py-1 text-xs font-medium text-neutral-200 transition hover:bg-neutral-700"
-                  >
-                    Switch League
-                  </Link>
-                ) : null}
               </div>
             </div>
           </section>
+
+          {hasMultipleSavedLeagues ? (
+            <section className={`${panelClass} p-0`}>
+              <Link
+                href="/my-leagues"
+                className="flex min-h-14 w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-white/[0.03]"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-white">Switch League</p>
+                  <p className="mt-0.5 text-xs text-neutral-400">
+                    Open saved leagues on this device and jump into another board.
+                  </p>
+                </div>
+                <ArrowRight className="size-4 shrink-0 text-neutral-400" />
+              </Link>
+            </section>
+          ) : null}
 
           <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <div className={`${panelClass} space-y-3`}>

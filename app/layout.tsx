@@ -77,7 +77,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="min-h-full overflow-x-hidden bg-[#0b0f19]">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} app-shell flex max-w-full flex-col overflow-x-hidden bg-[#0b0f19] text-[#e8ecf5] antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} app-shell flex max-w-full flex-col overflow-x-hidden bg-[#0b0f19] text-[#e8ecf5] antialiased [padding-bottom:env(safe-area-inset-bottom,0px)]`}
       >
         <AppSplashShell>
           <div className="app-shell flex w-full min-w-0 max-w-full flex-1 flex-col bg-[#0b0f19]">
