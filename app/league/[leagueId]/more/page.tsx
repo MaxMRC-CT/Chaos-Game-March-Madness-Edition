@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { HowToPlayLinks } from "@/components/how-to-play-links";
 import { getWarRoomData } from "@/lib/war-room/get-data";
 import { LeagueSidebarNav } from "../_components/LeagueSidebarNav";
 import { WarRoomResponse } from "../dashboard/_components/types";
@@ -24,9 +25,9 @@ const MORE_LINKS = [
     description: "Explore the full field and ownership view by region.",
   },
   {
-    href: "/guide",
-    title: "Rules & Guide",
-    description: "Scoring, format, and game basics.",
+    href: "/how-to-play",
+    title: "How to Play",
+    description: "Rules, app navigation, and a clean game overview.",
     external: true,
   },
   {
@@ -74,6 +75,12 @@ export default async function MorePage({
               Advanced views, rules, and league utilities live here.
             </p>
           </section>
+
+          <HowToPlayLinks
+            variant="compact"
+            title="How to Play"
+            description="Open the web guide or download the PDFs when you need the full rules, app map, or a quick game card."
+          />
 
           <div className="space-y-3">
             {MORE_LINKS.map((item) => {

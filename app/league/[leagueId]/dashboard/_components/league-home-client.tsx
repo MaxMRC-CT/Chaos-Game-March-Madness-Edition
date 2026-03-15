@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
 import { RankMovementIndicator } from "@/app/league/[leagueId]/_components/rank-movement-indicator";
 import { ScoreDeltaBadge } from "@/app/league/[leagueId]/_components/score-delta-badge";
+import { HowToPlayLinks } from "@/components/how-to-play-links";
 import { getSavedLeagues, upsertSavedLeague } from "@/lib/client/device-session";
 import {
   normalizeWarRoomPayload,
@@ -334,6 +335,12 @@ export function LeagueHomeClient({
               </div>
             </div>
           </section>
+
+          <HowToPlayLinks
+            variant="compact"
+            title="Need a refresher?"
+            description="Learn how Heroes, Villains, and Cinderellas work and where to go in the app."
+          />
 
           <section className={`${panelClass} lg:hidden`}>
             <Link

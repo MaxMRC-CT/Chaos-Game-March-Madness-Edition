@@ -6,6 +6,7 @@ import { joinLeague, reconnectMember } from "@/lib/actions/league";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { HowToPlayLinks } from "@/components/how-to-play-links";
 import {
   ensureDeviceSessionId,
   upsertSavedLeague,
@@ -256,6 +257,11 @@ export default function JoinLeague({
         <p className="text-sm text-neutral-500">Have a Game PIN? Jump right in.</p>
       </div>
 
+      <HowToPlayLinks
+        title="New to Chaos League?"
+        description="Read the quick guide before joining so you know how the game works and where to go once you're in."
+      />
+
       {message ? (
         <div className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
           {message}
@@ -410,7 +416,7 @@ export default function JoinLeague({
         <Link href="/create" className="text-neutral-400 hover:text-white underline">
           Create League
         </Link>
-        <Link href="/guide" className="text-neutral-500 hover:text-neutral-400 text-xs">
+        <Link href="/how-to-play" className="text-neutral-500 hover:text-neutral-400 text-xs">
           How to Play
         </Link>
       </div>
