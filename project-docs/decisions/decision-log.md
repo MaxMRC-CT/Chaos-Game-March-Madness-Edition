@@ -1,14 +1,9 @@
 # Decision Log
 
-## Template
-- Date:
-- Decision:
-- Context:
-- Options Considered:
-- Why Chosen:
-- Consequences:
-- Follow-Up Needed:
+War Room placed prominently in navigation.
 
----
+Polling used initially instead of realtime infrastructure.
 
-## Decisions
+Manual game entry preferred for tournament updates.
+
+Mobile-first UI prioritized.

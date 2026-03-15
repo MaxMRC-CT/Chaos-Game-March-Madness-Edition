@@ -1,17 +1,20 @@
 # Constraints
 
-## Hard Constraints
-
 ## Product Constraints
+- The app is already deployed on Vercel.
+- Beta testing is currently ongoing.
+- Do not introduce breaking changes to existing league functionality.
 
 ## Technical Constraints
+- Avoid introducing paid services.
+- Prefer simple architecture.
+- Preserve existing Prisma schema unless necessary.
 
-## Cost Constraints
+## UX Constraints
+- Mobile-first design.
+- Navigation must remain simple.
+- War Room should be easily accessible.
 
-## Timeline Constraints
-
-## Things Agents Must Not Change Without Approval
-
-## Things Agents Must Not Introduce
-
-## Notes
+## Development Constraints
+- All changes must be production safe.
+- Avoid large refactors during active tournament operation.

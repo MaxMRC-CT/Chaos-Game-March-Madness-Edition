@@ -1,23 +1,38 @@
 # Coding Standards
 
-## General Rules
+## Language
 
-## TypeScript Rules
+Use TypeScript for all application code.
 
-## Component Rules
+Avoid using the `any` type.
 
-## Styling Rules
+## Components
 
-## State Rules
+Prefer server components when possible.
 
-## File Naming Conventions
+Client components should only be used when needed.
 
-## Folder Organization Rules
+## Styling
 
-## Accessibility Rules
+Use Tailwind CSS.
 
-## Performance Rules
+Avoid inline styles.
 
-## Testing Expectations
+Prefer mobile-first layouts.
 
-## Definition of Done
+## File Naming
+
+Components: PascalCase  
+Files: kebab-case
+
+## State Management
+
+Prefer server actions and database reads.
+
+Avoid complex global state solutions.
+
+## Performance
+
+Avoid heavy libraries.
+
+Optimize for fast page loads.

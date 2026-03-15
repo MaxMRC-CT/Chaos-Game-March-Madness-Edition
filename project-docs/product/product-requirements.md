@@ -1,27 +1,35 @@
 # Product Requirements
 
-## Product Summary
+## League Creation
+Users can create a league by entering a league name.
 
-## Core Features
+System generates:
+- Game PIN
+- Join link
 
-### Feature 1
-- Description:
-- Acceptance Criteria:
+## Join League
+Players join using:
+- Game PIN
+- Nickname
 
-### Feature 2
-- Description:
-- Acceptance Criteria:
+## Draft
+Each player drafts:
+- 1 Hero
+- 1 Villain
+- 2 Cinderella teams
 
-### Feature 3
-- Description:
-- Acceptance Criteria:
+## War Room
+Displays:
+- League standings
+- Player portfolios
+- Score updates
 
-## Roles / Permissions
+## Bracket
+Interactive bracket showing tournament results.
 
-## Functional Requirements
-
-## Non-Functional Requirements
-
-## Future Features
-
-## Open Questions
+## Admin Controls
+Admin can:
+- Start draft
+- Force start league
+- Enter game results
+- Lock league at tournament start

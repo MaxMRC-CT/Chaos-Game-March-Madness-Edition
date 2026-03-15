@@ -1,15 +1,11 @@
-# Memory
+# System Memory
 
-## Stable Decisions to Remember
+Chaos League is mobile-first.
 
-## Current Priorities
+The War Room is the central gameplay screen.
 
-## Known Constraints
+Navigation should remain simple.
 
-## Known Technical Debt
+The system is already deployed on Vercel.
 
-## Important UX Rules
-
-## Repeated User Preferences
-
-## Things Future Agents Should Read First
+Admin tools must support live tournament operation.

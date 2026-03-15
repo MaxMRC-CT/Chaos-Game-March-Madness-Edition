@@ -1,23 +1,25 @@
 # UI Guidelines
 
-## Brand Direction
-
 ## Design Principles
 
-## Layout Rules
+Mobile-first design.
 
-## Mobile Rules
+Clean and modern interface.
 
-## Desktop Rules
+Fast loading pages.
 
-## Navigation Rules
+## Visual Style
 
-## Component Style Notes
+Sports themed but modern.
 
-## Typography Notes
+Minimal clutter.
 
-## Interaction Notes
+High contrast scoreboard views.
 
-## Accessibility Notes
+## Interaction
 
-## Reference Inspirations
+Simple navigation.
+
+Clear calls to action.
+
+Immediate feedback on user actions.

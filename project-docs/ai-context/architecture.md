@@ -1,27 +1,44 @@
 # Architecture
 
-## High-Level Overview
+## Framework
+Next.js (App Router)
 
-## Frontend
+## Language
+TypeScript
 
-## Backend
+## Styling
+TailwindCSS
 
 ## Database
+PostgreSQL via Prisma ORM
 
-## Hosting / Deployment
+## Hosting
+Vercel
 
-## Authentication
+## Core Data Models
 
-## Integrations
+League
+- id
+- name
+- gamePin
+- status
 
-## Data Model Summary
+Player
+- id
+- nickname
+- leagueId
 
-## API / Route Structure
+DraftPick
+- id
+- playerId
+- teamId
+- role (hero | villain | cinderella)
 
-## State Management Approach
+Game
+- id
+- teamA
+- teamB
+- winner
 
-## Performance Considerations
-
-## Security Considerations
-
-## Open Questions
+## Realtime Strategy
+Currently uses polling for updates. Real-time infrastructure may be added later.

@@ -2,22 +2,32 @@
 
 ## Frontend
 
+Next.js  
+React  
+TypeScript  
+Tailwind CSS
+
 ## Backend
+
+Next.js API routes
 
 ## Database
 
-## Styling
+PostgreSQL  
+Prisma ORM
 
-## Authentication
+## Hosting
 
-## Deployment
+Vercel
 
-## Analytics
+## Development Tools
 
-## Testing
+GitHub  
+VS Code / Cursor  
+Codex
 
-## Tooling
+## Design Goals
 
-## Allowed Dependencies
-
-## Avoid / Do Not Use
+- minimal dependencies
+- simple architecture
+- mobile-first UI

@@ -1,17 +1,25 @@
 # System Map
 
-## Product Surface Areas
+## Landing
+Intro page explaining Chaos League.
 
-## Main Routes / Screens
+## Join Flow
+Enter Game PIN → Choose nickname → Join league.
 
-## Shared Components
+## League Dashboard
+Main hub for league activity.
 
-## Data Flow Overview
+## Draft Room
+Players draft their Hero, Villain, and Cinderella picks.
 
-## External Integrations
+## War Room
+Live scoreboard showing standings.
 
-## Dependencies Between Modules
+## Bracket
+Tournament bracket visualization.
 
-## High-Risk Areas
+## Admin Tools
+Admin can manage league state and input results.
 
-## Areas Most Likely to Break During Changes
+## Settings
+League information and player management.

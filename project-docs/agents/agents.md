@@ -1,29 +1,17 @@
 # Agents
 
-## Agent Roles
+## Product Agent
 
-### Product Agent
-- Responsible for:
-- Inputs:
-- Outputs:
+Ensures features align with gameplay vision.
 
-### Engineering Agent
-- Responsible for:
-- Inputs:
-- Outputs:
+## Engineering Agent
 
-### UI/UX Agent
-- Responsible for:
-- Inputs:
-- Outputs:
+Implements technical solutions safely.
 
-### QA Agent
-- Responsible for:
-- Inputs:
-- Outputs:
+## UX Agent
 
-## Rules of Engagement
+Ensures mobile usability.
 
-## Handoff Format
+## QA Agent
 
-## When to Escalate to Human Approval
+Tests flows and identifies bugs.

@@ -1,9 +1,11 @@
 # Backlog
 
-## High Priority
+Realtime updates.
 
-## Medium Priority
+Player stats.
 
-## Low Priority
+Expanded analytics.
 
-## Parking Lot
+Improved bracket animations.
+
+League history tracking.

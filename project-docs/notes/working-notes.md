@@ -1,3 +1,5 @@
 # Working Notes
 
-Use this file for temporary notes, rough ideas, and intermediate planning.
+Temporary development notes.
+
+Ideas and experiments can be stored here.

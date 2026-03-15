@@ -1,16 +1,23 @@
 # Current Sprint
 
-## Sprint Goal
+## Goals
 
-## Priority Tasks
-1.
-2.
-3.
+Prepare Chaos League for live tournament play.
+
+## Tasks
+
+Improve War Room navigation.
+
+Add manual game result entry.
+
+Improve scoreboard UI.
+
+Finalize mobile navigation.
 
 ## Acceptance Criteria
 
-## In Progress
+War Room loads quickly.
 
-## Blockers
+Admin can input results easily.
 
-## Notes for Agents
+Mobile navigation remains simple.

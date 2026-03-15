@@ -1,9 +1,7 @@
-# Bugs
+# Known Issues
 
-## Critical
+Draft reconnection edge cases.
 
-## Medium
+Mobile spacing inconsistencies.
 
-## Low
-
-## Resolved
+Bracket layout improvements.
