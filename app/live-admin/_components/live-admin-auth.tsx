@@ -14,7 +14,7 @@ export function LiveAdminAuth({
   error: string | null;
 }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-[#0c1424] px-4 text-neutral-100">
+    <main className="app-shell app-safe-top app-safe-bottom flex items-center justify-center bg-[#0c1424] px-4 text-neutral-100">
       <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-neutral-950/90 p-6 shadow-2xl shadow-black/30">
         <div className="mb-6">
           <p className="inline-flex rounded-full border border-[#fb6223]/30 bg-[#fb6223]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ffb08d]">

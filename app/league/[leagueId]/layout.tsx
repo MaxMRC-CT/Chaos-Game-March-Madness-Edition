@@ -12,7 +12,7 @@ export default async function LeagueLayout({
 
   return (
     <BrandBackground>
-      <div className="pb-[calc(7.25rem+env(safe-area-inset-bottom))] lg:pb-0">
+      <div className="app-safe-top app-nav-clear lg:px-0 lg:pt-4 lg:pb-0">
         {children}
       </div>
       <MobileLeagueNav leagueId={leagueId} />

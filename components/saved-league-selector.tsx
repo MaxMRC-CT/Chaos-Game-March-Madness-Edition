@@ -32,7 +32,7 @@ export function SavedLeagueSelector({
   subtitle?: string;
 }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-5 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] px-4 py-8 text-white">
+    <main className="app-shell app-safe-top app-safe-bottom mx-auto flex w-full max-w-md flex-col justify-center gap-4 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] px-4 text-white">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold tracking-tight text-white">{title}</h1>
         <p className="text-sm text-neutral-400">{subtitle}</p>

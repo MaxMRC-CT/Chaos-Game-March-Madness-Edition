@@ -61,7 +61,7 @@ export default async function MorePage({
       <div className="mx-auto flex min-w-0 max-w-[1600px] gap-4 p-4">
         <LeagueSidebarNav leagueId={leagueId} showAdmin={Boolean(initial.me?.isAdmin)} />
 
-        <div className="min-w-0 flex-1 space-y-4">
+        <div className="min-w-0 flex-1 space-y-3">
           <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
               More
@@ -74,19 +74,19 @@ export default async function MorePage({
             </p>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
+          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-3.5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
               Follow the Tournament
             </p>
             <h2 className="mt-1 text-lg font-semibold text-white">Stay on Top of the Board</h2>
-            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            <div className="mt-2.5 grid gap-2.5 lg:grid-cols-2">
               {TOURNAMENT_LINKS.map((item) => {
                 const href = `/league/${leagueId}/${item.href}`;
                 return (
                   <Link
                     key={item.title}
                     href={href}
-                    className="block rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-white/20 hover:bg-white/[0.05]"
+                  className="block rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 transition hover:border-white/20 hover:bg-white/[0.05]"
                   >
                     <p className="text-base font-semibold text-white">{item.title}</p>
                     <p className="mt-1 text-sm text-neutral-400">{item.description}</p>
@@ -96,22 +96,22 @@ export default async function MorePage({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
+          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-3.5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
               Help & Info
             </p>
             <h2 className="mt-1 text-lg font-semibold text-white">Rules and Quick Guides</h2>
-            <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="mt-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
               <Link
                 href="/how-to-play"
-                className="block rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-white/20 hover:bg-white/[0.05]"
+                className="block rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 transition hover:border-white/20 hover:bg-white/[0.05]"
               >
                 <p className="text-base font-semibold text-white">How to Play</p>
                 <p className="mt-1 text-sm text-neutral-400">
                   Rules, quick guide, and downloads.
                 </p>
               </Link>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 <Link
                   href="/docs/chaos-league-how-to-play.pdf"
                   target="_blank"
@@ -132,18 +132,18 @@ export default async function MorePage({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
+          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-3.5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
               League Actions
             </p>
-            <div className="mt-3 space-y-3">
+            <div className="mt-2.5 space-y-2.5">
               {LEAGUE_ACTIONS.map((item) => {
                 const href = isExternalLink(item) ? item.href : `/league/${leagueId}/${item.href}`;
                 return (
                   <Link
                     key={item.title}
                     href={href}
-                    className="block rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-white/20 hover:bg-white/[0.05]"
+                    className="block rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 transition hover:border-white/20 hover:bg-white/[0.05]"
                   >
                     <p className="text-base font-semibold text-white">{item.title}</p>
                     <p className="mt-1 text-sm text-neutral-400">{item.description}</p>

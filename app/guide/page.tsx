@@ -9,14 +9,14 @@ export default function GuidePage() {
 
   return (
     <BrandBackground>
-      <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">
-        <div className="mx-auto flex max-w-[900px] flex-col gap-8 px-4 py-8 lg:flex-row lg:gap-12">
+      <main className="app-shell app-safe-top app-safe-bottom min-w-0 overflow-x-hidden text-neutral-100">
+        <div className="mx-auto flex max-w-[900px] flex-col gap-6 px-4 lg:flex-row lg:gap-12">
           {/* Sticky nav: top on mobile, right on desktop */}
           <nav
             aria-label="Guide sections"
-            className="order-2 shrink-0 lg:order-1 lg:w-[200px] lg:pt-24"
+            className="order-2 shrink-0 lg:order-1 lg:w-[200px] lg:pt-20"
           >
-            <div className="sticky top-4 flex flex-row gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
+              <div className="sticky top-4 flex flex-row gap-2 overflow-x-auto pb-2 lg:top-6 lg:flex-col lg:overflow-visible lg:pb-0">
               {sections.map((s) => (
                 <a
                   key={s.id}
@@ -30,7 +30,7 @@ export default function GuidePage() {
           </nav>
 
           <div className="min-w-0 flex-1">
-            <header className="mb-8 flex items-center gap-4">
+            <header className="mb-6 flex items-center gap-4">
               <Link
                 href="/"
                 className="rounded-lg outline-none transition focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
@@ -55,7 +55,7 @@ export default function GuidePage() {
               </div>
             </header>
 
-            <div className="space-y-8">
+            <div className="space-y-6">
               {sections.map((section) => (
                 <SectionCard key={section.id} section={section} />
               ))}

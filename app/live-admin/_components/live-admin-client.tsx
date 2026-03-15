@@ -265,7 +265,7 @@ export function LiveAdminClient() {
 
   if (authState === "checking") {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-[#0c1424] text-neutral-400">
+      <main className="app-shell app-safe-top app-safe-bottom flex items-center justify-center bg-[#0c1424] px-4 text-neutral-400">
         Checking admin access...
       </main>
     );
@@ -284,7 +284,7 @@ export function LiveAdminClient() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#0c1424] px-4 py-6 text-neutral-100">
+    <main className="app-shell app-safe-top app-safe-bottom bg-[#0c1424] px-4 text-neutral-100">
       <div className="mx-auto max-w-[1500px] space-y-5">
         {data ? (
           <>

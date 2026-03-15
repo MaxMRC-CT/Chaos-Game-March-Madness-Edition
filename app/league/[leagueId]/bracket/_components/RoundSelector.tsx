@@ -12,7 +12,7 @@ const ROUNDS = [
 export type RoundKey = (typeof ROUNDS)[number]["key"];
 
 const pillBase =
-  "inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg border px-2.5 text-xs font-medium outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900";
+  "inline-flex h-7 min-w-[1.9rem] items-center justify-center rounded-lg border px-2 text-[11px] font-medium outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900";
 const pillActive =
   "border-violet-500/60 bg-violet-500/20 text-violet-200";
 const pillInactive =

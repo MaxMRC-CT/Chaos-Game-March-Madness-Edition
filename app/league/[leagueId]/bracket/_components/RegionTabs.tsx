@@ -4,7 +4,7 @@ const REGIONS = ["East", "West", "South", "Midwest"] as const;
 export type RegionKey = (typeof REGIONS)[number];
 
 const pillBase =
-  "inline-flex h-8 shrink-0 items-center justify-center rounded-lg border px-3 text-xs font-medium outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900";
+  "inline-flex h-7 shrink-0 items-center justify-center rounded-lg border px-2.5 text-[11px] font-medium outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900";
 const pillActive =
   "border-violet-500/60 bg-violet-500/20 text-violet-200";
 const pillInactive =
@@ -18,7 +18,7 @@ type RegionTabsProps = {
 export function RegionTabs({ value, onChange }: RegionTabsProps) {
   return (
     <div
-      className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin"
+      className="flex gap-1 overflow-x-auto pb-1 scrollbar-thin"
       role="tablist"
       aria-label="Region"
     >

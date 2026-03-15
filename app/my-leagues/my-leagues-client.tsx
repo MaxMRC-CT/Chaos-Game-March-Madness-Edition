@@ -53,7 +53,7 @@ export default function MyLeaguesClient() {
   if (savedLeagues.length === 0) {
     return (
       <BrandBackground>
-        <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-5 px-4 py-8 text-neutral-100">
+        <main className="app-shell app-safe-top app-safe-bottom mx-auto flex max-w-md flex-col justify-center gap-4 px-4 text-neutral-100">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur-md">
             <h1 className="text-2xl font-semibold text-white">My Leagues</h1>
             <p className="mt-2 text-sm text-neutral-400">

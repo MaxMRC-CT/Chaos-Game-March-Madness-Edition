@@ -51,7 +51,6 @@ function normalizeWarRoomForBracket(raw: WarRoomResponse | null | undefined): Wa
 export default function BracketClient({
   leagueId,
   initial,
-  roundCounts: _roundCounts,
 }: {
   leagueId: string;
   initial: WarRoomResponse;
@@ -105,10 +104,9 @@ export default function BracketClient({
     return map;
   }, [data.teams]);
 
-  const teams = data.teams ?? [];
-  const games = data.games ?? [];
+  const teams = useMemo(() => data.teams ?? [], [data.teams]);
+  const games = useMemo(() => data.games ?? [], [data.games]);
   const hasTeams = teams.length > 0;
-  const hasGames = games.length > 0;
   const showDebug = useBracketDebug();
 
   const debugCountsByRound = useMemo(() => {
@@ -132,10 +130,10 @@ export default function BracketClient({
         <LeagueSidebarNav leagueId={leagueId} showAdmin={Boolean(data.me?.isAdmin)} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <header className="sticky top-0 z-10 shrink-0 rounded-xl border border-neutral-800 bg-neutral-900/95 px-4 py-4 shadow-lg backdrop-blur-sm">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <header className="sticky top-0 z-10 shrink-0 rounded-xl border border-neutral-800 bg-neutral-900/95 px-3 py-3 shadow-lg backdrop-blur-sm sm:px-4 sm:py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="text-xl font-semibold tracking-tight text-neutral-50 sm:text-2xl">
+                <h1 className="text-[17px] font-semibold tracking-tight text-neutral-50 sm:text-2xl">
                   Full Bracket
                 </h1>
                 <p className="mt-0.5 text-sm text-neutral-400">
@@ -150,7 +148,7 @@ export default function BracketClient({
               </Link>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2" role="group" aria-label="Ownership filter">
+            <div className="mt-2.5 flex flex-wrap items-center gap-1 sm:gap-1.5" role="group" aria-label="Ownership filter">
               {(["ALL", "HERO", "VILLAIN", "CINDERELLA", "UNOWNED"] as OwnershipFilter[]).map(
                 (item) => (
                   <button
@@ -158,7 +156,7 @@ export default function BracketClient({
                     type="button"
                     aria-pressed={filter === item}
                     onClick={() => setFilter(item)}
-                    className={`inline-flex h-8 items-center rounded-lg border px-2.5 text-xs font-medium outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 ${
+                    className={`inline-flex h-7 items-center rounded-lg border px-2 text-[11px] font-medium outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 ${
                       filter === item
                         ? "border-violet-500/60 bg-violet-500/20 text-violet-200"
                         : "border-neutral-700 bg-neutral-800/80 text-neutral-400 hover:border-neutral-600 hover:bg-neutral-700/80 hover:text-neutral-200"
@@ -176,21 +174,21 @@ export default function BracketClient({
               )}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-neutral-800 pt-4">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2.5 border-t border-neutral-800 pt-2.5">
               <RoundSelector value={selectedRound} onChange={setSelectedRound} />
               <ZoomControls zoom={zoom} onZoomChange={setZoom} />
               <button
                 type="button"
                 onClick={handleResetView}
                 aria-label="Reset view to default round and zoom"
-                className="inline-flex h-8 items-center rounded-lg border border-neutral-700 bg-neutral-800/80 px-2.5 text-xs font-medium text-neutral-400 outline-none transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 hover:text-neutral-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+                className="inline-flex h-7 items-center rounded-lg border border-neutral-700 bg-neutral-800/80 px-2 text-[11px] font-medium text-neutral-400 outline-none transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 hover:text-neutral-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
               >
                 Reset view
               </button>
             </div>
 
-            <div className="mt-4 lg:hidden">
-              <span className="mb-1.5 block text-xs font-medium text-neutral-500">Region</span>
+            <div className="mt-2.5 lg:hidden">
+              <span className="mb-1 block text-[11px] font-medium text-neutral-500">Region</span>
               <RegionTabs value={mobileRegion} onChange={setMobileRegion} />
             </div>
 
@@ -215,7 +213,7 @@ export default function BracketClient({
             </div>
           ) : (
             <div className="min-h-0 min-w-0 flex-1">
-              <div className="h-full min-h-0 min-w-0 overflow-x-auto overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 transition-[background-color] duration-200">
+              <div className="h-full min-h-0 min-w-0 overflow-x-auto overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-900/95 p-2.5 transition-[background-color] duration-200 sm:p-4">
                 <div
                   className="inline-block min-h-full min-w-0 lg:flex lg:gap-6"
                   style={{
@@ -226,13 +224,12 @@ export default function BracketClient({
                   <DesktopBracket
                     data={data}
                     teamById={teamById}
-                    ownershipByTeamId={ownershipByTeamId}
-                    resultByTeamId={resultByTeamId}
-                    filter={filter}
-                    selectedRound={selectedRound}
-                    mobileRegion={mobileRegion}
-                    hasGames={hasGames}
-                  />
+                  ownershipByTeamId={ownershipByTeamId}
+                  resultByTeamId={resultByTeamId}
+                  filter={filter}
+                  selectedRound={selectedRound}
+                  mobileRegion={mobileRegion}
+                />
                 </div>
               </div>
             </div>
@@ -251,7 +248,6 @@ function DesktopBracket({
   filter,
   selectedRound,
   mobileRegion,
-  hasGames,
 }: {
   data: WarRoomResponse;
   teamById: Record<string, WarRoomResponse["teams"][number]>;
@@ -260,7 +256,6 @@ function DesktopBracket({
   filter: OwnershipFilter;
   selectedRound: RoundKey;
   mobileRegion: RegionKey;
-  hasGames: boolean;
 }) {
   const isFinalsRound = selectedRound === "F4" || selectedRound === "FINAL";
 
@@ -276,7 +271,7 @@ function DesktopBracket({
         <h2 className="mb-3 text-base font-semibold tracking-tight text-neutral-100">
           {selectedRound === "F4" ? "Final Four" : "Championship"}
         </h2>
-        {!hasGames || finalsGames.length === 0 ? (
+        {finalsGames.length === 0 ? (
           <div className="rounded-lg border border-neutral-800 bg-neutral-950/80 px-3 py-4 text-center text-sm text-neutral-500">
             Awaiting results
           </div>
@@ -351,7 +346,6 @@ function DesktopBracket({
               ownershipByTeamId={ownershipByTeamId}
               resultByTeamId={resultByTeamId}
               filter={filter}
-              hasGames={hasGames}
             />
           </section>
         );
@@ -369,7 +363,6 @@ function RegionRoundContent({
   ownershipByTeamId,
   resultByTeamId,
   filter,
-  hasGames,
 }: {
   round: "R64" | "R32" | "S16" | "E8";
   region: string;
@@ -379,7 +372,6 @@ function RegionRoundContent({
   ownershipByTeamId: ReturnType<typeof buildTeamOwnershipMap>;
   resultByTeamId: Record<string, WarRoomResponse["teamResults"][number] | undefined>;
   filter: OwnershipFilter;
-  hasGames: boolean;
 }) {
   const matchups = getMatchupsForRound({
     round,

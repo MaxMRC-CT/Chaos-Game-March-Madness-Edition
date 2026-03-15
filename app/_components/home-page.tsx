@@ -59,7 +59,7 @@ const FEATURE_PILLS = [
 
 export function HomePage() {
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white">
+    <main className="app-shell relative overflow-hidden bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white">
       <div className="absolute inset-0 brand-grain opacity-30" aria-hidden />
       <div className="absolute inset-0 brand-diagonal" aria-hidden />
       <div
@@ -67,7 +67,7 @@ export function HomePage() {
         aria-hidden
       />
 
-      <div className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+      <div className="app-shell app-safe-top app-safe-bottom relative flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1180px]">
           {/* Hero: two-column on desktop, stacked on mobile */}
           <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
@@ -139,7 +139,7 @@ export function HomePage() {
           </div>
 
           {/* Bottom info strip */}
-          <div className="mt-16 flex flex-col items-center gap-4 text-center sm:mt-20">
+          <div className="mt-12 flex flex-col items-center gap-4 text-center sm:mt-16">
             <p className="max-w-[540px] text-sm text-neutral-500">
               Draft your Heroes, Villains, and Cinderellas. Track every round
               live. Win with leverage.

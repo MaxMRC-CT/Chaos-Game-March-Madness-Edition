@@ -3,6 +3,12 @@
 :root {
   --background: #0b0f19;
   --foreground: #e8ecf5;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-safe-top: calc(var(--safe-top) + 0.875rem);
+  --app-safe-top-tight: calc(var(--safe-top) + 0.625rem);
+  --app-safe-bottom: calc(var(--safe-bottom) + 1rem);
+  --app-nav-clearance: calc(var(--safe-bottom) + 7.75rem);
 }
 
 @theme inline {
@@ -22,6 +28,38 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+@media (max-height: 812px) {
+  :root {
+    --app-safe-top: calc(var(--safe-top) + 0.625rem);
+    --app-safe-top-tight: calc(var(--safe-top) + 0.5rem);
+    --app-safe-bottom: calc(var(--safe-bottom) + 0.875rem);
+    --app-nav-clearance: calc(var(--safe-bottom) + 7.1rem);
+  }
+}
+
+@layer utilities {
+  .app-shell {
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
+  .app-safe-top {
+    padding-top: var(--app-safe-top);
+  }
+
+  .app-safe-top-tight {
+    padding-top: var(--app-safe-top-tight);
+  }
+
+  .app-safe-bottom {
+    padding-bottom: var(--app-safe-bottom);
+  }
+
+  .app-nav-clear {
+    padding-bottom: var(--app-nav-clearance);
+  }
 }
 
 .brand-grain {

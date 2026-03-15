@@ -21,13 +21,13 @@ const FEATURE_CARDS = [
 
 export function PrelaunchLanding() {
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white">
+    <main className="app-shell relative overflow-hidden bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white">
       <div className="absolute inset-0 brand-grain opacity-30" aria-hidden />
       <div className="absolute inset-0 brand-diagonal" aria-hidden />
       <div className="absolute inset-0 brand-vignette pointer-events-none" aria-hidden />
       <div className="absolute inset-0 prelaunch-hero-glow pointer-events-none" aria-hidden />
 
-      <div className="relative flex min-h-dvh flex-col px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+      <div className="app-shell app-safe-top app-safe-bottom relative flex flex-col px-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-[720px] flex-col items-center text-center">
           {/* Hero */}
           <div className="relative flex flex-col items-center">
@@ -54,7 +54,7 @@ export function PrelaunchLanding() {
           </div>
 
           {/* Beta notice */}
-          <div className="mt-11 w-full max-w-[540px] rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] px-6 py-5 shadow-[0_0_40px_rgba(251,191,36,0.08)] backdrop-blur-sm">
+          <div className="mt-8 w-full max-w-[540px] rounded-2xl border border-amber-400/30 bg-amber-500/[0.08] px-6 py-5 shadow-[0_0_40px_rgba(251,191,36,0.08)] backdrop-blur-sm">
             <p className="text-base font-semibold tracking-tight text-amber-100">
               Private Beta Opens Tomorrow Night
             </p>
@@ -65,7 +65,7 @@ export function PrelaunchLanding() {
           </div>
 
           {/* CTA row */}
-          <div className="mt-11 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3">
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3">
             <Link
               href="/guide"
               className="w-full rounded-xl bg-[#fb6223] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#fb6223]/25 transition hover:bg-[#ff7a3d] hover:shadow-[#fb6223]/30 active:scale-[0.99] sm:w-auto"
@@ -94,7 +94,7 @@ export function PrelaunchLanding() {
           </Link>
 
           {/* Feature cards */}
-          <div className="mt-20 grid w-full gap-4 sm:mt-24 sm:grid-cols-3">
+          <div className="mt-14 grid w-full gap-4 sm:mt-20 sm:grid-cols-3">
             {FEATURE_CARDS.map((card) => (
               <div
                 key={card.title}

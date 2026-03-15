@@ -215,7 +215,7 @@ export default function JoinLeague({
   const showAvailability = availability.message && availability.message !== "Checking...";
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-3 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] px-5 pb-5 pt-[max(1rem,calc(env(safe-area-inset-top)+0.75rem))] text-white">
+    <main className="app-shell app-safe-top app-safe-bottom mx-auto flex max-w-md flex-col justify-center gap-3 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] px-5 text-white">
       <div className="relative flex justify-center">
         <Image
           src="/chaos-shield.png"

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HowToPlayBackButton } from "./_components/how-to-play-back-button";
 
 const sections = [
   {
@@ -40,9 +41,13 @@ const sections = [
 
 export default function HowToPlayPage() {
   return (
-    <main className="min-h-dvh bg-gradient-to-b from-[#0c1424] via-[#0f1726] to-[#0b1120] text-white">
-      <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6">
-        <section className="rounded-3xl border border-[#fb6223]/20 bg-neutral-950/80 p-5 sm:p-6 shadow-2xl shadow-black/30">
+    <main className="app-shell app-safe-top app-safe-bottom bg-gradient-to-b from-[#0c1424] via-[#0f1726] to-[#0b1120] text-white">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <div className="mb-2.5">
+          <HowToPlayBackButton />
+        </div>
+
+        <section className="rounded-3xl border border-[#fb6223]/20 bg-neutral-950/80 p-4 sm:p-6 shadow-2xl shadow-black/30">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ffb08d]">
             Chaos League Guide
           </p>
@@ -53,14 +58,14 @@ export default function HowToPlayPage() {
             A mobile-first guide to how the game works, where to go in the app, and how to stay on top of the tournament without getting overloaded.
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             <GuideBadge>Start at Home</GuideBadge>
             <GuideBadge>Track chaos quickly</GuideBadge>
             <GuideBadge>Use device re-entry</GuideBadge>
           </div>
         </section>
 
-        <section className="mt-5 grid gap-3 sm:grid-cols-2">
+        <section className="mt-3.5 grid gap-3 sm:grid-cols-2">
           {sections.map((section) => (
             <article
               key={section.title}
@@ -72,7 +77,7 @@ export default function HowToPlayPage() {
           ))}
         </section>
 
-        <section className="mt-5 rounded-3xl border border-white/10 bg-neutral-950/85 p-5 sm:p-6 shadow-lg shadow-black/20">
+        <section className="mt-3.5 rounded-3xl border border-white/10 bg-neutral-950/85 p-4 sm:p-6 shadow-lg shadow-black/20">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
             Downloadable Guides
           </p>

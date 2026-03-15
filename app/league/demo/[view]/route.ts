@@ -6,6 +6,7 @@ const ALLOWED_VIEWS = new Set([
   "standings",
   "games",
   "more",
+  "war-room",
   "portfolio",
   "bracket",
 ]);

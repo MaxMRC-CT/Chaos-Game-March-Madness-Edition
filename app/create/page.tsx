@@ -56,8 +56,8 @@ function CreateLeagueFormContent() {
 export default function CreatePage() {
   return (
     <BrandBackground>
-      <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">
-        <div className="mx-auto max-w-[400px] px-4 py-8">
+      <main className="app-shell app-safe-top app-safe-bottom min-w-0 overflow-x-hidden text-neutral-100">
+        <div className="mx-auto max-w-[400px] px-4">
           <div className="mb-8 flex items-center gap-4">
             <Link
               href="/"
@@ -83,7 +83,7 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-neutral-900/80 p-8 shadow-xl shadow-black/20 backdrop-blur-md">
+          <div className="rounded-2xl border border-white/10 bg-neutral-900/80 p-6 sm:p-8 shadow-xl shadow-black/20 backdrop-blur-md">
             <form action={createLeague} className="space-y-0">
               <CreateLeagueFormContent />
             </form>
