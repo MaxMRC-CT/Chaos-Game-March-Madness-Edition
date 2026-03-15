@@ -33,10 +33,10 @@ export function HowToPlayLinks({
         </p>
       </div>
 
-      <div className={`mt-4 ${isHero ? "grid gap-2 sm:grid-cols-3" : "flex flex-wrap gap-2"}`}>
+      <div className={`mt-4 ${isHero ? "grid gap-2 sm:grid-cols-3" : "grid gap-2 sm:grid-cols-3"}`}>
         <Link
           href="/how-to-play"
-          className={`inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+          className={`inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
             isHero
               ? "bg-[#fb6223] text-white hover:bg-[#e35a20]"
               : "border border-neutral-700 bg-neutral-800 text-neutral-100 hover:bg-neutral-700"
@@ -48,7 +48,7 @@ export function HowToPlayLinks({
           href="/docs/chaos-league-how-to-play.pdf"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-neutral-200 transition hover:bg-neutral-800"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-neutral-200 transition hover:bg-neutral-800"
         >
           Download Full Guide
         </Link>
@@ -56,7 +56,7 @@ export function HowToPlayLinks({
           href="/docs/chaos-league-game-card.pdf"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-neutral-200 transition hover:bg-neutral-800"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-neutral-200 transition hover:bg-neutral-800"
         >
           Download Game Card
         </Link>

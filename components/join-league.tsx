@@ -215,24 +215,24 @@ export default function JoinLeague({
   const showAvailability = availability.message && availability.message !== "Checking...";
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] p-5 text-white">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] px-5 pb-5 pt-[max(1rem,calc(env(safe-area-inset-top)+0.75rem))] text-white">
       <div className="relative flex justify-center">
         <Image
           src="/chaos-shield.png"
           alt="Chaos League"
-          width={96}
-          height={96}
-          className="drop-shadow-[0_0_20px_rgba(251,98,35,0.4)]"
+          width={84}
+          height={84}
+          className="drop-shadow-[0_0_18px_rgba(251,98,35,0.38)]"
           priority
         />
       </div>
 
-      <div className="space-y-0.5 text-center">
+      <div className="space-y-0 text-center">
         <p className="mx-auto inline-flex rounded-full border border-[#fb6223]/30 bg-[#fb6223]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffb08d]">
           March Madness 2026
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">CHAOS LEAGUE</h1>
-        <p className="text-sm text-neutral-400">Enter your Game PIN to join the league.</p>
+        <h1 className="pt-1 text-2xl font-semibold tracking-tight">CHAOS LEAGUE</h1>
+        <p className="pt-0.5 text-sm text-neutral-400">Enter your Game PIN to join the league.</p>
       </div>
 
       {message ? (
@@ -243,7 +243,7 @@ export default function JoinLeague({
 
       <form
         action={joinFormAction}
-        className="space-y-4 rounded-2xl border border-white/12 bg-white/[0.06] p-5 shadow-[0_14px_40px_rgba(0,0,0,0.32)] ring-1 ring-white/5 backdrop-blur-md"
+        className="space-y-4 rounded-2xl border border-white/15 bg-white/[0.07] p-5 shadow-[0_16px_44px_rgba(0,0,0,0.34)] ring-1 ring-white/6 backdrop-blur-md"
       >
         {joinClosed ? (
           <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
@@ -251,7 +251,7 @@ export default function JoinLeague({
           </p>
         ) : null}
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           <label className="text-sm font-medium text-neutral-200">Game PIN</label>
           <input
             name="code"
@@ -263,12 +263,12 @@ export default function JoinLeague({
           />
         </div>
 
-        <div className="space-y-2.5">
-          <label className="text-sm font-medium text-neutral-200">Nickname</label>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-neutral-200">Display name</label>
           <input
             ref={nicknameRef}
             name="nickname"
-            placeholder="How your league will see you"
+            placeholder="Your nickname"
             className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#fb6223]"
             value={nickname}
             onChange={(event) => setNickname(event.target.value)}
@@ -314,32 +314,32 @@ export default function JoinLeague({
               href={savedLeagueCount === 1 ? "/" : "/my-leagues"}
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-medium text-white transition hover:bg-white/15"
             >
-              {savedLeagueCount === 1 ? "Resume Saved League" : "Choose Saved League"}
+              {savedLeagueCount === 1 ? "Resume from This Device" : "Choose Saved League"}
             </Link>
             <button
               type="button"
               onClick={() => setShowReconnectForm((current) => !current)}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 px-4 text-sm font-medium text-neutral-200 transition hover:bg-neutral-800"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 px-4 text-sm font-medium text-neutral-300 transition hover:bg-neutral-800"
             >
-              {showReconnectForm ? "Hide Reconnect Code" : "Use Reconnect Code"}
+              {showReconnectForm ? "Hide Manual Reconnect" : "Need Manual Reconnect?"}
             </button>
           </div>
         </section>
-      ) : (
+      ) : joinClosed ? (
         <div className="text-center">
           <button
             type="button"
             onClick={() => setShowReconnectForm((current) => !current)}
             className="text-sm text-neutral-500 underline underline-offset-4 transition hover:text-neutral-300"
           >
-            Have a reconnect code?
+            Need manual reconnect?
           </button>
         </div>
-      )}
+      ) : null}
 
       {showReconnectForm ? (
         <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5 shadow-xl backdrop-blur-md">
-          <p className="text-sm text-neutral-400">Reconnect with your Game PIN, nickname, and reconnect code.</p>
+          <p className="text-sm text-neutral-400">Use manual reconnect only if this device cannot resume your saved league automatically.</p>
 
           <form action={reconnectFormAction} className="space-y-3">
             <input
@@ -359,7 +359,7 @@ export default function JoinLeague({
             />
             <input
               name="reconnectCode"
-              placeholder="Reconnect Code (XXXX-XXXX)"
+              placeholder="Manual reconnect code"
               className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-3 uppercase text-white focus:outline-none focus:ring-2 focus:ring-[#fb6223]"
               value={reconnectCode}
               onChange={(event) => setReconnectCode(event.target.value.toUpperCase())}
@@ -383,18 +383,13 @@ export default function JoinLeague({
         description="Read the 2-minute guide before joining so you know how the game works and where to go once you're in."
       />
 
-      <div className="flex flex-col items-center gap-2 text-center text-sm">
+      <div className="rounded-2xl border border-white/8 bg-neutral-950/40 px-4 py-3 text-center">
+        <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Commissioner?</p>
         <Link
           href="/create"
-          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-neutral-700 bg-transparent px-4 text-neutral-300 transition hover:border-neutral-500 hover:text-white"
+          className="mt-2 inline-flex min-h-10 items-center justify-center rounded-xl border border-neutral-700 bg-transparent px-4 text-sm font-medium text-neutral-300 transition hover:border-neutral-500 hover:text-white"
         >
-          Create League
-        </Link>
-        <Link
-          href="/how-to-play"
-          className="inline-flex min-h-10 items-center justify-center rounded-xl px-4 text-neutral-500 transition hover:text-neutral-300"
-        >
-          How to Play
+          Create Your Own League
         </Link>
       </div>
     </main>
