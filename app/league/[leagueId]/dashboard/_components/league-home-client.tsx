@@ -269,7 +269,7 @@ export function LeagueHomeClient({
                 </Link>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
                 <SnapshotTile
                   label="Heroes"
                   value={`${myTeamSnapshot.HERO.alive}/${myTeamSnapshot.HERO.total}`}
@@ -378,9 +378,9 @@ function SnapshotTile({
   compact?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-neutral-500">{label}</p>
-      <p className={`mt-2 font-semibold ${compact ? "text-sm" : "text-xl"} ${accent}`}>{value}</p>
+    <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="truncate text-xs uppercase tracking-[0.16em] text-neutral-500">{label}</p>
+      <p className={`mt-2 min-w-0 font-semibold ${compact ? "text-sm" : "text-xl"} ${accent}`}>{value}</p>
     </div>
   );
 }
