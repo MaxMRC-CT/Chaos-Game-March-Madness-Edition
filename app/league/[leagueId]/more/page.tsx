@@ -28,8 +28,14 @@ const TOURNAMENT_LINKS = [
 const LEAGUE_ACTIONS = [
   {
     href: "/my-leagues",
-    title: "Switch League",
-    description: "Jump between saved leagues on this device.",
+    title: "My Leagues",
+    description: "Open saved leagues on this device, switch leagues, or forget stale ones.",
+    external: true,
+  },
+  {
+    href: "/join",
+    title: "Join Another League",
+    description: "Enter a new Game PIN without deleting your current saved league.",
     external: true,
   },
 ] as const;

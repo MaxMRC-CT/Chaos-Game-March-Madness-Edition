@@ -36,6 +36,9 @@ export function SavedLeagueSelector({
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold tracking-tight text-white">{title}</h1>
         <p className="text-sm text-neutral-400">{subtitle}</p>
+        <p className="text-xs text-neutral-500">
+          Use Forget to remove old beta or stale leagues from this device.
+        </p>
       </div>
 
       {message ? (
@@ -64,10 +67,11 @@ export function SavedLeagueSelector({
                 <button
                   type="button"
                   onClick={() => onRemoveLeague(league.leagueId)}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-neutral-400 transition hover:border-red-400/40 hover:text-red-300"
-                  aria-label={`Remove ${league.leagueName}`}
+                  className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-black/20 px-3 text-xs font-medium text-neutral-300 transition hover:border-red-400/40 hover:text-red-300"
+                  aria-label={`Forget ${league.leagueName} on this device`}
                 >
                   <Trash2 className="size-4" />
+                  Forget
                 </button>
               </div>
 

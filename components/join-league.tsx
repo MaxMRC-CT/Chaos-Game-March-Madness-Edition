@@ -302,18 +302,18 @@ export default function JoinLeague({
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#ffb08d]">
             Saved League
           </p>
-          <h2 className="mt-2 text-lg font-semibold text-white">Reconnect to a saved league</h2>
+          <h2 className="mt-2 text-lg font-semibold text-white">Saved leagues on this device</h2>
           <p className="mt-1 text-sm text-neutral-300">
             {savedLeagueCount === 1 && mostRecentLeagueName
-              ? `This device already knows ${mostRecentLeagueName}.`
-              : "This device already has saved league access."}
+              ? `This device already knows ${mostRecentLeagueName}. Open My Leagues to switch or remove it.`
+              : "This device already has saved league access. Open My Leagues to switch or remove old leagues."}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
-              href={savedLeagueCount === 1 ? "/" : "/my-leagues"}
+              href="/my-leagues"
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-medium text-white transition hover:bg-white/15"
             >
-              {savedLeagueCount === 1 ? "Resume from This Device" : "Choose Saved League"}
+              Open My Leagues
             </Link>
             <button
               type="button"

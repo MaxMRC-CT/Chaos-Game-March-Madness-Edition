@@ -90,7 +90,8 @@ export default function MyLeaguesClient() {
           removeSavedLeague(leagueId);
           setSavedLeagues(getSavedLeagues());
         }}
-        subtitle="Saved leagues on this phone."
+        title="My Leagues"
+        subtitle="Open a saved league, switch leagues, or forget stale access on this device."
       />
     </BrandBackground>
   );
