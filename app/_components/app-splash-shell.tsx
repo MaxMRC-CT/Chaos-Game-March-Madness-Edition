@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { getMostRecentLeague } from "@/lib/client/device-session";
 
 const SPLASH_VISIBLE_MS = 520;
 const SPLASH_FADE_MS = 180;
@@ -20,13 +22,26 @@ export function AppSplashShell({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
-    if (isAuditMode()) {
-      setIsFading(false);
-      setIsVisible(false);
+    const shouldBypassSplash =
+      isAuditMode() || (pathname === "/" && Boolean(getMostRecentLeague()));
+
+    if (shouldBypassSplash) {
+      const bypassFrame = window.requestAnimationFrame(() => {
+        setIsFading(false);
+        setIsVisible(false);
+      });
+
+      return () => {
+        window.cancelAnimationFrame(bypassFrame);
+      };
+    }
+
+    if (!isVisible) {
       return;
     }
 
@@ -42,7 +57,7 @@ export function AppSplashShell({
       window.clearTimeout(fadeTimer);
       window.clearTimeout(hideTimer);
     };
-  }, []);
+  }, [isVisible, pathname]);
 
   return (
     <>

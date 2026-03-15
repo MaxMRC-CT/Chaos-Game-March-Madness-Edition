@@ -1,6 +1,6 @@
 import { mkdirSync, existsSync } from "node:fs";
 import path from "node:path";
-import { test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 /*
 Design audit checklist:
@@ -88,6 +88,27 @@ async function stabilizePageForAudit(page: Page) {
     `,
   });
 }
+
+test("reconnects returning user directly to the same league dashboard", async ({ page }) => {
+  await page.goto("/league/demo/dashboard", { waitUntil: "networkidle" });
+
+  await expect(page).toHaveURL(/\/league\/[^/]+\/dashboard(?:\?.*)?$/);
+  await expect(
+    page.getByRole("heading", { name: /Chaos League Demo/i }),
+  ).toBeVisible();
+
+  const initialPathname = new URL(page.url()).pathname;
+
+  await page.reload({ waitUntil: "networkidle" });
+
+  await expect(page).toHaveURL(new RegExp(`${initialPathname.replace(/\//g, "\\/")}(?:\\?.*)?$`));
+  await expect(page).not.toHaveURL(/\/join(?:\?|$)/);
+  await expect(page).not.toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("heading", { name: /Chaos League Demo/i }),
+  ).toBeVisible();
+  await expect(page.getByText(/Enter your Game PIN/i)).toHaveCount(0);
+});
 
 for (const audit of routeAudits) {
   test(`${audit.name} design audit screenshot`, async ({ page }, testInfo) => {

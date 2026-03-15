@@ -1,10 +1,21 @@
-import { Suspense } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { HomeEntry } from "@/app/_components/home-entry";
+import {
+  getLeaguesFromCookiePairs,
+  parseMemberCookies,
+} from "@/lib/my-leagues/get-leagues-from-cookies";
 
-export default function HomePage() {
-  return (
-    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] text-white">Loading...</div>}>
-      <HomeEntry />
-    </Suspense>
-  );
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const cookiePairs = parseMemberCookies(cookieStore.getAll());
+
+  if (cookiePairs.length > 0) {
+    const savedLeagues = await getLeaguesFromCookiePairs(cookiePairs);
+    if (savedLeagues.length === 1) {
+      redirect(`/league/${savedLeagues[0].leagueId}/dashboard`);
+    }
+  }
+
+  return <HomeEntry />;
 }
