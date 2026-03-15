@@ -18,23 +18,27 @@ const MORE_LINKS = [
     href: "war-room",
     title: "War Room",
     description: "Advanced league activity, chaos feed, and commissioner view.",
+    tone: "primary",
   },
   {
     href: "bracket",
     title: "Full Bracket",
     description: "Explore the full field and ownership view by region.",
+    tone: "primary",
   },
   {
     href: "/how-to-play",
     title: "How to Play",
     description: "Rules, app navigation, and a clean game overview.",
     external: true,
+    tone: "reference",
   },
   {
     href: "/my-leagues",
     title: "Switch League",
     description: "Jump between saved leagues on this device.",
     external: true,
+    tone: "reference",
   },
 ] as const;
 
@@ -82,32 +86,70 @@ export default async function MorePage({
             description="Open the web guide or download the PDFs when you need the full rules, app map, or a quick game card."
           />
 
-          <div className="space-y-3">
-            {MORE_LINKS.map((item) => {
-              const href = isExternalLink(item) ? item.href : `/league/${leagueId}/${item.href}`;
-              return (
+          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+              Go Next
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-white">Primary Views</h2>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              {MORE_LINKS.filter((item) => item.tone === "primary").map((item) => {
+                const href = isExternalLink(item) ? item.href : `/league/${leagueId}/${item.href}`;
+                return (
+                  <Link
+                    key={item.title}
+                    href={href}
+                    className="block rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-white/20 hover:bg-white/[0.05]"
+                  >
+                    <p className="text-base font-semibold text-white">{item.title}</p>
+                    <p className="mt-1 text-sm text-neutral-400">{item.description}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+              References
+            </p>
+            <div className="mt-3 space-y-3">
+              {MORE_LINKS.filter((item) => item.tone === "reference").map((item) => {
+                const href = isExternalLink(item) ? item.href : `/league/${leagueId}/${item.href}`;
+                return (
+                  <Link
+                    key={item.title}
+                    href={href}
+                    className="block rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-white/20 hover:bg-white/[0.05]"
+                  >
+                    <p className="text-base font-semibold text-white">{item.title}</p>
+                    <p className="mt-1 text-sm text-neutral-400">{item.description}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          {initial.me?.isAdmin ? (
+            <section className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 shadow-lg shadow-black/20">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-orange-200/80">
+                Commissioner
+              </p>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-base font-semibold text-orange-200">Commissioner Tools</p>
+                  <p className="mt-1 text-sm text-orange-100/70">
+                    Enter results and manage the league.
+                  </p>
+                </div>
                 <Link
-                  key={item.title}
-                  href={href}
-                  className="block rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20 transition hover:border-white/20 hover:bg-neutral-900"
+                  href={`/league/${leagueId}/admin/results`}
+                  className="inline-flex min-h-10 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/10 px-4 text-sm font-medium text-orange-100 transition hover:border-orange-400/30 hover:bg-orange-500/15"
                 >
-                  <p className="text-base font-semibold text-white">{item.title}</p>
-                  <p className="mt-1 text-sm text-neutral-400">{item.description}</p>
+                  Open Tools
                 </Link>
-              );
-            })}
-            {initial.me?.isAdmin ? (
-              <Link
-                href={`/league/${leagueId}/admin/results`}
-                className="block rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 shadow-lg shadow-black/20 transition hover:border-orange-500/30"
-              >
-                <p className="text-base font-semibold text-orange-200">Commissioner Tools</p>
-                <p className="mt-1 text-sm text-orange-100/70">
-                  Enter results and manage the league.
-                </p>
-              </Link>
-            ) : null}
-          </div>
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </main>

@@ -9,14 +9,15 @@ export function BrandLockup() {
         className="block rounded-lg outline-none transition focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
         aria-label="Chaos Game – go to War Room"
       >
-        <Image
-          src="/chaos-shield.png"
-          width={240}
-          height={320}
-          alt=""
-          priority
-          className="h-auto w-[140px] sm:w-[180px] lg:w-[200px]"
-        />
+        <div className="relative aspect-[2/3] w-[140px] sm:w-[180px] lg:w-[200px]">
+          <Image
+            src="/chaos-shield.png"
+            fill
+            alt=""
+            sizes="(min-width: 1024px) 200px, (min-width: 640px) 180px, 140px"
+            className="object-contain"
+          />
+        </div>
       </Link>
     </div>
   );

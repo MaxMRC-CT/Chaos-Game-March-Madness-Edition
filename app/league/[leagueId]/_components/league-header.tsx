@@ -4,15 +4,14 @@ export function LeagueHeader() {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div className="flex items-center justify-center rounded-xl border border-[#1f2937] bg-[#111827]/80 px-4 py-2 backdrop-blur-sm">
-        <div className="relative mr-3 flex-shrink-0">
+        <div className="relative mr-3 h-12 w-12 flex-shrink-0 sm:h-14 sm:w-14 md:h-16 md:w-16">
           <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-[radial-gradient(circle,rgba(77,216,255,0.22)_0%,rgba(251,98,35,0.12)_45%,transparent_72%)] blur-md" />
           <Image
             src="/chaos-shield.png"
-            width={64}
-            height={64}
+            fill
             alt="Chaos Game"
-            priority
-            className="h-12 w-12 rounded-md object-cover sm:h-14 sm:w-14 md:h-16 md:w-16"
+            sizes="(min-width: 768px) 4rem, (min-width: 640px) 3.5rem, 3rem"
+            className="rounded-md object-contain"
           />
         </div>
 

@@ -75,12 +75,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="overflow-x-hidden">
+    <html lang="en" className="min-h-full overflow-x-hidden bg-[#0b0f19]">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-dvh antialiased overflow-x-hidden flex flex-col max-w-full`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-[100dvh] max-w-full flex-col overflow-x-hidden bg-[#0b0f19] text-[#e8ecf5] antialiased`}
       >
         <AppSplashShell>
-          <div className="flex min-h-dvh w-full min-w-0 max-w-full flex-1 flex-col">
+          <div className="flex min-h-[100dvh] w-full min-w-0 max-w-full flex-1 flex-col bg-[#0b0f19]">
             {children}
           </div>
         </AppSplashShell>

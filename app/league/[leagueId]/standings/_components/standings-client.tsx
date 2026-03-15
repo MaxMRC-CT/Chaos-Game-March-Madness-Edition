@@ -104,36 +104,43 @@ export default function StandingsClient({
               const delta = data.standingsDelta[row.memberId] ?? 0;
               const movement = rankDelta[row.memberId] ?? 0;
               const displayName = isMe ? "YOU" : row.displayName;
+              const scoreParts = [
+                `H ${row.HERO ?? 0}`,
+                `V ${row.VILLAIN ?? 0}`,
+                `C ${row.CINDERELLA ?? 0}`,
+                `R ${row.rivalry ?? 0}`,
+              ];
 
               return (
                 <article
                   key={row.memberId}
-                  className={`rounded-2xl border p-4 shadow-lg shadow-black/20 ${
+                  className={`rounded-2xl border px-3 py-3 shadow-lg shadow-black/20 sm:px-4 sm:py-4 ${
                     isMe
                       ? "border-emerald-500/30 bg-emerald-500/10"
                       : "border-white/10 bg-neutral-900/95"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-white">
+                      <p className="truncate text-[15px] font-semibold text-white sm:text-base">
                         #{index + 1} {displayName}
                       </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-neutral-400">
                         <RankMovementIndicator delta={movement} compact />
                         <ScoreDeltaBadge delta={delta} todayLabel compact />
-                        <span>Hero {row.HERO ?? 0}</span>
-                        <span>Villain {row.VILLAIN ?? 0}</span>
-                        <span>Cinderella {row.CINDERELLA ?? 0}</span>
-                        <span>Rivalry {row.rivalry ?? 0}</span>
+                        {scoreParts.map((part) => (
+                          <span
+                            key={part}
+                            className="rounded-full border border-white/8 bg-white/[0.03] px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-neutral-300"
+                          >
+                            {part}
+                          </span>
+                        ))}
                       </div>
                     </div>
 
                     <div className="shrink-0 text-right">
-                      <p className="text-lg font-semibold text-white">{row.total}</p>
-                      <div className="mt-1 flex justify-end">
-                        <ScoreDeltaBadge delta={delta} compact />
-                      </div>
+                      <p className="text-xl font-semibold leading-none text-white">{row.total}</p>
                     </div>
                   </div>
                 </article>

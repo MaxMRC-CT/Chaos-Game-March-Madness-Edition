@@ -215,7 +215,7 @@ export default function JoinLeague({
   const showAvailability = availability.message && availability.message !== "Checking...";
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] px-5 pb-5 pt-[max(1rem,calc(env(safe-area-inset-top)+0.75rem))] text-white">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-3 bg-gradient-to-b from-[#0c1424] to-[#0e1a2f] px-5 pb-5 pt-[max(1rem,calc(env(safe-area-inset-top)+0.75rem))] text-white">
       <div className="relative flex justify-center">
         <Image
           src="/chaos-shield.png"
@@ -223,7 +223,6 @@ export default function JoinLeague({
           width={84}
           height={84}
           className="drop-shadow-[0_0_18px_rgba(251,98,35,0.38)]"
-          priority
         />
       </div>
 
@@ -380,7 +379,7 @@ export default function JoinLeague({
       <HowToPlayLinks
         variant="compact"
         title="New to Chaos League?"
-        description="Read the 2-minute guide before joining so you know how the game works and where to go once you're in."
+        description="Read the quick guide before joining."
       />
 
       <div className="rounded-2xl border border-white/8 bg-neutral-950/40 px-4 py-3 text-center">

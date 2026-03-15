@@ -83,7 +83,7 @@ export default function GamesClient({
         <div className="min-w-0 flex-1 space-y-4">
           <StickyUserStatus rank={myRank} points={myStanding?.total ?? 0} delta={myDelta} />
 
-          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-5 shadow-lg shadow-black/20">
+          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
@@ -101,7 +101,7 @@ export default function GamesClient({
               </Link>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               {([
                 ["all", "All"],
                 ["upsets", "Upsets"],
@@ -111,7 +111,7 @@ export default function GamesClient({
                   key={value}
                   type="button"
                   onClick={() => setFilter(value)}
-                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                  className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-medium ${
                     filter === value
                       ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
                       : "border-neutral-700 bg-neutral-800 text-neutral-300"
@@ -130,14 +130,14 @@ export default function GamesClient({
             </section>
           ) : (
             groupedGames.map(([round, games]) => (
-              <section key={round} className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold text-white">{formatRound(round)}</h2>
-                  <span className="rounded-full border border-neutral-700 bg-neutral-800 px-2.5 py-0.5 text-xs text-neutral-400">
+              <section key={round} className="space-y-2.5">
+                <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-white">{formatRound(round)}</h2>
+                  <span className="rounded-full border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-400">
                     {games.length} games
                   </span>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {games.map((game) => {
                     const upset =
                       game.winner && game.loser ? game.winner.seed > game.loser.seed : false;
@@ -146,26 +146,26 @@ export default function GamesClient({
                     return (
                       <article
                         key={game.id}
-                        className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20"
+                        className="rounded-2xl border border-white/10 bg-neutral-900/95 px-3 py-3 shadow-lg shadow-black/20 sm:px-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-white">
+                            <p className="text-sm font-semibold leading-5 text-white">
                               {game.winner?.name ?? "Winner"} defeated {game.loser?.name ?? "Loser"}
                             </p>
-                            <p className="mt-1 text-sm text-neutral-400">
+                            <p className="mt-1 text-[12px] text-neutral-400">
                               {game.winner?.seed ?? "—"} over {game.loser?.seed ?? "—"}
                             </p>
                           </div>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex shrink-0 flex-wrap gap-1.5">
                             {upset ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-1 text-[11px] font-medium text-violet-200">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-medium text-violet-200">
                                 <Sparkles className="size-3" />
                                 Upset
                               </span>
                             ) : null}
                             {myImpact ? (
-                              <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-medium text-emerald-200">
+                              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-200">
                                 My Team
                               </span>
                             ) : null}

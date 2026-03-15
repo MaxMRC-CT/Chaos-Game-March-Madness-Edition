@@ -59,13 +59,13 @@ export function MobileLeagueNav({ leagueId }: { leagueId: string }) {
   return (
     <nav
       aria-label="Mobile league navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-800 bg-neutral-950/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/8 bg-neutral-950/92 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 shadow-[0_-6px_18px_rgba(0,0,0,0.24)] backdrop-blur-md lg:hidden"
     >
       {showSwitchLeague ? (
-        <div className="mx-auto mb-2 max-w-lg">
+        <div className="mx-auto mb-1.5 max-w-lg">
           <Link
             href="/my-leagues"
-            className="flex min-h-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900/80 px-3 text-xs font-medium text-neutral-200 transition hover:bg-neutral-800"
+            className="flex min-h-9 items-center justify-center rounded-xl border border-white/8 bg-neutral-900/75 px-3 text-[11px] font-medium text-neutral-200 transition hover:bg-neutral-800"
           >
             Switch League
           </Link>
@@ -81,14 +81,14 @@ export function MobileLeagueNav({ leagueId }: { leagueId: string }) {
               key={item.href}
               href={href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition ${
+              className={`flex min-h-[3.6rem] flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-medium transition ${
                 isActive
-                  ? "bg-violet-500/12 text-white"
-                  : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
+                  ? "bg-violet-500/10 text-white"
+                  : "text-neutral-400 hover:bg-neutral-900/80 hover:text-neutral-200"
               }`}
             >
               <item.Icon
-                className={`size-5 ${isActive ? "text-violet-300" : "text-neutral-500"}`}
+                className={`size-[18px] ${isActive ? "text-violet-300" : "text-neutral-500"}`}
                 aria-hidden
               />
               <span>{item.label}</span>

@@ -15,7 +15,7 @@ import {
 import { WarRoomResponse } from "./types";
 
 const panelClass =
-  "rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20";
+  "rounded-2xl border border-white/10 bg-neutral-900/95 p-3.5 shadow-lg shadow-black/20 sm:p-4";
 
 export function LeagueHomeClient({
   leagueId,
@@ -166,7 +166,7 @@ export function LeagueHomeClient({
         <LeagueSidebarNav leagueId={leagueId} showAdmin={Boolean(data.me?.isAdmin)} />
 
         <div className="min-w-0 flex-1 space-y-4">
-          <section className={`${panelClass} p-5`}>
+          <section className={`${panelClass} p-4 sm:p-5`}>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
@@ -277,8 +277,8 @@ export function LeagueHomeClient({
                   accent="text-violet-300"
                 />
               </div>
-              <p className="text-xs text-neutral-500">
-                Alive counts shown first so you can scan your roster in seconds.
+              <p className="text-[11px] text-neutral-500">
+                Alive counts shown first for quick scanning.
               </p>
             </div>
           </section>
@@ -307,7 +307,7 @@ export function LeagueHomeClient({
                   </span>
                 </div>
                 <p className="mt-3 text-lg font-semibold text-white">{latestChaos.title}</p>
-                <p className="mt-1 text-sm text-neutral-400">{latestChaos.detail}</p>
+                <p className="mt-1 text-[13px] text-neutral-400">{latestChaos.detail}</p>
               </div>
             </div>
 
@@ -339,7 +339,7 @@ export function LeagueHomeClient({
           <HowToPlayLinks
             variant="compact"
             title="Need a refresher?"
-            description="Learn how Heroes, Villains, and Cinderellas work and where to go in the app."
+            description="Quick rules and app map."
           />
 
           <section className={`${panelClass} lg:hidden`}>

@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:ui": "playwright test tests/ui-audit.spec.ts",
+    "test:ui:headed": "playwright test tests/ui-audit.spec.ts --headed",
+    "test:ui:update": "playwright test tests/ui-audit.spec.ts",
+    "playwright:report": "playwright show-report",
     "prisma:dev:status": "dotenv -e .env.development -- prisma migrate status",
     "prisma:dev:generate": "dotenv -e .env.development -- prisma generate",
     "prisma:dev:migrate": "dotenv -e .env.development -- prisma migrate dev",
@@ -47,6 +51,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

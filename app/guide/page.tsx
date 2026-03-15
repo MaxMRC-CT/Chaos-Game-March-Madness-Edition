@@ -35,13 +35,15 @@ export default function GuidePage() {
                 href="/"
                 className="rounded-lg outline-none transition focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
               >
-                <Image
-                  src="/chaos-shield.png"
-                  alt="Chaos League"
-                  width={80}
-                  height={104}
-                  className="h-auto w-[60px] sm:w-[80px]"
-                />
+                <div className="relative aspect-[2/3] w-[60px] sm:w-[80px]">
+                  <Image
+                    src="/chaos-shield.png"
+                    alt="Chaos League"
+                    fill
+                    sizes="(min-width: 640px) 80px, 60px"
+                    className="object-contain"
+                  />
+                </div>
               </Link>
               <div>
                 <h1 className="text-2xl font-semibold text-white">
