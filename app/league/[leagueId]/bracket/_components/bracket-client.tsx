@@ -146,7 +146,7 @@ export default function BracketClient({
                 href={`/league/${leagueId}/dashboard`}
                 className="shrink-0 rounded text-sm font-medium text-neutral-300 underline-offset-4 transition hover:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
               >
-                Back to War Room
+                Back Home
               </Link>
             </div>
 

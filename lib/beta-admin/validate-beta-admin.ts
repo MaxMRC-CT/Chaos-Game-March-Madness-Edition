@@ -1,41 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
+import { NextRequest } from "next/server";
+import {
+  BETA_ADMIN_COOKIE_NAME,
+  createAdminCookieValue,
+  validateAdminSession,
+} from "@/lib/admin/admin-session";
 
-const COOKIE_NAME = "cl_beta_admin";
+const COOKIE_NAME = BETA_ADMIN_COOKIE_NAME;
 
-function hashKey(key: string): string {
-  return createHash("sha256").update(key).digest("hex");
+/** Validate beta admin access. Accepts BETA_ADMIN_KEY and LIVE_ADMIN_KEY. */
+export function validateBetaAdmin(request: NextRequest) {
+  return validateAdminSession(request, "beta");
 }
 
-/** Validate beta admin access. Uses BETA_ADMIN_KEY. Works in production. */
-export function validateBetaAdmin(request: NextRequest): NextResponse | null {
-  const adminKey = process.env.BETA_ADMIN_KEY;
-  if (!adminKey) {
-    return NextResponse.json(
-      { ok: false, error: "BETA_ADMIN_KEY not configured" },
-      { status: 500 },
-    );
-  }
-
-  const headerKey = request.headers.get("x-beta-admin-key");
-  if (headerKey === adminKey) {
-    return null;
-  }
-
-  const cookieValue = request.cookies.get(COOKIE_NAME)?.value;
-  const expectedHash = hashKey(adminKey);
-  if (cookieValue === expectedHash) {
-    return null;
-  }
-
-  return NextResponse.json(
-    { ok: false, error: "Unauthorized" },
-    { status: 401 },
-  );
-}
-
-export function createBetaAdminCookie(adminKey: string): string {
-  return hashKey(adminKey);
+export function createBetaAdminCookie(adminKey: string) {
+  return createAdminCookieValue(adminKey);
 }
 
 export { COOKIE_NAME };

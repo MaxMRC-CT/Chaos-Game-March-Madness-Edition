@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { startTournamentFromForm } from "@/lib/actions/league";
 import { LeagueSidebarNav } from "@/app/league/[leagueId]/_components/LeagueSidebarNav";
+import { StickyUserStatus } from "@/app/league/[leagueId]/_components/sticky-user-status";
+import { getSavedLeagues, upsertSavedLeague } from "@/lib/client/device-session";
 import { memberHasSubmittedPortfolio } from "@/lib/league/member-status";
 import { LeaderboardPanel } from "./leaderboard-panel";
 import { RoundSummaryCard } from "./RoundSummaryCard";
@@ -61,6 +63,8 @@ export default function DashboardClient({
   const [copied, setCopied] = useState(false);
   const prevStandingsRef = useRef<WarRoomResponse["standings"] | null>(null);
   const [rankDelta, setRankDelta] = useState<Record<string, number>>({});
+  const [reconnectSaved, setReconnectSaved] = useState(Boolean(initial.me));
+  const [hasMultipleSavedLeagues, setHasMultipleSavedLeagues] = useState(false);
 
   const load = useCallback(
     async (limit = 15, mode: "all" | "highlights" = "all") => {
@@ -235,11 +239,29 @@ export default function DashboardClient({
     .slice(0, 2)
     .toUpperCase();
 
-  const reconnectSaved = useMemo(() => {
-    if (typeof window === "undefined") return Boolean(data.me);
-    const reconnectKey = `chaos_${leagueId}_deviceToken`;
-    return Boolean(window.localStorage.getItem(reconnectKey)) || Boolean(data.me);
-  }, [data.me, leagueId]);
+  useEffect(() => {
+    if (!data.me) return;
+    const me = data.me;
+
+    upsertSavedLeague({
+      leagueId,
+      leagueName: data.league.name,
+      leagueCode: data.league.code,
+      playerId: me.memberId,
+      nickname: me.displayName,
+    });
+    const frame = window.requestAnimationFrame(() => {
+      const savedLeagues = getSavedLeagues();
+      setReconnectSaved(
+        savedLeagues.some(
+          (league) => league.leagueId === leagueId && league.playerId === me.memberId,
+        ),
+      );
+      setHasMultipleSavedLeagues(savedLeagues.length > 1);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [data.league.code, data.league.name, data.me, leagueId]);
 
   async function copyPin() {
     try {
@@ -269,6 +291,8 @@ export default function DashboardClient({
         <div className="min-w-0 flex-1">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="min-w-0 space-y-4 lg:col-span-8">
+              <StickyUserStatus rank={myRank} points={myStanding?.total ?? 0} delta={myDelta} />
+
               {preTipBanner ? (
                 <PreTipBannerCard
                   variant={preTipBanner.variant}
@@ -368,6 +392,14 @@ export default function DashboardClient({
                           Reconnect not saved
                         </p>
                       )}
+                      {hasMultipleSavedLeagues ? (
+                        <Link
+                          href="/my-leagues"
+                          className="text-xs font-medium text-neutral-300 underline-offset-4 hover:text-white hover:underline"
+                        >
+                          Switch League
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
 

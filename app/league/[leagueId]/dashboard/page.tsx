@@ -1,13 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getWarRoomData } from "@/lib/war-room/get-data";
-import {
-  memberHasSubmittedPortfolio,
-  allMembersSubmitted,
-  canEditPortfolio,
-  isPreTip,
-} from "@/lib/league/member-status";
-import DashboardClient from "./_components/dashboard-client";
+import { LeagueHomeClient } from "./_components/league-home-client";
 import { WarRoomResponse } from "./_components/types";
 
 async function loadWarRoomData(leagueId: string): Promise<WarRoomResponse | null> {
@@ -38,44 +32,6 @@ export default async function DashboardPage({
   if (!memberId) {
     redirect(`/join?code=${encodeURIComponent(summary.league.code)}`);
   }
-  const hasSubmitted = memberHasSubmittedPortfolio(
-    summary.myPicks?.length ?? 0,
-    summary.me?.championshipPrediction ?? null,
-  );
 
-  const championshipByMemberId = new Map(
-    (summary.standings ?? []).map((s) => [s.memberId, s.championshipPrediction]),
-  );
-  for (const m of summary.members ?? []) {
-    if (!championshipByMemberId.has(m.id)) {
-      championshipByMemberId.set(m.id, summary.me?.memberId === m.id ? summary.me?.championshipPrediction : null);
-    }
-  }
-  const readyForTipOff = allMembersSubmitted(
-    summary.members ?? [],
-    summary.picks ?? [],
-    championshipByMemberId,
-  );
-
-  // Submitted member: show real War Room (with pre-tip banner if applicable)
-  const preTip = isPreTip(summary.league.status);
-  const canEdit = canEditPortfolio(summary.league.status);
-
-  return (
-    <DashboardClient
-      leagueId={leagueId}
-      initial={summary}
-      hasSubmittedPortfolio={hasSubmitted}
-      canEditPortfolio={canEdit}
-      preTipBanner={
-        preTip && hasSubmitted
-          ? {
-              variant: readyForTipOff ? "ready" : "submitted",
-              canEditPicks: canEdit,
-              isAdmin: Boolean(summary.me?.isAdmin),
-            }
-          : undefined
-      }
-    />
-  );
+  return <LeagueHomeClient leagueId={leagueId} initial={summary} />;
 }

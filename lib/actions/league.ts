@@ -13,6 +13,10 @@ type ActionState =
       error?: string;
       reconnectCode?: string;
       leagueId?: string;
+      leagueName?: string;
+      leagueCode?: string;
+      playerId?: string;
+      nickname?: string;
       deviceToken?: string;
       success?: boolean;
     }
@@ -119,7 +123,7 @@ export async function joinLeague(
 
   const league = await prisma.league.findUnique({
     where: { code },
-    select: { id: true, status: true },
+    select: { id: true, name: true, code: true, status: true },
   });
 
   if (!league) {
@@ -175,6 +179,10 @@ export async function joinLeague(
       success: true,
       reconnectCode,
       leagueId: league.id,
+      leagueName: league.name,
+      leagueCode: league.code,
+      playerId: member.id,
+      nickname: member.displayName,
       deviceToken,
     };
   } catch (err: unknown) {

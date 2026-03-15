@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BookOpen, ChevronDown, Flame, LayoutGrid, Settings, Shield, Users } from "lucide-react";
+import { ChevronDown, Ellipsis, Flame, House, Settings, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLockup } from "@/app/(dashboard)/_components/BrandLockup";
@@ -11,11 +11,21 @@ export const LEAGUE_SIDEBAR_ASIDE_CLASS =
   "sticky top-4 hidden h-[calc(100dvh-2rem)] w-[240px] shrink-0 overflow-y-auto rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 shadow-lg lg:block";
 
 const NAV_ITEMS = [
-  { href: "dashboard", segment: "dashboard", label: "War Room", Icon: Shield },
-  { href: "portfolio", segment: "portfolio", label: "Roster", Icon: Users },
-  { href: "bracket", segment: "bracket", label: "Full Bracket", Icon: LayoutGrid },
-  { href: "standings", segment: "standings", label: "My League", Icon: Flame },
-  { href: "/guide", segment: "guide", label: "League Guide", Icon: BookOpen, external: true },
+  { href: "dashboard", segment: "dashboard", label: "Home", Icon: House, match: (pathname: string, base: string) => pathname === `${base}/dashboard` },
+  { href: "standings", segment: "standings", label: "Standings", Icon: Trophy, match: (pathname: string, base: string) => pathname === `${base}/standings` },
+  { href: "portfolio", segment: "portfolio", label: "My Team", Icon: Users, match: (pathname: string, base: string) => pathname === `${base}/portfolio` },
+  { href: "games", segment: "games", label: "Games", Icon: Flame, match: (pathname: string, base: string) => pathname === `${base}/games` },
+  {
+    href: "more",
+    segment: "more",
+    label: "More",
+    Icon: Ellipsis,
+    match: (pathname: string, base: string) =>
+      pathname === `${base}/more` ||
+      pathname === `${base}/war-room` ||
+      pathname === `${base}/bracket` ||
+      pathname.startsWith(`${base}/admin`),
+  },
 ] as const;
 
 type MyLeagueEntry = {
@@ -78,7 +88,7 @@ function LeagueSwitcher({ currentLeagueId }: { currentLeagueId: string }) {
             className="absolute left-4 right-4 z-20 mt-1 max-h-[200px] overflow-auto rounded-lg border border-neutral-700 bg-neutral-900 py-1 shadow-xl"
           >
             {others.map((entry) => (
-              <li key={entry.leagueId} role="option">
+              <li key={entry.leagueId} role="option" aria-selected={false}>
                 <Link
                   href={`/league/${entry.leagueId}/dashboard`}
                   className="block truncate px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-800 hover:text-white"
@@ -128,8 +138,7 @@ export function LeagueSidebarNav({ leagueId, showAdmin = false }: LeagueSidebarN
                 : `${base}/${item.href}`;
             const isActive =
               !("external" in item && item.external) &&
-              (pathname === to ||
-                (pathname.startsWith(to + "/") && item.segment !== "dashboard"));
+              item.match(pathname, base);
             return (
               <NavLink
                 key={item.segment}

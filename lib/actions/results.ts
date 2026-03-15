@@ -1,26 +1,15 @@
 "use server";
 
-import { Round } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { revalidateLeagueViews } from "@/lib/league/revalidate";
-import { computeLeagueStandings } from "@/lib/scoring/compute";
 import { cookies } from "next/headers";
+import {
+  replaceResultsState,
+  TeamResultInput,
+  TournamentGameInput,
+} from "@/lib/results/replace-results-state";
 
 type ActionState = { error?: string; success?: boolean } | null;
-
-type TeamResultInput = {
-  teamId: string;
-  wins: number;
-  eliminatedRound: Round | null;
-};
-
-type TournamentGameInput = {
-  round: Round;
-  gameNo: number;
-  winnerTeamId: string;
-  loserTeamId: string;
-};
 
 const SAMPLE_TEAMS = [
   { name: "Kansas", seed: 1, region: "Midwest" },
@@ -96,87 +85,7 @@ export async function updateResults(
 ): Promise<ActionState> {
   try {
     await requireAdmin(leagueId);
-
-    await prisma.$transaction(async (tx) => {
-      for (const result of teamResults) {
-        await tx.teamResult.upsert({
-          where: {
-            leagueId_teamId: {
-              leagueId,
-              teamId: result.teamId,
-            },
-          },
-          update: {
-            wins: result.wins,
-            eliminatedRound: result.eliminatedRound,
-          },
-          create: {
-            leagueId,
-            teamId: result.teamId,
-            wins: result.wins,
-            eliminatedRound: result.eliminatedRound,
-          },
-        });
-      }
-
-      await tx.tournamentGame.deleteMany({ where: { leagueId } });
-      if (games.length > 0) {
-        await tx.tournamentGame.createMany({
-          data: games.map((game) => ({
-            leagueId,
-            round: game.round,
-            gameNo: game.gameNo,
-            winnerTeamId: game.winnerTeamId,
-            loserTeamId: game.loserTeamId,
-          })),
-        });
-      }
-
-      await tx.leagueEvent.deleteMany({
-        where: { leagueId, type: "TEAM_ELIMINATED" },
-      });
-      const eliminationEvents = teamResults
-        .filter((result) => result.eliminatedRound && result.eliminatedRound !== "CHAMP")
-        .map((result) => ({
-          leagueId,
-          type: "TEAM_ELIMINATED",
-          payload: {
-            teamId: result.teamId,
-            eliminatedRound: result.eliminatedRound,
-          },
-        }));
-
-      if (eliminationEvents.length > 0) {
-        await tx.leagueEvent.createMany({ data: eliminationEvents });
-      }
-
-      const hasChampion = teamResults.some((result) => result.eliminatedRound === "CHAMP");
-      if (hasChampion) {
-        await tx.league.update({
-          where: { id: leagueId },
-          data: { status: "COMPLETE" },
-        });
-      } else {
-        const hasLiveResults =
-          games.length > 0 ||
-          teamResults.some(
-            (result) => result.wins > 0 || result.eliminatedRound !== null,
-          );
-
-        if (hasLiveResults) {
-          await tx.league.updateMany({
-            where: {
-              id: leagueId,
-              status: { in: ["SETUP", "LOCKED", "DRAFT"] },
-            },
-            data: { status: "LIVE" },
-          });
-        }
-      }
-    });
-
-    await computeLeagueStandings(leagueId);
-    revalidateLeagueViews(leagueId);
+    await replaceResultsState(leagueId, teamResults, games);
     revalidatePath(`/league/${leagueId}`);
     return { success: true };
   } catch (err: unknown) {

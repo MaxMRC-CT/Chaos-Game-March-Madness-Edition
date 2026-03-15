@@ -5,7 +5,11 @@ import { useActionState } from "react";
 import { joinLeague, reconnectMember } from "@/lib/actions/league";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  ensureDeviceSessionId,
+  upsertSavedLeague,
+} from "@/lib/client/device-session";
 
 /** Beta override: allow joining even when league is LOCKED/LIVE/etc (e.g. 2025 test data). Disable for 2026 production. */
 const ALLOW_BETA_JOIN_AFTER_START = process.env.NEXT_PUBLIC_ALLOW_BETA_JOIN_AFTER_START === "true";
@@ -18,7 +22,11 @@ type AvailabilityState =
 type JoinMode = "join" | "reconnect";
 type LeagueStatus = "SETUP" | "LOCKED" | "DRAFT" | "LIVE" | "COMPLETE";
 
-export default function JoinLeague() {
+export default function JoinLeague({
+  initialMessage = null,
+}: {
+  initialMessage?: string | null;
+}) {
   const [joinState, joinFormAction, joinPending] = useActionState(joinLeague, null);
   const [reconnectState, reconnectFormAction, reconnectPending] = useActionState(
     reconnectMember,
@@ -37,13 +45,19 @@ export default function JoinLeague() {
   const [resolvedLeagueId, setResolvedLeagueId] = React.useState<string | null>(null);
   const [autoDeviceToken, setAutoDeviceToken] = React.useState<string | null>(null);
   const [leagueStatus, setLeagueStatus] = React.useState<LeagueStatus | null>(null);
+  const [message, setMessage] = React.useState<string | null>(initialMessage);
 
   const nicknameRef = React.useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   React.useEffect(() => {
     nicknameRef.current?.focus();
   }, []);
+
+  React.useEffect(() => {
+    setMessage(initialMessage);
+  }, [initialMessage]);
 
   // Prefill from ?pin= or ?code= query params
   React.useEffect(() => {
@@ -193,10 +207,29 @@ export default function JoinLeague() {
 
   // Store deviceToken after successful join
   React.useEffect(() => {
-    if (!joinState?.success || !joinState.leagueId || !joinState.deviceToken) return;
+    if (
+      !joinState?.success ||
+      !joinState.leagueId ||
+      !joinState.deviceToken ||
+      !joinState.playerId ||
+      !joinState.leagueName ||
+      !joinState.leagueCode ||
+      !joinState.nickname
+    ) {
+      return;
+    }
 
+    ensureDeviceSessionId();
     window.localStorage.setItem(`chaos_${joinState.leagueId}_deviceToken`, joinState.deviceToken);
-  }, [joinState]);
+    upsertSavedLeague({
+      leagueId: joinState.leagueId,
+      leagueName: joinState.leagueName,
+      leagueCode: joinState.leagueCode,
+      playerId: joinState.playerId,
+      nickname: joinState.nickname,
+    });
+    router.replace(`/league/${joinState.leagueId}/dashboard`);
+  }, [joinState, router]);
 
   const joinClosed =
     (leagueStatus === "LOCKED" ||
@@ -222,6 +255,12 @@ export default function JoinLeague() {
         <p className="text-sm text-neutral-400">Beta Season – 2026</p>
         <p className="text-sm text-neutral-500">Have a Game PIN? Jump right in.</p>
       </div>
+
+      {message ? (
+        <div className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+          {message}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-2 rounded-xl border border-white/10 bg-white/5 p-1 text-sm sm:grid-cols-2 sm:gap-1">
         <button
@@ -295,18 +334,11 @@ export default function JoinLeague() {
 
           {joinState?.error ? <p className="text-sm text-red-400">{joinState.error}</p> : null}
 
-          {joinState?.success && joinState.reconnectCode && joinState.leagueId ? (
+          {joinState?.success ? (
             <div className="space-y-3 rounded-lg border border-green-400/30 bg-green-500/10 p-3">
-              <p className="text-sm text-green-400">
-                Save this reconnect code:{" "}
-                <span className="font-mono font-semibold">{joinState.reconnectCode}</span>
+              <p className="text-sm text-green-300">
+                Joining your league…
               </p>
-              <Link
-                href={`/league/${joinState.leagueId}/dashboard`}
-                className="inline-block rounded-xl bg-[#fb6223] hover:bg-[#ff7a3d] transition-colors duration-200 px-3 py-2 text-sm text-white font-medium shadow-lg"
-              >
-                Continue to War Room
-              </Link>
             </div>
           ) : null}
         </form>

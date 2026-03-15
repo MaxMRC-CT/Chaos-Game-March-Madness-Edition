@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getAdminConfigError, isAcceptedAdminKey } from "@/lib/admin/admin-session";
 import { createBetaAdminCookie, COOKIE_NAME } from "@/lib/beta-admin/validate-beta-admin";
 
 /** POST /api/beta-admin/auth - Verify key and set session cookie */
 export async function POST(request: NextRequest) {
-  const adminKey = process.env.BETA_ADMIN_KEY;
-  if (!adminKey) {
+  const configError = getAdminConfigError("beta");
+  if (configError) {
     return NextResponse.json(
-      { ok: false, error: "BETA_ADMIN_KEY not configured" },
+      { ok: false, error: configError },
       { status: 500 },
     );
   }
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
   }
 
   const key = String(body.key ?? "").trim();
-  if (key !== adminKey) {
+  if (!isAcceptedAdminKey(key, "beta")) {
     return NextResponse.json(
       { ok: false, error: "Invalid key" },
       { status: 401 },
@@ -31,12 +32,12 @@ export async function POST(request: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, createBetaAdminCookie(adminKey), {
+  cookieStore.set(COOKIE_NAME, createBetaAdminCookie(key), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 12,
   });
 
   return NextResponse.json({ ok: true });

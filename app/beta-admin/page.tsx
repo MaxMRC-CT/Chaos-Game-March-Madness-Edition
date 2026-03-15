@@ -202,7 +202,7 @@ export default function BetaAdminPage() {
         <div className="w-full max-w-sm space-y-6 rounded-xl border border-neutral-700/60 bg-[#0f1623] p-6">
           <header>
             <h1 className="text-xl font-bold tracking-tight text-white">
-              Beta Admin
+              BETA / TEST ADMIN
             </h1>
             <p className="mt-1 text-sm text-neutral-400">
               Private admin panel for tournament simulation
@@ -246,7 +246,7 @@ export default function BetaAdminPage() {
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-700/60 pb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
-              Beta Admin
+              BETA / TEST ADMIN
             </h1>
             <p className="mt-1 text-sm text-neutral-400">
               Simulate tournament rounds for deployed beta

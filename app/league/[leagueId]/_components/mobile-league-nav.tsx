@@ -2,45 +2,76 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, LayoutGrid, Shield, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Ellipsis, Flame, House, Trophy, Users } from "lucide-react";
+import { getSavedLeagues } from "@/lib/client/device-session";
 
 const NAV_ITEMS = [
   {
-    href: "standings",
-    label: "League",
-    Icon: Flame,
-    match: (pathname: string, base: string) => pathname === `${base}/standings`,
-  },
-  {
     href: "dashboard",
-    label: "War Room",
-    Icon: Shield,
+    label: "Home",
+    Icon: House,
     match: (pathname: string, base: string) => pathname === `${base}/dashboard`,
   },
   {
+    href: "standings",
+    label: "Standings",
+    Icon: Trophy,
+    match: (pathname: string, base: string) => pathname === `${base}/standings`,
+  },
+  {
     href: "portfolio",
-    label: "Roster",
+    label: "My Team",
     Icon: Users,
     match: (pathname: string, base: string) => pathname === `${base}/portfolio`,
   },
   {
-    href: "bracket",
-    label: "Bracket",
-    Icon: LayoutGrid,
-    match: (pathname: string, base: string) => pathname === `${base}/bracket`,
+    href: "games",
+    label: "Games",
+    Icon: Flame,
+    match: (pathname: string, base: string) => pathname === `${base}/games`,
+  },
+  {
+    href: "more",
+    label: "More",
+    Icon: Ellipsis,
+    match: (pathname: string, base: string) =>
+      pathname === `${base}/more` ||
+      pathname === `${base}/war-room` ||
+      pathname === `${base}/bracket` ||
+      pathname.startsWith(`${base}/admin`),
   },
 ] as const;
 
 export function MobileLeagueNav({ leagueId }: { leagueId: string }) {
   const pathname = usePathname();
   const base = `/league/${leagueId}`;
+  const [showSwitchLeague, setShowSwitchLeague] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setShowSwitchLeague(getSavedLeagues().length > 1);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <nav
       aria-label="Mobile league navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-800 bg-neutral-950/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:hidden"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-4 gap-1">
+      {showSwitchLeague ? (
+        <div className="mx-auto mb-2 max-w-lg">
+          <Link
+            href="/my-leagues"
+            className="flex min-h-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900/80 px-3 text-xs font-medium text-neutral-200 transition hover:bg-neutral-800"
+          >
+            Switch League
+          </Link>
+        </div>
+      ) : null}
+      <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
         {NAV_ITEMS.map((item) => {
           const href = `${base}/${item.href}`;
           const isActive = item.match(pathname, base);
