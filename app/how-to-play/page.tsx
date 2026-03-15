@@ -41,8 +41,8 @@ const sections = [
 export default function HowToPlayPage() {
   return (
     <main className="min-h-dvh bg-gradient-to-b from-[#0c1424] via-[#0f1726] to-[#0b1120] text-white">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <section className="rounded-3xl border border-[#fb6223]/20 bg-neutral-950/80 p-6 shadow-2xl shadow-black/30">
+      <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6">
+        <section className="rounded-3xl border border-[#fb6223]/20 bg-neutral-950/80 p-5 sm:p-6 shadow-2xl shadow-black/30">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#ffb08d]">
             Chaos League Guide
           </p>
@@ -53,26 +53,26 @@ export default function HowToPlayPage() {
             A mobile-first guide to how the game works, where to go in the app, and how to stay on top of the tournament without getting overloaded.
           </p>
 
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <GuideBadge>Start at Home</GuideBadge>
             <GuideBadge>Track chaos quickly</GuideBadge>
             <GuideBadge>Use device re-entry</GuideBadge>
           </div>
         </section>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2">
+        <section className="mt-5 grid gap-3 sm:grid-cols-2">
           {sections.map((section) => (
             <article
               key={section.title}
-              className="rounded-2xl border border-white/10 bg-neutral-950/85 p-5 shadow-lg shadow-black/20"
+              className="rounded-2xl border border-white/10 bg-neutral-950/85 p-4 shadow-lg shadow-black/20"
             >
-              <h2 className="text-lg font-semibold text-white">{section.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-neutral-300">{section.body}</p>
+              <h2 className="text-[17px] font-semibold text-white">{section.title}</h2>
+              <p className="mt-2 text-[13px] leading-6 text-neutral-300">{section.body}</p>
             </article>
           ))}
         </section>
 
-        <section className="mt-6 rounded-3xl border border-white/10 bg-neutral-950/85 p-6 shadow-lg shadow-black/20">
+        <section className="mt-5 rounded-3xl border border-white/10 bg-neutral-950/85 p-5 sm:p-6 shadow-lg shadow-black/20">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
             Downloadable Guides
           </p>

@@ -108,13 +108,13 @@ export default function StandingsClient({
                 `H ${row.HERO ?? 0}`,
                 `V ${row.VILLAIN ?? 0}`,
                 `C ${row.CINDERELLA ?? 0}`,
-                `R ${row.rivalry ?? 0}`,
               ];
+              if ((row.rivalry ?? 0) !== 0) scoreParts.push(`R ${row.rivalry ?? 0}`);
 
               return (
                 <article
                   key={row.memberId}
-                  className={`rounded-2xl border px-3 py-3 shadow-lg shadow-black/20 sm:px-4 sm:py-4 ${
+                  className={`rounded-2xl border px-3 py-2.5 shadow-lg shadow-black/20 sm:px-4 sm:py-3 ${
                     isMe
                       ? "border-emerald-500/30 bg-emerald-500/10"
                       : "border-white/10 bg-neutral-900/95"
@@ -125,13 +125,13 @@ export default function StandingsClient({
                       <p className="truncate text-[15px] font-semibold text-white sm:text-base">
                         #{index + 1} {displayName}
                       </p>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-neutral-400">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-neutral-400">
                         <RankMovementIndicator delta={movement} compact />
                         <ScoreDeltaBadge delta={delta} todayLabel compact />
                         {scoreParts.map((part) => (
                           <span
                             key={part}
-                            className="rounded-full border border-white/8 bg-white/[0.03] px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-neutral-300"
+                            className="rounded-full border border-white/7 bg-white/[0.025] px-1.5 py-0.5 text-[9px] uppercase tracking-[0.08em] text-neutral-300"
                           >
                             {part}
                           </span>
@@ -140,7 +140,7 @@ export default function StandingsClient({
                     </div>
 
                     <div className="shrink-0 text-right">
-                      <p className="text-xl font-semibold leading-none text-white">{row.total}</p>
+                      <p className="text-[1.35rem] font-semibold leading-none text-white">{row.total}</p>
                     </div>
                   </div>
                 </article>

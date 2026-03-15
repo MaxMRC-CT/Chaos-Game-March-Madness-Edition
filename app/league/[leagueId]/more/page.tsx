@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { HowToPlayLinks } from "@/components/how-to-play-links";
 import { getWarRoomData } from "@/lib/war-room/get-data";
 import { LeagueSidebarNav } from "../_components/LeagueSidebarNav";
 import { WarRoomResponse } from "../dashboard/_components/types";
@@ -13,36 +12,31 @@ async function loadWarRoomData(leagueId: string): Promise<WarRoomResponse | null
   return data as WarRoomResponse | null;
 }
 
-const MORE_LINKS = [
+const TOURNAMENT_LINKS = [
   {
-    href: "war-room",
-    title: "War Room",
-    description: "Advanced league activity, chaos feed, and commissioner view.",
-    tone: "primary",
+    href: "games",
+    title: "Games",
+    description: "See results by round and completed matchups.",
   },
   {
     href: "bracket",
     title: "Full Bracket",
     description: "Explore the full field and ownership view by region.",
-    tone: "primary",
   },
-  {
-    href: "/how-to-play",
-    title: "How to Play",
-    description: "Rules, app navigation, and a clean game overview.",
-    external: true,
-    tone: "reference",
-  },
+] as const;
+
+const LEAGUE_ACTIONS = [
   {
     href: "/my-leagues",
     title: "Switch League",
     description: "Jump between saved leagues on this device.",
     external: true,
-    tone: "reference",
   },
 ] as const;
 
-function isExternalLink(item: (typeof MORE_LINKS)[number]) {
+function isExternalLink(
+  item: (typeof LEAGUE_ACTIONS)[number],
+) {
   return "external" in item && Boolean(item.external);
 }
 
@@ -80,20 +74,14 @@ export default async function MorePage({
             </p>
           </section>
 
-          <HowToPlayLinks
-            variant="compact"
-            title="How to Play"
-            description="Open the web guide or download the PDFs when you need the full rules, app map, or a quick game card."
-          />
-
           <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
-              Go Next
+              Follow the Tournament
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-white">Primary Views</h2>
+            <h2 className="mt-1 text-lg font-semibold text-white">Stay on Top of the Board</h2>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
-              {MORE_LINKS.filter((item) => item.tone === "primary").map((item) => {
-                const href = isExternalLink(item) ? item.href : `/league/${leagueId}/${item.href}`;
+              {TOURNAMENT_LINKS.map((item) => {
+                const href = `/league/${leagueId}/${item.href}`;
                 return (
                   <Link
                     key={item.title}
@@ -110,10 +98,46 @@ export default async function MorePage({
 
           <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
-              References
+              Help & Info
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-white">Rules and Quick Guides</h2>
+            <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <Link
+                href="/how-to-play"
+                className="block rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-white/20 hover:bg-white/[0.05]"
+              >
+                <p className="text-base font-semibold text-white">How to Play</p>
+                <p className="mt-1 text-sm text-neutral-400">
+                  Rules, quick guide, and downloads.
+                </p>
+              </Link>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <Link
+                  href="/docs/chaos-league-how-to-play.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 px-4 text-sm font-medium text-neutral-200 transition hover:bg-neutral-800"
+                >
+                  Download Full Guide
+                </Link>
+                <Link
+                  href="/docs/chaos-league-game-card.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 px-4 text-sm font-medium text-neutral-200 transition hover:bg-neutral-800"
+                >
+                  Download Game Card
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-lg shadow-black/20">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+              League Actions
             </p>
             <div className="mt-3 space-y-3">
-              {MORE_LINKS.filter((item) => item.tone === "reference").map((item) => {
+              {LEAGUE_ACTIONS.map((item) => {
                 const href = isExternalLink(item) ? item.href : `/league/${leagueId}/${item.href}`;
                 return (
                   <Link

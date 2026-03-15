@@ -293,10 +293,10 @@ export function LeagueHomeClient({
                   <h2 className="mt-1 text-lg font-semibold text-white">What Just Happened</h2>
                 </div>
                 <Link
-                  href={`/league/${leagueId}/games`}
+                  href={`/league/${leagueId}/war-room`}
                   className="text-sm font-medium text-violet-300 hover:text-violet-200"
                 >
-                  View Games
+                  Open War Room
                 </Link>
               </div>
 

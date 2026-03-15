@@ -231,7 +231,7 @@ export default function JoinLeague({
           March Madness 2026
         </p>
         <h1 className="pt-1 text-2xl font-semibold tracking-tight">CHAOS LEAGUE</h1>
-        <p className="pt-0.5 text-sm text-neutral-400">Enter your Game PIN to join the league.</p>
+        <p className="pt-0.5 text-[13px] text-neutral-400">Enter your Game PIN to join the league.</p>
       </div>
 
       {message ? (
@@ -382,7 +382,7 @@ export default function JoinLeague({
         description="Read the quick guide before joining."
       />
 
-      <div className="rounded-2xl border border-white/8 bg-neutral-950/40 px-4 py-3 text-center">
+      <div className="rounded-2xl border border-white/8 bg-neutral-950/35 px-4 py-3 text-center">
         <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Commissioner?</p>
         <Link
           href="/create"

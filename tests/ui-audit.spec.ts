@@ -46,6 +46,11 @@ const routeAudits: RouteAudit[] = [
     sourcePath: "league/[leagueId]/more/page.tsx",
   },
   {
+    name: "demo-war-room",
+    route: "/league/demo/war-room",
+    sourcePath: "league/[leagueId]/war-room/page.tsx",
+  },
+  {
     name: "demo-portfolio",
     route: "/league/demo/portfolio",
     sourcePath: "league/[leagueId]/portfolio/page.tsx",

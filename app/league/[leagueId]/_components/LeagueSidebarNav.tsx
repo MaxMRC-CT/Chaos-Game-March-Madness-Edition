@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: "dashboard", segment: "dashboard", label: "Home", Icon: House, match: (pathname: string, base: string) => pathname === `${base}/dashboard` },
   { href: "standings", segment: "standings", label: "Standings", Icon: Trophy, match: (pathname: string, base: string) => pathname === `${base}/standings` },
   { href: "portfolio", segment: "portfolio", label: "My Team", Icon: Users, match: (pathname: string, base: string) => pathname === `${base}/portfolio` },
-  { href: "games", segment: "games", label: "Games", Icon: Flame, match: (pathname: string, base: string) => pathname === `${base}/games` },
+  { href: "war-room", segment: "war-room", label: "War Room", Icon: Flame, match: (pathname: string, base: string) => pathname === `${base}/war-room` },
   {
     href: "more",
     segment: "more",
@@ -22,7 +22,7 @@ const NAV_ITEMS = [
     Icon: Ellipsis,
     match: (pathname: string, base: string) =>
       pathname === `${base}/more` ||
-      pathname === `${base}/war-room` ||
+      pathname === `${base}/games` ||
       pathname === `${base}/bracket` ||
       pathname.startsWith(`${base}/admin`),
   },

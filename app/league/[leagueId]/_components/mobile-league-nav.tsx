@@ -26,10 +26,10 @@ const NAV_ITEMS = [
     match: (pathname: string, base: string) => pathname === `${base}/portfolio`,
   },
   {
-    href: "games",
-    label: "Games",
+    href: "war-room",
+    label: "War Room",
     Icon: Flame,
-    match: (pathname: string, base: string) => pathname === `${base}/games`,
+    match: (pathname: string, base: string) => pathname === `${base}/war-room`,
   },
   {
     href: "more",
@@ -37,7 +37,7 @@ const NAV_ITEMS = [
     Icon: Ellipsis,
     match: (pathname: string, base: string) =>
       pathname === `${base}/more` ||
-      pathname === `${base}/war-room` ||
+      pathname === `${base}/games` ||
       pathname === `${base}/bracket` ||
       pathname.startsWith(`${base}/admin`),
   },
@@ -59,13 +59,13 @@ export function MobileLeagueNav({ leagueId }: { leagueId: string }) {
   return (
     <nav
       aria-label="Mobile league navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/8 bg-neutral-950/92 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 shadow-[0_-6px_18px_rgba(0,0,0,0.24)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.05] bg-neutral-950/88 px-2 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-1 shadow-[0_-4px_12px_rgba(0,0,0,0.18)] backdrop-blur-sm lg:hidden"
     >
       {showSwitchLeague ? (
-        <div className="mx-auto mb-1.5 max-w-lg">
+        <div className="mx-auto mb-1 max-w-lg">
           <Link
             href="/my-leagues"
-            className="flex min-h-9 items-center justify-center rounded-xl border border-white/8 bg-neutral-900/75 px-3 text-[11px] font-medium text-neutral-200 transition hover:bg-neutral-800"
+            className="flex min-h-8.5 items-center justify-center rounded-xl border border-white/[0.06] bg-neutral-900/65 px-3 text-[11px] font-medium text-neutral-200 transition hover:bg-neutral-800"
           >
             Switch League
           </Link>
@@ -81,14 +81,14 @@ export function MobileLeagueNav({ leagueId }: { leagueId: string }) {
               key={item.href}
               href={href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex min-h-[3.6rem] flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-medium transition ${
+              className={`flex min-h-[3.35rem] flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1 text-[10px] font-medium transition ${
                 isActive
-                  ? "bg-violet-500/10 text-white"
-                  : "text-neutral-400 hover:bg-neutral-900/80 hover:text-neutral-200"
+                  ? "bg-violet-500/9 text-white"
+                  : "text-neutral-400 hover:bg-neutral-900/70 hover:text-neutral-200"
               }`}
             >
               <item.Icon
-                className={`size-[18px] ${isActive ? "text-violet-300" : "text-neutral-500"}`}
+                className={`size-4 ${isActive ? "text-violet-300" : "text-neutral-500"}`}
                 aria-hidden
               />
               <span>{item.label}</span>

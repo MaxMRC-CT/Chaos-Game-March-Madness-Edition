@@ -130,8 +130,8 @@ export default function GamesClient({
             </section>
           ) : (
             groupedGames.map(([round, games]) => (
-              <section key={round} className="space-y-2.5">
-                <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2">
+              <section key={round} className="space-y-2">
+                <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-1.5">
                   <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-white">{formatRound(round)}</h2>
                   <span className="rounded-full border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-400">
                     {games.length} games
@@ -146,14 +146,14 @@ export default function GamesClient({
                     return (
                       <article
                         key={game.id}
-                        className="rounded-2xl border border-white/10 bg-neutral-900/95 px-3 py-3 shadow-lg shadow-black/20 sm:px-4"
+                        className="rounded-2xl border border-white/10 bg-neutral-900/95 px-3 py-2.5 shadow-lg shadow-black/20 sm:px-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold leading-5 text-white">
                               {game.winner?.name ?? "Winner"} defeated {game.loser?.name ?? "Loser"}
                             </p>
-                            <p className="mt-1 text-[12px] text-neutral-400">
+                            <p className="mt-0.5 text-[12px] text-neutral-400">
                               {game.winner?.seed ?? "—"} over {game.loser?.seed ?? "—"}
                             </p>
                           </div>
