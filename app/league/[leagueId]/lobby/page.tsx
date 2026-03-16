@@ -6,6 +6,7 @@ import { BrandBackground } from "@/app/(dashboard)/_components/BrandBackground";
 import { prisma } from "@/lib/db";
 import { PinCard } from "./components/pin-card";
 import { LobbyMemberList } from "./components/lobby-member-list";
+import { ShareLeagueButton } from "./components/share-league-button";
 import { StartTournamentForm } from "./components/start-tournament-form";
 
 function getStatusMeta(status: string, memberCount: number) {
@@ -134,6 +135,18 @@ export default async function LobbyPage({
                   : "Finish your roster and watch the room fill in."}
               </p>
             </div>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                League PIN
+              </p>
+              <p className="mt-1 font-mono text-2xl font-semibold tracking-[0.2em] text-white">
+                {league.code ?? "—"}
+              </p>
+            </div>
+            <ShareLeagueButton leaguePin={league.code ?? null} />
           </div>
 
           <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
