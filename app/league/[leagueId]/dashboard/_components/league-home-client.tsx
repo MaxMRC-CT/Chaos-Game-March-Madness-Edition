@@ -8,6 +8,7 @@ import { RankMovementIndicator } from "@/app/league/[leagueId]/_components/rank-
 import { ScoreDeltaBadge } from "@/app/league/[leagueId]/_components/score-delta-badge";
 import { HowToPlayLinks } from "@/components/how-to-play-links";
 import { getSavedLeagues, upsertSavedLeague } from "@/lib/client/device-session";
+import { ShareLeagueButton } from "@/app/league/[leagueId]/lobby/components/share-league-button";
 import {
   normalizeWarRoomPayload,
   isWarRoomErrorPayload,
@@ -185,6 +186,7 @@ export function LeagueHomeClient({
                 <Badge>{formatRound(data.league.currentRound)}</Badge>
                 <Badge>{data.games.length} games completed</Badge>
                 <Badge>PIN {data.league.code}</Badge>
+                <ShareLeagueButton leaguePin={data.league.code} variant="chip" />
               </div>
             </div>
           </section>

@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type ShareLeagueButtonProps = {
   leaguePin: string | null | undefined;
+  variant?: "card" | "chip";
 };
 
 async function copyInviteText(value: string) {
@@ -25,7 +26,10 @@ async function copyInviteText(value: string) {
   document.body.removeChild(textarea);
 }
 
-export function ShareLeagueButton({ leaguePin }: ShareLeagueButtonProps) {
+export function ShareLeagueButton({
+  leaguePin,
+  variant = "card",
+}: ShareLeagueButtonProps) {
   const [status, setStatus] = useState<"idle" | "copied" | "shared" | "error">("idle");
 
   const inviteText = leaguePin
@@ -61,6 +65,33 @@ export function ShareLeagueButton({ leaguePin }: ShareLeagueButtonProps) {
     } catch {
       flashStatus("error");
     }
+  }
+
+  if (variant === "chip") {
+    const chipLabel =
+      status === "copied"
+        ? "Copied!"
+        : status === "shared"
+          ? "Shared!"
+          : status === "error"
+            ? "Try again"
+            : "Share League";
+
+    return (
+      <button
+        type="button"
+        onClick={handleShare}
+        disabled={!leaguePin}
+        className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#fb6223]/25 bg-[#fb6223]/12 px-3 text-xs font-medium text-[#ffd0bb] transition hover:bg-[#fb6223]/18 disabled:opacity-50"
+      >
+        {status === "copied" || status === "shared" ? (
+          <Check className="size-3.5 text-emerald-300" />
+        ) : (
+          <Share2 className="size-3.5" />
+        )}
+        {chipLabel}
+      </button>
+    );
   }
 
   return (
