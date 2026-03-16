@@ -15,6 +15,7 @@ import { LiveFeed } from "./live-feed";
 import { WarRoomResponse } from "./types";
 
 type ActionState = { error?: string } | null;
+const MotionLink = motion(Link);
 
 export function PreDraftWarRoom({
   leagueId,
@@ -43,10 +44,6 @@ export function PreDraftWarRoom({
     if (isWarRoomErrorPayload(raw)) return;
     setData(normalizeWarRoomPayload(raw));
   }, [leagueId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   useEffect(() => {
     const id = window.setInterval(() => void load(), 4000);
@@ -287,7 +284,6 @@ function NavItem({
   icon: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const MotionLink = motion(Link);
   return (
     <MotionLink
       href={href}

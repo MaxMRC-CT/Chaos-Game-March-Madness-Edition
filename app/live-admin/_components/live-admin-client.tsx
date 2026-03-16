@@ -171,6 +171,19 @@ export function LiveAdminClient() {
     const winnerTeamId = selectedWinnerBySlot[slotId];
     if (!slot || !winnerTeamId) return;
 
+    const selectedWinnerName =
+      winnerTeamId === slot.teamA.id
+        ? slot.teamA.shortName || slot.teamA.name
+        : slot.teamB.shortName || slot.teamB.name;
+    const isOverwrite = slot.status === "completed" && slot.winnerTeamId !== winnerTeamId;
+
+    const confirmed = window.confirm(
+      isOverwrite
+        ? `Overwrite this finalized result and advance ${selectedWinnerName} instead?`
+        : `Confirm ${selectedWinnerName} as the winner?`,
+    );
+    if (!confirmed) return;
+
     setLoading(`save:${slotId}`);
     setError(null);
 
@@ -183,6 +196,7 @@ export function LiveAdminClient() {
         round: slot.round,
         gameNo: slot.gameNo,
         winnerTeamId,
+        allowOverwrite: isOverwrite,
       }),
     });
 

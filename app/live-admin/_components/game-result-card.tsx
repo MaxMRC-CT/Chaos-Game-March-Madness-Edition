@@ -47,7 +47,17 @@ export function GameResultCard({
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
             {game.roundLabel} • Game {game.gameNo}
           </p>
-          <p className="mt-1 text-sm text-neutral-400">{game.bracketLabel}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-400">
+            <span>{game.bracketLabel}</span>
+            <span className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-300">
+              {game.region}
+            </span>
+            {game.isPlayInRelated ? (
+              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-amber-200">
+                Play-In Slot
+              </span>
+            ) : null}
+          </div>
         </div>
         <div className="shrink-0">
           {game.status === "completed" && !isEditing ? (
@@ -114,6 +124,7 @@ export function GameResultCard({
                   ? game.teamA.shortName || game.teamA.name
                   : game.teamB.shortName || game.teamB.name}
               </span>
+              {game.status === "completed" ? " • overwrite pending" : null}
             </>
           ) : (
             "Choose the winning team, then confirm the save."
@@ -145,7 +156,7 @@ export function GameResultCard({
                 disabled={!selectedWinnerId || isSaving}
                 className="rounded-xl bg-[#fb6223] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#e35a20] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSaving ? "Saving..." : game.status === "completed" ? "Save Change" : "Confirm Save"}
+                {isSaving ? "Saving..." : game.status === "completed" ? "Confirm Overwrite" : "Confirm Save"}
               </button>
             </>
           )}

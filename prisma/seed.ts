@@ -1,192 +1,111 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import * as path from "path";
-import * as fs from "fs";
+import {
+  FIRST_FOUR_2026,
+  FIRST_ROUND_MATCHUPS_2026,
+  TEAMS_2026,
+  type TournamentTeamInput,
+} from "./data/tournament-2026";
 
 const prisma = new PrismaClient();
 
-type TeamInput = {
-  name: string;
-  seed: number;
-  region: string;
-  shortName?: string;
-  logoUrl?: string;
-};
+const TOURNAMENT_YEAR = 2026;
+const TOURNAMENT_NAME = "2026 NCAA Division I Men's Basketball Championship";
+const LEGACY_TOURNAMENT_YEARS = [2025, 2026] as const;
 
-async function seed2025() {
-  const dataPath = path.join(__dirname, "data", "teams_2025.json");
-  if (!fs.existsSync(dataPath)) {
-    throw new Error(
-      `teams_2025.json not found at ${dataPath}. Create prisma/data/teams_2025.json with 68 teams.`
-    );
-  }
-
-  const raw = fs.readFileSync(dataPath, "utf-8");
-  let teams2025: TeamInput[];
-  try {
-    teams2025 = JSON.parse(raw) as TeamInput[];
-  } catch (e) {
-    throw new Error(`teams_2025.json is invalid JSON: ${(e as Error).message}`);
-  }
-
-  if (teams2025.length !== 68) {
-    throw new Error(
-      `teams_2025.json must contain exactly 68 teams. Found ${teams2025.length}.`
-    );
-  }
-
-  const year2025 = await prisma.tournamentYear.upsert({
-    where: { year: 2025 },
-    update: {},
-    create: {
-      year: 2025,
-      name: "NCAA March Madness 2025",
-    },
+async function removeLeaguesForYear(tournamentYearId: string) {
+  const leagues = await prisma.league.findMany({
+    where: { tournamentYearId },
+    select: { id: true },
   });
 
-  for (const team of teams2025) {
-    const existing = await prisma.team.findFirst({
-      where: {
-        tournamentYearId: year2025.id,
-        name: team.name,
-      },
-    });
+  if (leagues.length === 0) return;
 
-    if (!existing) {
-      await prisma.team.create({
-        data: {
-          tournamentYearId: year2025.id,
-          name: team.name,
-          seed: team.seed,
-          region: team.region,
-          shortName: team.shortName ?? null,
-          logoUrl: team.logoUrl ?? null,
-        },
-      });
-    }
-  }
+  const leagueIds = leagues.map((league) => league.id);
 
-  const total2025 = await prisma.team.count({
-    where: { tournamentYearId: year2025.id },
-  });
-  console.log(`✅ Seed complete (2025: ${total2025} teams)`);
-  return total2025;
+  await prisma.portfolioPick.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.draftPick.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.leagueEvent.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.leagueScoreSnapshot.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.leagueScore.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.teamResult.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.tournamentGame.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.leagueMember.deleteMany({ where: { leagueId: { in: leagueIds } } });
+  await prisma.league.deleteMany({ where: { id: { in: leagueIds } } });
 }
 
-async function seed2026() {
-  const year2026 = await prisma.tournamentYear.upsert({
-    where: { year: 2026 },
-    update: {},
-    create: {
-      year: 2026,
-      name: "March Madness 2026 (Using 2025 Field)",
-    },
+async function resetTournamentYear(year: number) {
+  const existing = await prisma.tournamentYear.findUnique({
+    where: { year },
+    select: { id: true },
   });
 
-  const teams2026: TeamInput[] = [
-    { name: "UConn", seed: 1, region: "East" },
-    { name: "Iowa State", seed: 2, region: "East" },
-    { name: "Illinois", seed: 3, region: "East" },
-    { name: "Auburn", seed: 4, region: "East" },
-    { name: "San Diego State", seed: 5, region: "East" },
-    { name: "BYU", seed: 6, region: "East" },
-    { name: "Washington State", seed: 7, region: "East" },
-    { name: "Florida Atlantic", seed: 8, region: "East" },
-    { name: "Northwestern", seed: 9, region: "East" },
-    { name: "Drake", seed: 10, region: "East" },
-    { name: "Duquesne", seed: 11, region: "East" },
-    { name: "UAB", seed: 12, region: "East" },
-    { name: "Yale", seed: 13, region: "East" },
-    { name: "Morehead State", seed: 14, region: "East" },
-    { name: "South Dakota State", seed: 15, region: "East" },
-    { name: "Stetson", seed: 16, region: "East" },
-    { name: "North Carolina", seed: 1, region: "West" },
-    { name: "Arizona", seed: 2, region: "West" },
-    { name: "Baylor", seed: 3, region: "West" },
-    { name: "Alabama", seed: 4, region: "West" },
-    { name: "Saint Mary's", seed: 5, region: "West" },
-    { name: "Clemson", seed: 6, region: "West" },
-    { name: "Dayton", seed: 7, region: "West" },
-    { name: "Mississippi State", seed: 8, region: "West" },
-    { name: "Michigan State", seed: 9, region: "West" },
-    { name: "Nevada", seed: 10, region: "West" },
-    { name: "New Mexico", seed: 11, region: "West" },
-    { name: "Grand Canyon", seed: 12, region: "West" },
-    { name: "Charleston", seed: 13, region: "West" },
-    { name: "Colgate", seed: 14, region: "West" },
-    { name: "Long Beach State", seed: 15, region: "West" },
-    { name: "Wagner", seed: 16, region: "West" },
-    { name: "Houston", seed: 1, region: "South" },
-    { name: "Marquette", seed: 2, region: "South" },
-    { name: "Kentucky", seed: 3, region: "South" },
-    { name: "Duke", seed: 4, region: "South" },
-    { name: "Wisconsin", seed: 5, region: "South" },
-    { name: "Texas Tech", seed: 6, region: "South" },
-    { name: "Florida", seed: 7, region: "South" },
-    { name: "Nebraska", seed: 8, region: "South" },
-    { name: "Texas A&M", seed: 9, region: "South" },
-    { name: "Colorado", seed: 10, region: "South" },
-    { name: "NC State", seed: 11, region: "South" },
-    { name: "James Madison", seed: 12, region: "South" },
-    { name: "Vermont", seed: 13, region: "South" },
-    { name: "Oakland", seed: 14, region: "South" },
-    { name: "Western Kentucky", seed: 15, region: "South" },
-    { name: "Longwood", seed: 16, region: "South" },
-    { name: "Purdue", seed: 1, region: "Midwest" },
-    { name: "Tennessee", seed: 2, region: "Midwest" },
-    { name: "Creighton", seed: 3, region: "Midwest" },
-    { name: "Kansas", seed: 4, region: "Midwest" },
-    { name: "Gonzaga", seed: 5, region: "Midwest" },
-    { name: "South Carolina", seed: 6, region: "Midwest" },
-    { name: "Texas", seed: 7, region: "Midwest" },
-    { name: "Utah State", seed: 8, region: "Midwest" },
-    { name: "TCU", seed: 9, region: "Midwest" },
-    { name: "Virginia", seed: 10, region: "Midwest" },
-    { name: "Oregon", seed: 11, region: "Midwest" },
-    { name: "McNeese", seed: 12, region: "Midwest" },
-    { name: "Samford", seed: 13, region: "Midwest" },
-    { name: "Akron", seed: 14, region: "Midwest" },
-    { name: "Saint Peter's", seed: 15, region: "Midwest" },
-    { name: "Grambling State", seed: 16, region: "Midwest" },
-  ];
+  if (!existing) return;
 
-  for (const team of teams2026) {
-    const existing = await prisma.team.findFirst({
-      where: {
-        tournamentYearId: year2026.id,
-        name: team.name,
-      },
-    });
+  await removeLeaguesForYear(existing.id);
+  await prisma.team.deleteMany({ where: { tournamentYearId: existing.id } });
+  await prisma.tournamentYear.delete({ where: { id: existing.id } });
+}
 
-    if (!existing) {
-      await prisma.team.create({
-        data: {
-          tournamentYearId: year2026.id,
-          name: team.name,
-          seed: team.seed,
-          region: team.region,
-          shortName: team.shortName ?? null,
-          logoUrl: team.logoUrl ?? null,
-        },
-      });
+function validateBracketSlots(teams: TournamentTeamInput[]) {
+  const teamNames = new Set(teams.map((team) => team.name));
+
+  for (const matchup of FIRST_ROUND_MATCHUPS_2026) {
+    if (!teamNames.has(matchup.teamA) || !teamNames.has(matchup.teamB)) {
+      throw new Error(
+        `Missing team for first-round matchup ${matchup.region}: ${matchup.teamA} vs ${matchup.teamB}`,
+      );
     }
   }
+}
 
-  const total2026 = await prisma.team.count({
-    where: { tournamentYearId: year2026.id },
+async function seedTournamentYear() {
+  validateBracketSlots(TEAMS_2026);
+
+  const year = await prisma.tournamentYear.create({
+    data: {
+      year: TOURNAMENT_YEAR,
+      name: TOURNAMENT_NAME,
+    },
+    select: { id: true },
   });
-  console.log(`✅ Seed complete (2026: ${total2026} teams)`);
-  return total2026;
+
+  await prisma.team.createMany({
+    data: TEAMS_2026.map((team) => ({
+      tournamentYearId: year.id,
+      name: team.name,
+      seed: team.seed,
+      region: team.region,
+      shortName: team.shortName ?? null,
+      logoUrl: null,
+    })),
+  });
+
+  const totalTeams = await prisma.team.count({
+    where: { tournamentYearId: year.id },
+  });
+
+  if (totalTeams !== TEAMS_2026.length) {
+    throw new Error(`Expected ${TEAMS_2026.length} teams for ${TOURNAMENT_YEAR}, found ${totalTeams}.`);
+  }
+
+  console.log(`✅ Seeded ${TOURNAMENT_YEAR} tournament year with ${totalTeams} bracket slots.`);
+  console.log(
+    `ℹ️ First Four is represented as 4 composite bracket slots: ${FIRST_FOUR_2026.map((slot) => slot.slotName).join(", ")}.`,
+  );
 }
 
 async function main() {
-  await seed2025();
-  await seed2026();
+  for (const year of LEGACY_TOURNAMENT_YEARS) {
+    await resetTournamentYear(year);
+  }
+
+  await seedTournamentYear();
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Seed failed:", e);
+  .catch((error) => {
+    console.error("❌ Seed failed:", error);
     process.exit(1);
   })
   .finally(async () => {

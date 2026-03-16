@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
 
       expected = Math.floor(priorGamesForExpected.length / 2);
     }
-    let games: { winnerTeamId: string; loserTeamId: string }[] = [];
+    const games: { winnerTeamId: string; loserTeamId: string }[] = [];
 
     if (roundArg === "R64") {
       if (mode === "REAL_RESULTS" && realResults?.R64?.length) {

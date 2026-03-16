@@ -6,6 +6,7 @@ import { ROUND_LABELS } from "@/lib/bracket/shape";
 import { replaceResultsState, TeamResultInput, TournamentGameInput } from "@/lib/results/replace-results-state";
 import { getRoundHealth } from "@/lib/tournament/roundHealth";
 import { evaluateStatusTransitions } from "@/lib/league/lifecycle";
+import type { Region } from "@/lib/bracket/espnLayout";
 
 type TeamLite = {
   id: string;
@@ -26,8 +27,10 @@ export type LiveAdminGameCard = {
   round: Round;
   roundLabel: string;
   gameNo: number;
+  region: string;
   bracketLabel: string;
   status: "pending" | "completed";
+  isPlayInRelated: boolean;
   teamA: TeamLite;
   teamB: TeamLite;
   winnerTeamId: string | null;
@@ -74,7 +77,7 @@ export type LiveAdminConsoleData = {
   };
 };
 
-const REGION_ORDER = [...REGIONS];
+const REGION_ORDER: Region[] = [...REGIONS];
 const ROUND_ORDER: Round[] = ["R64", "R32", "S16", "E8", "F4", "FINAL"];
 
 function slotKey(round: Round, gameNo: number) {
@@ -87,6 +90,14 @@ function roundLabel(round: Round) {
 
 function formatMatchup(teamA: TeamLite, teamB: TeamLite) {
   return `[${teamA.seed}] ${teamA.shortName || teamA.name} vs [${teamB.seed}] ${teamB.shortName || teamB.name}`;
+}
+
+function isPlayInRelatedSlot(teamA: TeamLite, teamB: TeamLite) {
+  return teamA.name.includes("/") || teamB.name.includes("/");
+}
+
+function isRegion(value: string): value is Region {
+  return REGIONS.includes(value as Region);
 }
 
 function pushSlot(
@@ -112,8 +123,10 @@ function pushSlot(
     round,
     roundLabel: roundLabel(round),
     gameNo,
+    region: teamA.region,
     bracketLabel,
     status: validWinnerId ? "completed" : "pending",
+    isPlayInRelated: isPlayInRelatedSlot(teamA, teamB),
     teamA,
     teamB,
     winnerTeamId: validWinnerId,
@@ -134,7 +147,7 @@ function buildTournamentSlots(
   selectedWinners: Map<string, string>,
   existingMetaMap: Map<string, ExistingGameMeta>,
 ) {
-  const teamsByRegion = new Map<string, TeamLite[]>();
+  const teamsByRegion = new Map<Region, TeamLite[]>();
   for (const region of REGION_ORDER) {
     teamsByRegion.set(
       region,
@@ -145,7 +158,7 @@ function buildTournamentSlots(
   }
 
   const slots: LiveAdminGameCard[] = [];
-  const regionalChampions = new Map<string, TeamLite | null>();
+  const regionalChampions = new Map<Region, TeamLite | null>();
 
   for (const region of REGION_ORDER) {
     const regionTeams = teamsByRegion.get(region) ?? [];
@@ -228,6 +241,10 @@ function buildTournamentSlots(
   const pairings = getBracketConfig(year).finalFourPairings;
   const finalFourWinners: Array<TeamLite | null> = [];
   pairings.forEach(([leftRegion, rightRegion], index) => {
+    if (!isRegion(leftRegion) || !isRegion(rightRegion)) {
+      return;
+    }
+
     const gameNo = index + 1;
     const winner = pushSlot(slots, {
       round: "F4",
@@ -292,6 +309,74 @@ function toTournamentGames(completedGames: LiveAdminGameCard[]): TournamentGameI
     winnerTeamId: game.winnerTeamId!,
     loserTeamId: game.teamA.id === game.winnerTeamId ? game.teamB.id : game.teamA.id,
   }));
+}
+
+function findRegionForGame(round: Round, gameNo: number): Region | null {
+  if (round === "R64") {
+    for (const region of REGION_ORDER) {
+      const [start, end] = R64_REGION_GAME_RANGES[region];
+      if (gameNo >= start && gameNo <= end) return region;
+    }
+    return null;
+  }
+
+  if (round === "R32" || round === "S16" || round === "E8") {
+    const ranges = REGION_GAME_RANGES[round];
+    for (const region of REGION_ORDER) {
+      const [start, end] = ranges[region];
+      if (gameNo >= start && gameNo <= end) return region;
+    }
+    return null;
+  }
+
+  return null;
+}
+
+function getNextSlot(round: Round, gameNo: number, year: number): { round: Round; gameNo: number } | null {
+  const region = findRegionForGame(round, gameNo);
+
+  if (round === "R64" && region) {
+    const [r64Start] = R64_REGION_GAME_RANGES[region];
+    const [r32Start] = REGION_GAME_RANGES.R32[region];
+    return { round: "R32", gameNo: r32Start + Math.floor((gameNo - r64Start) / 2) };
+  }
+
+  if (round === "R32" && region) {
+    const [r32Start] = REGION_GAME_RANGES.R32[region];
+    const [s16Start] = REGION_GAME_RANGES.S16[region];
+    return { round: "S16", gameNo: s16Start + Math.floor((gameNo - r32Start) / 2) };
+  }
+
+  if (round === "S16" && region) {
+    const [e8GameNo] = REGION_GAME_RANGES.E8[region];
+    return { round: "E8", gameNo: e8GameNo };
+  }
+
+  if (round === "E8" && region) {
+    const pairings = getBracketConfig(year).finalFourPairings;
+    const pairingIndex = pairings.findIndex(
+      ([leftRegion, rightRegion]) => leftRegion === region || rightRegion === region,
+    );
+    return pairingIndex >= 0 ? { round: "F4", gameNo: pairingIndex + 1 } : null;
+  }
+
+  if (round === "F4") {
+    return { round: "FINAL", gameNo: 1 };
+  }
+
+  return null;
+}
+
+function getDependentSlotKeys(round: Round, gameNo: number, year: number) {
+  const keys: string[] = [];
+  let cursor = getNextSlot(round, gameNo, year);
+
+  while (cursor) {
+    keys.push(slotKey(cursor.round, cursor.gameNo));
+    cursor = getNextSlot(cursor.round, cursor.gameNo, year);
+  }
+
+  return keys;
 }
 
 async function loadLeagueCore(leagueIdOrCode: { leagueId?: string; code?: string }) {
@@ -443,6 +528,7 @@ export async function applyLiveAdminResult(input: {
   round: Round;
   gameNo: number;
   winnerTeamId: string;
+  allowOverwrite?: boolean;
 }) {
   const core = await loadLeagueCore({ leagueId: input.leagueId });
   if (!core) {
@@ -474,6 +560,23 @@ export async function applyLiveAdminResult(input: {
 
   if (target.teamA.id !== input.winnerTeamId && target.teamB.id !== input.winnerTeamId) {
     throw new Error("Selected winner is not part of this matchup");
+  }
+
+  const existingWinnerId = existingMetaMap.get(slotKey(input.round, input.gameNo))?.winnerTeamId ?? null;
+  if (existingWinnerId) {
+    if (existingWinnerId === input.winnerTeamId) {
+      throw new Error("This matchup is already finalized with that winner.");
+    }
+
+    if (!input.allowOverwrite) {
+      throw new Error("This matchup is already finalized. Confirm overwrite to change the winner.");
+    }
+
+    const dependentKeys = getDependentSlotKeys(input.round, input.gameNo, league.tournamentYear.year);
+    const blockedDependent = dependentKeys.find((key) => existingMetaMap.has(key));
+    if (blockedDependent) {
+      throw new Error("Later-round results depend on this matchup. Clear those downstream games before overwriting.");
+    }
   }
 
   const completedGames = slots.filter((slot) => slot.status === "completed");

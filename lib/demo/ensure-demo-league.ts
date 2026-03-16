@@ -1,16 +1,12 @@
-import fs from "node:fs";
-import path from "node:path";
-import { DraftRole, LeagueStatus, type Round, type RoleType } from "@prisma/client";
+import { DraftRole, LeagueStatus, type RoleType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { makeNicknameKey } from "@/lib/league/nickname";
 import { generateReconnectCode } from "@/lib/utils/reconnect";
-import { replaceResultsState, type TeamResultInput, type TournamentGameInput } from "@/lib/results/replace-results-state";
 import { computeLeagueStandings } from "@/lib/scoring/compute";
 
 const DEMO_LEAGUE_CODE = "424242";
 const DEMO_LEAGUE_NAME = "Chaos League Demo";
-const DEMO_YEAR = 2025;
-const DEMO_ROUNDS: Round[] = ["R64", "R32", "S16", "E8", "F4"];
+const DEMO_YEAR = 2026;
 
 const DEMO_MEMBERS = [
   {
@@ -31,8 +27,8 @@ const DEMO_MEMBERS = [
     championshipPrediction: 141,
     picks: {
       HERO: "Houston",
-      VILLAIN: "St. John's",
-      CINDERELLA: "Drake",
+      VILLAIN: "Kansas",
+      CINDERELLA: "Northern Iowa",
     },
   },
   {
@@ -41,9 +37,9 @@ const DEMO_MEMBERS = [
     isAdmin: false,
     championshipPrediction: 152,
     picks: {
-      HERO: "Auburn",
+      HERO: "Arizona",
       VILLAIN: "Michigan State",
-      CINDERELLA: "Arkansas",
+      CINDERELLA: "High Point",
     },
   },
   {
@@ -54,7 +50,7 @@ const DEMO_MEMBERS = [
     picks: {
       HERO: "Tennessee",
       VILLAIN: "UConn",
-      CINDERELLA: "BYU",
+      CINDERELLA: "VCU",
     },
   },
   {
@@ -65,7 +61,7 @@ const DEMO_MEMBERS = [
     picks: {
       HERO: "Alabama",
       VILLAIN: "Texas Tech",
-      CINDERELLA: "Colorado State",
+      CINDERELLA: "Akron",
     },
   },
   {
@@ -74,9 +70,9 @@ const DEMO_MEMBERS = [
     isAdmin: false,
     championshipPrediction: 144,
     picks: {
-      HERO: "Maryland",
-      VILLAIN: "Kentucky",
-      CINDERELLA: "New Mexico",
+      HERO: "Purdue",
+      VILLAIN: "Illinois",
+      CINDERELLA: "UCF",
     },
   },
 ] as const;
@@ -86,8 +82,6 @@ type DemoSeedResult = {
   memberId: string;
   code: string;
 };
-
-type RawResults = Record<string, Array<{ winnerName: string; loserName: string }>>;
 
 function isLocalSafe() {
   const envName = (process.env.ENV_NAME ?? "").toLowerCase();
@@ -128,51 +122,6 @@ async function generateUniqueReconnectCode() {
   }
 
   throw new Error("Failed to generate unique reconnect code for demo league.");
-}
-
-function buildResultsState(results: RawResults, teamIdByName: Map<string, string>) {
-  const winsByTeamId = new Map<string, number>();
-  const eliminatedRoundByTeamId = new Map<string, Round | null>();
-  const games: TournamentGameInput[] = [];
-
-  for (const round of DEMO_ROUNDS) {
-    const entries = results[round];
-    if (!Array.isArray(entries) || entries.length === 0) {
-      throw new Error(`Missing ${round} results for demo league.`);
-    }
-
-    entries.forEach((entry, index) => {
-      const winnerTeamId = teamIdByName.get(normalizeTeamName(entry.winnerName));
-      const loserTeamId = teamIdByName.get(normalizeTeamName(entry.loserName));
-
-      if (!winnerTeamId || !loserTeamId) {
-        throw new Error(`Could not map demo result: ${entry.winnerName} vs ${entry.loserName}`);
-      }
-
-      winsByTeamId.set(winnerTeamId, (winsByTeamId.get(winnerTeamId) ?? 0) + 1);
-      if (!winsByTeamId.has(loserTeamId)) {
-        winsByTeamId.set(loserTeamId, 0);
-      }
-      eliminatedRoundByTeamId.set(loserTeamId, round);
-
-      games.push({
-        round,
-        gameNo: index + 1,
-        winnerTeamId,
-        loserTeamId,
-      });
-    });
-  }
-
-  const teamResults: TeamResultInput[] = Array.from(winsByTeamId.entries()).map(
-    ([teamId, wins]) => ({
-      teamId,
-      wins,
-      eliminatedRound: eliminatedRoundByTeamId.get(teamId) ?? null,
-    }),
-  );
-
-  return { games, teamResults };
 }
 
 async function removeLeague(leagueId: string) {
@@ -310,11 +259,6 @@ async function createDemoLeague(): Promise<DemoSeedResult> {
 
   await computeLeagueStandings(league.id);
 
-  const resultsPath = path.join(process.cwd(), "data", String(DEMO_YEAR), "results.json");
-  const rawResults = JSON.parse(fs.readFileSync(resultsPath, "utf-8")) as RawResults;
-  const { games, teamResults } = buildResultsState(rawResults, teamIdByName);
-  await replaceResultsState(league.id, teamResults, games);
-
   return {
     leagueId: league.id,
     memberId: memberRecords[0].id,
@@ -332,6 +276,7 @@ export async function ensureDemoLeague(): Promise<DemoSeedResult> {
     select: {
       id: true,
       status: true,
+      tournamentYear: { select: { year: true } },
       members: {
         orderBy: { draftPosition: "asc" },
         select: { id: true, nickname: true },
@@ -344,10 +289,11 @@ export async function ensureDemoLeague(): Promise<DemoSeedResult> {
 
   if (
     existing &&
+    existing.tournamentYear.year === DEMO_YEAR &&
     existing.status === LeagueStatus.LIVE &&
     existing.members.length === DEMO_MEMBERS.length &&
     existing.portfolioPicks.length === DEMO_MEMBERS.length * 3 &&
-    existing.tournamentGames.length === 62 &&
+    existing.tournamentGames.length === 0 &&
     existing.score &&
     existing.members[0]
   ) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type {
   EspnLayoutData,
   MatchupNode,
@@ -29,12 +29,9 @@ type Props = {
 
 export function EspnStyleBracket({ data }: Props) {
   const [selectedRegion, setSelectedRegion] = useState<(typeof REGIONS)[number] | "all">("all");
-  const [zoom, setZoom] = useState(0.85);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    setZoom(mq.matches ? 0.7 : 0.85);
-  }, []);
+  const [zoom, setZoom] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches ? 0.7 : 0.85,
+  );
 
   return (
     <div className="space-y-3">
@@ -158,7 +155,6 @@ function computeRegionNodePositions(
   const colX = [0, CARD_WIDTH + ROUND_GAP, (CARD_WIDTH + ROUND_GAP) * 2, (CARD_WIDTH + ROUND_GAP) * 3, (CARD_WIDTH + ROUND_GAP) * 4, (CARD_WIDTH + ROUND_GAP) * 5, (CARD_WIDTH + ROUND_GAP) * 6];
   for (let c = 0; c < cols.length; c++) {
     const nodes = cols[c];
-    const totalH = nodes.length * CARD_H + Math.max(0, nodes.length - 1) * CARD_GAP;
     let y = 0;
     for (const n of nodes) {
       map.set(n.id, { x: colX[c], y, w: CARD_WIDTH, h: CARD_H });

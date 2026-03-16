@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Activity, BarChart3, Flame, Swords, Zap } from "lucide-react";
+import { Activity, BarChart3, Swords, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -18,9 +17,7 @@ import {
   isWarRoomErrorPayload,
 } from "@/lib/war-room/normalize";
 
-const TABS = ["standings", "portfolio", "power", "rivalries", "feed"] as const;
-
-const LAYOUT_TRANSITION = { type: "tween" as const, duration: 0.22, ease: "easeOut" } as const;
+const TABS = ["portfolio", "power", "rivalries", "feed"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function MyLeagueClient({
@@ -34,7 +31,7 @@ export default function MyLeagueClient({
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<Tab>(
-    TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "standings",
+    TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "portfolio",
   );
   const [data, setData] = useState<WarRoomResponse | null>(() =>
     initial ? normalizeWarRoomPayload(initial) : null,
@@ -132,26 +129,7 @@ export default function MyLeagueClient({
     return buildTeamOwnershipMap(data.picks ?? []);
   }, [data?.picks]);
 
-  const standings = data?.standings ?? [];
-  const standingsWithLeverage = data?.standingsWithLeverage ?? [];
   const showPortfolio = data?.league.status === "SETUP" || data?.league.status === "LOCKED" || data?.league.status === "DRAFT";
-
-  type StandingsViewMode = "points" | "leverage" | "chaos";
-  const [standingsView, setStandingsView] = useState<StandingsViewMode>("points");
-
-  const displayStandings = useMemo(() => {
-    if (standingsView === "points") return standings;
-    const withLev =
-      standingsWithLeverage.length > 0
-        ? standingsWithLeverage
-        : standings.map((r) => ({ ...r, chaosIndex: 0, portfolioLeverage: 0 }));
-    if (standingsView === "leverage") {
-      return [...withLev].sort((a, b) => (b.portfolioLeverage ?? 0) - (a.portfolioLeverage ?? 0));
-    }
-    return [...withLev].sort((a, b) => (b.chaosIndex ?? 0) - (a.chaosIndex ?? 0));
-  }, [standings, standingsWithLeverage, standingsView]);
-
-  const valueLabel = standingsView === "points" ? "Total" : standingsView === "leverage" ? "Leverage" : "Chaos";
 
   return (
     <main className="min-h-dvh min-w-0 overflow-x-hidden text-neutral-100">
@@ -168,7 +146,7 @@ export default function MyLeagueClient({
                     <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" aria-hidden />
                     {data?.league.status ?? "—"}
                   </span>
-                  <span className="text-sm text-neutral-400">Standings, portfolio, power, rivalries, feed</span>
+                  <span className="text-sm text-neutral-400">Portfolio, power, rivalries, and live league intel</span>
                   {data?.rivalryPanel &&
                     (data.rivalryPanel.closestRival ||
                       data.rivalryPanel.directConflict ||
@@ -211,25 +189,21 @@ export default function MyLeagueClient({
           <div className="flex flex-wrap gap-1.5 rounded-xl border border-neutral-800 bg-neutral-900/80 p-1.5" role="tablist" aria-label="My League tabs">
             {TABS.map((t) => {
               const label =
-                t === "standings"
-                  ? "Standings"
-                  : t === "portfolio"
-                    ? "Portfolio"
-                    : t === "power"
-                      ? "Power"
-                      : t === "rivalries"
-                        ? "Rivalries"
-                        : "Feed";
+                t === "portfolio"
+                  ? "Portfolio"
+                  : t === "power"
+                    ? "Power"
+                    : t === "rivalries"
+                      ? "Rivalries"
+                      : "Feed";
               const Icon =
-                t === "standings"
-                  ? Flame
-                  : t === "portfolio"
-                    ? BarChart3
-                    : t === "power"
-                      ? Zap
-                      : t === "rivalries"
-                        ? Swords
-                        : Activity;
+                t === "portfolio"
+                  ? BarChart3
+                  : t === "power"
+                    ? Zap
+                    : t === "rivalries"
+                      ? Swords
+                      : Activity;
               const isActive = activeTab === t;
               return (
                 <Link
@@ -258,134 +232,7 @@ export default function MyLeagueClient({
             </div>
           ) : null}
 
-          {activeTab === "standings" ? (
-            <section className="overflow-hidden rounded-xl border border-[#1f2937] bg-[#111827] p-4 transition duration-200 hover:bg-[#131c2a]">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-neutral-500">View by</span>
-                {(["points", "leverage", "chaos"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setStandingsView(mode)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111827] ${
-                      standingsView === mode
-                        ? "bg-amber-500/20 text-amber-300"
-                        : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
-                    }`}
-                  >
-                    {mode === "points" ? "Points" : mode === "leverage" ? "Leverage" : "Chaos Index"}
-                  </button>
-                ))}
-              </div>
-              <div className="overflow-x-auto rounded-lg">
-                <table className="min-w-full text-sm">
-                  <thead className="sticky top-0 z-10 bg-[#0f1623]">
-                    <tr className="border-b border-[#1f2937]">
-                      <th className="px-2 py-2 text-left text-neutral-400 sm:px-4 sm:py-3">Rank</th>
-                      <th className="px-2 py-2 text-left text-neutral-400 sm:px-4 sm:py-3">Player</th>
-                      <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">{valueLabel}</th>
-                      <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">Hero</th>
-                      <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">Villain</th>
-                      <th className="px-2 py-2 text-right text-neutral-400 sm:px-4 sm:py-3">Cinderella</th>
-                      <th className="hidden px-2 py-2 text-right text-neutral-400 sm:table-cell sm:px-4 sm:py-3">
-                        Rivalry
-                      </th>
-                      <th className="hidden px-2 py-2 text-right text-neutral-400 sm:table-cell sm:px-4 sm:py-3">
-                        TB
-                      </th>
-                    </tr>
-                  </thead>
-                  <motion.tbody layout>
-                    {displayStandings.map((row, index) => {
-                      const value =
-                        standingsView === "points"
-                          ? row.total ?? 0
-                          : standingsView === "leverage"
-                            ? (row as { portfolioLeverage?: number }).portfolioLeverage ?? 0
-                            : (row as { chaosIndex?: number }).chaosIndex ?? 0;
-                      const rankChange = standingsView === "points" ? rankDelta[row.memberId] ?? 0 : 0;
-                      const biggestJumpId = data?.momentumSummaries?.biggestJump?.memberId;
-                      const clientBiggestJump =
-                        standingsView === "points" && !biggestJumpId
-                          ? displayStandings.reduce<{ memberId: string; delta: number } | null>(
-                              (best, r) => {
-                                const d = rankDelta[r.memberId] ?? 0;
-                                if (d <= 0) return best;
-                                return !best || d > best.delta ? { memberId: r.memberId, delta: d } : best;
-                              },
-                              null,
-                            )?.memberId
-                          : null;
-                      const isNewLeader = index === 0 && rankChange > 0;
-                      const showHighlight =
-                        standingsView === "points" &&
-                        (biggestJumpId === row.memberId ||
-                          clientBiggestJump === row.memberId ||
-                          isNewLeader);
-                      return (
-                      <motion.tr
-                        key={row.memberId}
-                        layout
-                        transition={LAYOUT_TRANSITION}
-                        className={`border-t border-[#1f2937] transition-colors hover:bg-white/5 ${
-                          showHighlight ? "standings-highlight-pulse" : ""
-                        }`}
-                      >
-                        <td className="px-2 py-2 sm:px-4 sm:py-3">
-                          <span className="inline-flex items-center gap-1.5">
-                            <span className="inline-flex rounded-full bg-neutral-700 px-2 py-0.5 text-[10px] font-medium tabular-nums">
-                              {index + 1}
-                            </span>
-                            {rankChange !== 0 ? (
-                              <span
-                                className={`text-[10px] font-semibold ${
-                                  rankChange > 0 ? "text-emerald-400" : "text-red-400"
-                                }`}
-                                title={rankChange > 0 ? `Up ${rankChange}` : `Down ${-rankChange}`}
-                              >
-                                {rankChange > 0 ? "↑" : "↓"} {Math.abs(rankChange)}
-                              </span>
-                            ) : null}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-neutral-100 sm:px-4 sm:py-3">
-                          <span className="inline-flex items-center gap-1.5">
-                            {row.displayName || "Unknown"}
-                            {data?.contrarianLabels?.[row.memberId] ? (
-                              <span
-                                className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300"
-                                title={data.contrarianLabels[row.memberId]}
-                              >
-                                {data.contrarianLabels[row.memberId]}
-                              </span>
-                            ) : null}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-right font-semibold tabular-nums text-neutral-100 sm:px-4 sm:py-3">
-                          {value}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums text-neutral-300 sm:px-4 sm:py-3">
-                          {row.HERO ?? 0}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums text-neutral-300 sm:px-4 sm:py-3">
-                          {row.VILLAIN ?? 0}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums text-neutral-300 sm:px-4 sm:py-3">
-                          {row.CINDERELLA ?? 0}
-                        </td>
-                        <td className="hidden px-2 py-2 text-right tabular-nums text-neutral-300 sm:table-cell sm:px-4 sm:py-3">
-                          {row.rivalry ?? 0}
-                        </td>
-                        <td className="hidden px-2 py-2 text-right text-[10px] tabular-nums text-neutral-500 sm:table-cell sm:px-4 sm:py-3">
-                          {row.championshipPrediction != null ? row.championshipPrediction : "—"}
-                        </td>
-                      </motion.tr>
-                    );})}
-                  </motion.tbody>
-                </table>
-              </div>
-            </section>
-          ) : activeTab === "portfolio" && data?.myLeagueAnalytics ? (
+          {activeTab === "portfolio" && data?.myLeagueAnalytics ? (
             <MyLeaguePortfolioPanel
               data={{ ...data, myLeagueAnalytics: data.myLeagueAnalytics }}
             />

@@ -3,8 +3,10 @@ export type LiveAdminGameCard = {
   round: "R64" | "R32" | "S16" | "E8" | "F4" | "FINAL";
   roundLabel: string;
   gameNo: number;
+  region: string;
   bracketLabel: string;
   status: "pending" | "completed";
+  isPlayInRelated: boolean;
   teamA: {
     id: string;
     name: string;

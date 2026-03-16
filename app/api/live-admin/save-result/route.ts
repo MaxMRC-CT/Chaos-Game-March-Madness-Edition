@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     round?: Round;
     gameNo?: number;
     winnerTeamId?: string;
+    allowOverwrite?: boolean;
   };
   try {
     body = await request.json();
@@ -25,13 +26,14 @@ export async function POST(request: NextRequest) {
   const round = body.round;
   const gameNo = Number(body.gameNo ?? 0);
   const winnerTeamId = String(body.winnerTeamId ?? "").trim();
+  const allowOverwrite = body.allowOverwrite === true;
 
   if (!leagueId || !round || !VALID_ROUNDS.has(round) || !Number.isInteger(gameNo) || gameNo < 1 || !winnerTeamId) {
     return NextResponse.json({ ok: false, error: "Invalid result payload" }, { status: 400 });
   }
 
   try {
-    const data = await applyLiveAdminResult({ leagueId, round, gameNo, winnerTeamId });
+    const data = await applyLiveAdminResult({ leagueId, round, gameNo, winnerTeamId, allowOverwrite });
     return NextResponse.json({ ok: true, data, message: "Result saved" });
   } catch (error) {
     return NextResponse.json(

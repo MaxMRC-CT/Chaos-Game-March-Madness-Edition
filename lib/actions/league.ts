@@ -53,8 +53,7 @@ export async function createLeague(formData: FormData) {
   const displayName = normalizeDisplayName(rawDisplayName);
   if (!displayName) throw new Error("Your name is required to create a league");
 
-  // Temporary beta sim override: when BETA_SIM_MODE=true, default to 2025 so /beta-admin replay works
-  const defaultYear = process.env.BETA_SIM_MODE === "true" ? 2025 : 2026;
+  const defaultYear = 2026;
   const year = await prisma.tournamentYear.findUnique({
     where: { year: defaultYear },
   });

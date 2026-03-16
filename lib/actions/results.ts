@@ -12,14 +12,14 @@ import {
 type ActionState = { error?: string; success?: boolean } | null;
 
 const SAMPLE_TEAMS = [
-  { name: "Kansas", seed: 1, region: "Midwest" },
-  { name: "Duke", seed: 2, region: "East" },
-  { name: "UConn", seed: 3, region: "South" },
-  { name: "Purdue", seed: 4, region: "West" },
-  { name: "Arizona", seed: 6, region: "West" },
-  { name: "Miami", seed: 7, region: "Midwest" },
-  { name: "Princeton", seed: 12, region: "South" },
-  { name: "Yale", seed: 13, region: "East" },
+  { name: "Duke", seed: 1, region: "East" },
+  { name: "Arizona", seed: 1, region: "West" },
+  { name: "Florida", seed: 1, region: "South" },
+  { name: "Michigan", seed: 1, region: "Midwest" },
+  { name: "NC State / Texas", seed: 11, region: "West" },
+  { name: "Lehigh / Prairie View A&M", seed: 16, region: "South" },
+  { name: "Howard / UMBC", seed: 16, region: "Midwest" },
+  { name: "SMU / Miami (Ohio)", seed: 11, region: "Midwest" },
 ];
 
 async function requireAdmin(leagueId: string) {

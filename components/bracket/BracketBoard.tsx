@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { BracketData, BracketGame } from "@/lib/bracket/shape";
 import { BRACKET_ROUNDS, ROUND_LABELS } from "@/lib/bracket/shape";
 
@@ -38,12 +38,11 @@ type Props = {
 
 export function BracketBoard({ data }: Props) {
   const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM_DESKTOP);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    setZoom(mq.matches ? DEFAULT_ZOOM_MOBILE : DEFAULT_ZOOM_DESKTOP);
-  }, []);
+  const [zoom, setZoom] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
+      ? DEFAULT_ZOOM_MOBILE
+      : DEFAULT_ZOOM_DESKTOP,
+  );
 
   const zoomIn = () => setZoom((z) => Math.min(ZOOM_RANGE[1], z + ZOOM_STEP));
   const zoomOut = () => setZoom((z) => Math.max(ZOOM_RANGE[0], z - ZOOM_STEP));

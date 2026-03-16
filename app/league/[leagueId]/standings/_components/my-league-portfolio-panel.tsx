@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { BarChart3, ChevronDown, ChevronUp, Gauge, Shield, Sparkles, Swords, Target, TrendingDown, TrendingUp, Zap } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { WarRoomResponse } from "@/app/league/[leagueId]/dashboard/_components/types";
 import {
   getAntiChalkExposureExplanation,
@@ -18,22 +18,14 @@ import {
 } from "@/lib/analytics/identity";
 
 function ChaosIndexCell({ value, label }: { value: number; label: string }) {
-  const prevRef = useRef<number | null>(null);
-  const [pulsing, setPulsing] = useState(false);
-  useEffect(() => {
-    if (prevRef.current !== null && prevRef.current !== value) {
-      setPulsing(true);
-      const t = setTimeout(() => setPulsing(false), 400);
-      return () => clearTimeout(t);
-    }
-    prevRef.current = value;
-  }, [value]);
   return (
     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
       <p className="text-[10px] uppercase tracking-wider text-amber-300">{label}</p>
       <motion.p
+        key={value}
         className="text-lg font-semibold tabular-nums text-neutral-100"
-        animate={pulsing ? { scale: [1, 1.15, 1] } : {}}
+        initial={{ scale: 1.15 }}
+        animate={{ scale: 1 }}
         transition={{ duration: 0.3 }}
       >
         {value}
