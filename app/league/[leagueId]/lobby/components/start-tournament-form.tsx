@@ -21,15 +21,15 @@ export function StartTournamentForm({ leagueId }: StartTournamentFormProps) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="w-full rounded-2xl bg-[#fb6223] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#fb6223]/20 transition hover:bg-[#ff7a3d] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Starting…" : "Start tournament"}
+        {pending ? "Starting…" : "Start Tournament"}
       </button>
       <p className="text-xs text-neutral-500">
         All players must complete their roster (2 Heroes, 2 Villains, 2 Cinderellas) first.
       </p>
       {state?.error ? (
-        <p className="text-sm text-red-600">{state.error}</p>
+        <p className="text-sm text-red-400">{state.error}</p>
       ) : null}
     </form>
   );
