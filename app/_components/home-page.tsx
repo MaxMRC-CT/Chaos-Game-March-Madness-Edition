@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { useFormStatus } from "react-dom";
 import { createLeague } from "@/lib/actions/league";
+import { PlayerTokenField } from "@/components/player-token-field";
 
 function CreateLeagueFormContent() {
   const { pending } = useFormStatus();
@@ -40,6 +41,7 @@ function CreateLeagueFormContent() {
         placeholder="e.g., Alex"
         className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-neutral-500 focus:border-[#fb6223]/60 focus:outline-none focus:ring-2 focus:ring-[#fb6223]/20 transition-all"
       />
+      <PlayerTokenField />
       <button
         type="submit"
         disabled={pending || !name.trim() || !displayName.trim()}

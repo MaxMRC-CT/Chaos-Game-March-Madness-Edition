@@ -9,6 +9,7 @@ import {
   removeSavedLeague,
   type SavedLeagueSession,
 } from "@/lib/client/device-session";
+import { ensurePlayerToken } from "@/lib/client/player-token";
 import { BrandBackground } from "@/app/(dashboard)/_components/BrandBackground";
 
 export default function MyLeaguesClient() {
@@ -32,6 +33,7 @@ export default function MyLeaguesClient() {
         body: JSON.stringify({
           leagueId: league.leagueId,
           playerId: league.playerId,
+          playerToken: ensurePlayerToken(),
         }),
       });
 

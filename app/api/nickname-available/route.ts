@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = String(searchParams.get("code") || "").trim();
   const nickname = String(searchParams.get("nickname") || "");
+  const playerToken = String(searchParams.get("playerToken") || "").trim();
 
   if (!/^\d{6}$/.test(code)) {
     return NextResponse.json({ ok: true, available: false, reason: "Enter Game PIN" });
@@ -32,11 +33,14 @@ export async function GET(request: Request) {
       leagueId: league.id,
       nicknameKey,
     },
-    select: { id: true },
+    select: { id: true, playerToken: true },
   });
 
   return NextResponse.json({
     ok: true,
-    available: !existing,
+    available:
+      !existing ||
+      (playerToken &&
+        (existing.playerToken === playerToken || existing.playerToken === null)),
   });
 }

@@ -69,6 +69,7 @@ model LeagueMember {
   createdAt              DateTime        @default(now())
   displayName            String
   nicknameKey            String
+  playerToken            String?
   deviceToken            String?
   reconnectCode          String          @unique
   championshipPrediction Int?
@@ -78,6 +79,7 @@ model LeagueMember {
 
   @@unique([leagueId, nicknameKey])
   @@index([leagueId])
+  @@index([playerToken])
 }
 
 model DraftPick {

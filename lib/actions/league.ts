@@ -41,6 +41,11 @@ async function generateUniqueReconnectCode() {
   throw new Error("Failed to generate reconnect code");
 }
 
+function readPlayerToken(value: FormDataEntryValue | null) {
+  const token = String(value || "").trim();
+  return token || null;
+}
+
 /* ============================================================
    CREATE LEAGUE
 ============================================================ */
@@ -52,6 +57,7 @@ export async function createLeague(formData: FormData) {
   const rawDisplayName = String(formData.get("displayName") || "").trim();
   const displayName = normalizeDisplayName(rawDisplayName);
   if (!displayName) throw new Error("Your name is required to create a league");
+  const playerToken = readPlayerToken(formData.get("playerToken"));
 
   const defaultYear = 2026;
   const year = await prisma.tournamentYear.findUnique({
@@ -80,6 +86,7 @@ export async function createLeague(formData: FormData) {
       nickname: displayName,
       displayName,
       nicknameKey,
+      playerToken,
       reconnectCode,
       deviceToken,
       isAdmin: true,
@@ -117,6 +124,7 @@ export async function joinLeague(
   if (!displayName) {
     return { error: "Nickname is required" };
   }
+  const playerToken = readPlayerToken(formData.get("playerToken"));
 
   const nicknameKey = makeNicknameKey(displayName);
 
@@ -145,11 +153,56 @@ export async function joinLeague(
         leagueId: league.id,
         nicknameKey,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        displayName: true,
+        reconnectCode: true,
+        deviceToken: true,
+        playerToken: true,
+      },
     });
 
     if (existing) {
-      return { error: "That nickname is already taken in this league." };
+      const canReclaim =
+        playerToken &&
+        (existing.playerToken === playerToken || existing.playerToken === null);
+
+      if (!canReclaim) {
+        return { error: "That nickname is already taken in this league." };
+      }
+
+      const nextDeviceToken = existing.deviceToken || crypto.randomUUID();
+      const member = await prisma.leagueMember.update({
+        where: { id: existing.id },
+        data: {
+          ...(existing.playerToken ? {} : { playerToken }),
+          ...(existing.deviceToken ? {} : { deviceToken: nextDeviceToken }),
+        },
+        select: {
+          id: true,
+          displayName: true,
+          reconnectCode: true,
+          deviceToken: true,
+        },
+      });
+
+      const cookieStore = await cookies();
+      cookieStore.set(`cl_member_${league.id}`, member.id, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+      });
+
+      return {
+        success: true,
+        reconnectCode: member.reconnectCode,
+        leagueId: league.id,
+        leagueName: league.name,
+        leagueCode: league.code,
+        playerId: member.id,
+        nickname: member.displayName,
+        deviceToken: member.deviceToken ?? nextDeviceToken,
+      };
     }
 
     const reconnectCode = await generateUniqueReconnectCode();
@@ -161,6 +214,7 @@ export async function joinLeague(
         nickname: displayName,
         displayName,
         nicknameKey,
+        playerToken,
         reconnectCode,
         deviceToken,
         isAdmin: false,
@@ -217,6 +271,7 @@ export async function reconnectMember(
     .trim()
     .toUpperCase();
   const deviceToken = String(formData.get("deviceToken") || "").trim();
+  const playerToken = readPlayerToken(formData.get("playerToken"));
 
   if (!/^\d{6}$/.test(code)) {
     return { error: "Enter a valid 6-digit Game PIN" };
@@ -243,7 +298,7 @@ export async function reconnectMember(
       leagueId: league.id,
       nicknameKey,
     },
-    select: { id: true, reconnectCode: true, deviceToken: true },
+    select: { id: true, reconnectCode: true, deviceToken: true, playerToken: true },
   });
 
   if (!member) {
@@ -252,8 +307,9 @@ export async function reconnectMember(
 
   const reconnectMatches = reconnectCode && member.reconnectCode === reconnectCode;
   const deviceMatches = deviceToken && member.deviceToken === deviceToken;
+  const playerMatches = playerToken && member.playerToken === playerToken;
 
-  if (!reconnectMatches && !deviceMatches) {
+  if (!reconnectMatches && !deviceMatches && !playerMatches) {
     return { error: "Invalid reconnect credentials" };
   }
 

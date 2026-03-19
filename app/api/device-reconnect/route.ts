@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 type RequestBody = {
   leagueId?: string;
   playerId?: string;
+  playerToken?: string;
 };
 
 export async function POST(request: Request) {
@@ -12,32 +13,56 @@ export async function POST(request: Request) {
     const body = (await request.json()) as RequestBody;
     const leagueId = String(body.leagueId || "").trim();
     const playerId = String(body.playerId || "").trim();
+    const playerToken = String(body.playerToken || "").trim();
 
-    if (!leagueId || !playerId) {
+    if (!leagueId || (!playerId && !playerToken)) {
       return NextResponse.json(
         { ok: false, error: "Missing league or player." },
         { status: 400 },
       );
     }
 
-    const member = await prisma.leagueMember.findFirst({
-      where: {
-        id: playerId,
-        leagueId,
-      },
-      select: {
-        id: true,
-        displayName: true,
-        league: {
-          select: {
-            id: true,
-            name: true,
-            code: true,
-            status: true,
-          },
-        },
-      },
-    });
+    const member =
+      (playerId
+        ? await prisma.leagueMember.findFirst({
+            where: {
+              id: playerId,
+              leagueId,
+            },
+            select: {
+              id: true,
+              displayName: true,
+              league: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                  status: true,
+                },
+              },
+            },
+          })
+        : null) ??
+      (playerToken
+        ? await prisma.leagueMember.findFirst({
+            where: {
+              leagueId,
+              playerToken,
+            },
+            select: {
+              id: true,
+              displayName: true,
+              league: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                  status: true,
+                },
+              },
+            },
+          })
+        : null);
 
     if (!member) {
       return NextResponse.json(

@@ -9,6 +9,7 @@ import {
   removeSavedLeague,
   type SavedLeagueSession,
 } from "@/lib/client/device-session";
+import { ensurePlayerToken } from "@/lib/client/player-token";
 
 export function HomeEntry() {
   const router = useRouter();
@@ -38,6 +39,7 @@ export function HomeEntry() {
           body: JSON.stringify({
             leagueId: league.leagueId,
             playerId: league.playerId,
+            playerToken: ensurePlayerToken(),
           }),
         });
 

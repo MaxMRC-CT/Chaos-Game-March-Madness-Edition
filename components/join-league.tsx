@@ -13,6 +13,7 @@ import {
   getSavedLeagues,
   upsertSavedLeague,
 } from "@/lib/client/device-session";
+import { ensurePlayerToken, getPlayerToken } from "@/lib/client/player-token";
 
 const ALLOW_BETA_JOIN_AFTER_START = process.env.NEXT_PUBLIC_ALLOW_BETA_JOIN_AFTER_START === "true";
 
@@ -46,6 +47,9 @@ export default function JoinLeague({
   const [showReconnectForm, setShowReconnectForm] = React.useState(false);
   const [savedLeagueCount, setSavedLeagueCount] = React.useState(0);
   const [mostRecentLeagueName, setMostRecentLeagueName] = React.useState<string | null>(null);
+  const [playerToken] = React.useState(() =>
+    typeof window !== "undefined" ? getPlayerToken() ?? ensurePlayerToken() : "",
+  );
 
   const nicknameRef = React.useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
@@ -149,6 +153,9 @@ export default function JoinLeague({
           code: trimmedCode,
           nickname: trimmedNickname,
         });
+        if (playerToken) {
+          params.set("playerToken", playerToken);
+        }
 
         const response = await fetch(`/api/nickname-available?${params.toString()}`, {
           signal: controller.signal,
@@ -178,7 +185,7 @@ export default function JoinLeague({
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [code, nickname, leagueStatus]);
+  }, [code, nickname, leagueStatus, playerToken]);
 
   React.useEffect(() => {
     if (
@@ -274,6 +281,8 @@ export default function JoinLeague({
           />
         </div>
 
+        <input type="hidden" name="playerToken" value={playerToken} suppressHydrationWarning />
+
         {availability.message === "Checking..." ? (
           <p className="text-sm text-neutral-500">Checking nickname...</p>
         ) : showAvailability ? (
@@ -363,6 +372,7 @@ export default function JoinLeague({
               value={reconnectCode}
               onChange={(event) => setReconnectCode(event.target.value.toUpperCase())}
             />
+            <input type="hidden" name="playerToken" value={playerToken} suppressHydrationWarning />
             <input type="hidden" name="deviceToken" value="" />
             <button
               disabled={reconnectPending}
